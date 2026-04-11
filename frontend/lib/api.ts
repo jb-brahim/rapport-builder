@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://rapport-builder.onrender.com/api';
 
 interface FetchOptions extends RequestInit {
   data?: any;
