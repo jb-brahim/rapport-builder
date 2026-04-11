@@ -768,7 +768,11 @@ export default function VisualEditor() {
         credentials: 'include' // crucial for auth cookies
       });
 
-      if (!response.ok) throw new Error('Export failed');
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error("Backend Export Error:", errText);
+        throw new Error('Export failed: ' + errText);
+      }
 
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);

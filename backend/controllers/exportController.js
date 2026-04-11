@@ -223,12 +223,19 @@ const exportToPdf = async (req, res) => {
     browser = await puppeteer.launch({ 
       headless: true, // Switched to modern standard
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--font-render-hinting=none']
+      args: [
+        '--no-sandbox', 
+        '--disable-setuid-sandbox', 
+        '--disable-dev-shm-usage', 
+        '--font-render-hinting=none',
+        '--single-process', // CRITICAL for 512MB RAM instances (Render free tier)
+        '--no-zygote'
+      ]
     });
     
     const page = await browser.newPage();
-    // Setting viewport exactly matching our 794x1123 canvas
-    await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 2 });
+    // Setting viewport exactly matching our 794x1123 canvas (removed deviceScaleFactor: 2 to save memory)
+    await page.setViewport({ width: 794, height: 1123 });
     
     // networkidle0 waits for all local/remote fonts to load
     await page.setContent(htmlContent, { waitUntil: 'networkidle0', timeout: 30000 });
