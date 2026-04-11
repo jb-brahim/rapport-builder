@@ -761,7 +761,7 @@ export default function VisualEditor() {
       });
 
       // 2. Begin Download
-      const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const url = process.env.NEXT_PUBLIC_API_URL || 'https://rapport-builder.onrender.com/api';
       const response = await fetch(`${url}/export/${rapportId}/${type}`, {
         method: 'GET',
         headers: { 'Accept': type === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
