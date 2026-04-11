@@ -1,0 +1,156 @@
+{
+  "info": {
+    "_postman_id": "8c4598ac-b44c-473d-82d0-eb8ab8d4b31a",
+    "name": "PFE Rapport Builder API v3",
+    "description": "API endpoints, now including AI Expansion, DOCX Export, and Image Uploads.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Student One\",\n  \"email\": \"student@test.com\",\n  \"password\": \"123456\",\n  \"role\": \"student\",\n  \"language\": \"FR\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/auth/register", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "auth", "register"] }
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"student@test.com\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/auth/login", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "auth", "login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rapports & Exports",
+      "item": [
+        {
+          "name": "Create Rapport",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"templateId\": null\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/rapports", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "rapports"] }
+          }
+        },
+        {
+          "name": "Auto-save Rapport",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentStep\": 4,\n  \"wizardAnswers\": {\n    \"projectTitle\": \"AI PFE Builder\",\n    \"companyName\": \"SparkTech\"\n  },\n  \"stepCompletion\": [100, 100, 100, 50, 0, 0, 0, 0, 0]\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/rapports/:id/autosave", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "rapports", ":id", "autosave"], "variable": [ { "key": "id", "value": "REPLACE_WITH_RAPPORT_ID" } ] }
+          }
+        },
+        {
+          "name": "Export Rapport to PDF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "http://localhost:5000/api/export/:id/pdf", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "export", ":id", "pdf"], "variable": [ { "key": "id", "value": "REPLACE_WITH_RAPPORT_ID" } ] }
+          }
+        },
+        {
+          "name": "Export Rapport to DOCX",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "http://localhost:5000/api/export/:id/docx", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "export", ":id", "docx"], "variable": [ { "key": "id", "value": "REPLACE_WITH_RAPPORT_ID" } ] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Wizard Automation",
+      "item": [
+        {
+          "name": "Generate Company Paragraph",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"language\": \"FR\",\n  \"answers\": {\n    \"companyName\": \"TechInnovate\",\n    \"sector\": \"FinTech\",\n    \"role\": \"Developpeur Backend\"\n  }\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/ai/generate-company", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "ai", "generate-company"] }
+          }
+        },
+        {
+          "name": "Suggest Chapter Structure",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"language\": \"EN\",\n  \"answers\": {\n    \"projectTitle\": \"AI PFE Rapport Builder\",\n    \"objective\": \"Automate internship report writing\",\n    \"technologies\": \"MERN, AWS\"\n  }\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/ai/suggest-structure", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "ai", "suggest-structure"] }
+          }
+        },
+        {
+          "name": "Expand Text String",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"language\": \"FR\",\n  \"shortText\": \"I worked at XYZ company in the backend team building an API\",\n  \"context\": \"Introductory paragraph about the internship\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/ai/expand-text", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "ai", "expand-text"] }
+          }
+        },
+        {
+          "name": "Generate FULL 100-Page Rapport",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "http://localhost:5000/api/ai/generate-full/:id", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "ai", "generate-full", ":id"], "variable": [ { "key": "id", "value": "REPLACE_WITH_RAPPORT_ID" } ] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Image & File Uploads",
+      "item": [
+        {
+          "name": "Upload Diagram/Screenshot",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": { "raw": "http://localhost:5000/api/upload", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "upload"] }
+          }
+        }
+      ]
+    }
+  ]
+}

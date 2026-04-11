@@ -1,0 +1,57 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+:root {
+  /* Pristine light theme with warmed backgrounds */
+  --background: #FFF8F2;
+  --foreground: #250136;
+  
+  --primary: #F59E51;
+  --secondary: #3A0353;
+  
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #F59E51;
+  --radius: 1rem;
+  --sidebar-width: 280px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    background-color: #FFF8F2 !important;
+    color: #250136;
+    @apply transition-colors duration-500 min-h-screen antialiased;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    /* Sophisticated Orange-to-Violet Glass Gradient */
+    @apply backdrop-blur-3xl border border-white/60 shadow-[0_20px_50px_rgba(245,158,81,0.15),0_10px_30px_rgba(58,3,83,0.12)] rounded-3xl;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.5) 50%, rgba(128, 74, 138, 0.1) 100%);
+  }
+  
+  .glass-button {
+    @apply bg-white/90 hover:bg-primary hover:text-white backdrop-blur-md border border-white/60 transition-all shadow-md rounded-full text-primary font-bold px-6 py-2;
+  }
+
+  .font-rapport {
+    font-family: "Computer Modern Serif", serif !important;
+  }
+}

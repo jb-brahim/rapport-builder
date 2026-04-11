@@ -1,0 +1,50 @@
+PFE RAPPORT BUILDER - TESTING GUIDE
+===================================
+
+This guide explains how to test the core backend functionality using Postman.
+
+PREREQUISITES:
+1. Make sure you have MongoDB running locally on port 27017.
+2. Open a terminal in `backend/` and run `npm run dev` to start the server on Port 5000.
+3. Open Postman. 
+
+IMPORTING THE COLLECTION:
+1. In Postman, click on "Import" (top left).
+2. Upload the `postman_collection.json` file found in the backend folder.
+3. You will see a new collection called "PFE Rapport Builder API" containing three folders: Auth, Rapports, and Supervisor Review.
+
+---
+
+TESTING WORKFLOW:
+
+Step 1: Auth & Cookies
+Since the backend uses `cookie-parser` for JWT tokens instead of HTTP Bearer Headers, Postman will AUTOMATICALLY handle the cookie for you after login/registration.
+
+- Run "Auth -> Register User" with the provided mock JSON.
+- Note that Postman will drop a cookie named `jwt` into your session. 
+- Try running "Auth -> Get Profile" to verify that the cookie works and it knows who you are.
+
+Step 2: Creating a Rapport
+- Run "Rapports -> Create Rapport". The backend knows it's you because of the cookie.
+- Look at the Response JSON. Copy the `_id` string of the newly created Rapport.
+- Run "Rapports -> Get My Rapports" to see it in your array.
+
+Step 3: Auto-Saving (The 30-sec Debounce feature)
+- Open "Rapports -> Auto-save Rapport".
+- In the URL parameter tab (or directly in the URL), replace `:id` with the `_id` you copied earlier.
+- Send the PATCH request. 
+- You will see "Auto-saved successfully" and it will return a `lastSavedAt` timestamp.
+
+Step 4: Supervisor Review Link
+- Open "Supervisor Review -> Generate Share Token".
+- Replace `:rapportId` in the URL with your Rapport `_id`.
+- Note: This must be done while logged into the Student account (since only the owner can generate the link).
+- The response will return a long JWT token embedded in a URL string like: `/review/eyJh...`
+- Copy ONLY the token part (`eyJh...`).
+
+Step 5: Anonymous Comments
+- To simulate a supervisor, you normally wouldn't have the student's cookie. Postman technically still has it, but the Supervisor endpoints are explicitly set up to ignore cookies and rely purely on the Token param!
+- Open "Supervisor Review -> Add Comment via Token".
+- Replace `:token` in the URL with the long JWT string you just copied.
+- Send the POST request. 
+- The Comment will be appended to the database anonymously assigned to that token/rapport!

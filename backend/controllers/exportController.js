@@ -1,0 +1,294 @@
+import puppeteer from 'puppeteer';
+import HTMLToDOCX from 'html-to-docx';
+import Rapport from '../models/Rapport.js';
+
+// Helper for Roman numerals in page numbers
+const toRoman = (num) => {
+  if (num <= 0) return '';
+  const roman = [
+    ['M', 1000], ['CM', 900], ['D', 500], ['CD', 400], ['C', 100],
+    ['XC', 90], ['L', 50], ['XL', 40], ['X', 10], ['IX', 9],
+    ['V', 5], ['IV', 4], ['I', 1]
+  ];
+  let result = '';
+  let n = num;
+  for (const [str, val] of roman) {
+    while (n >= val) {
+      result += str;
+      n -= val;
+    }
+  }
+  return result;
+};
+
+// Generate exact replica HTML for Puppeteer
+const createPdfHtml = (elements, numPages, introStartPage) => {
+  let html = `
+    <!DOCTYPE html>
+    <html lang="fr">
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@400;700;900&family=Outfit:wght@400;700;900&display=swap');
+          /* Latin Modern Roman (Computer Modern Equivalent) */
+          @import url('https://fonts.cdnfonts.com/css/latin-modern-roman');
+
+          body { 
+            margin: 0; 
+            padding: 0; 
+            background: #ffffff; 
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact;
+          }
+          .page {
+            width: 794px;
+            height: 1123px;
+            position: relative;
+            page-break-after: always;
+            background: #ffffff;
+            overflow: hidden;
+            box-sizing: border-box;
+          }
+          /* Apply the default serif fallback */
+          div {
+            font-family: inherit;
+          }
+        </style>
+      </head>
+      <body>
+  `;
+
+  for (let p = 1; p <= numPages; p++) {
+    html += `<div class="page">\n`;
+    
+    const pageElements = elements.filter(e => e.page === p);
+    for (const el of pageElements) {
+      let contentHtml = el.content;
+      
+      const elWidth = el.width === 'auto' ? '640px' : (typeof el.width === 'number' ? el.width + 'px' : el.width);
+      let elHeight = el.height === 'auto' ? 'auto' : (typeof el.height === 'number' ? el.height + 'px' : el.height);
+
+      if (el.type === 'image') {
+        const imgSrc = el.content || '';
+        contentHtml = `<img src="${imgSrc}" style="width: 100%; height: 100%; object-fit: contain;" />`;
+        if (el.caption) {
+           contentHtml += `<div style="margin-top: 8px; font-size: 10px; font-weight: bold; color: #64748B; font-style: italic; text-align: center;">${el.caption}</div>`;
+        }
+      } else if (el.type === 'table') {
+        try {
+          const data = JSON.parse(el.content);
+          const settings = el.tableSettings || { themeColor: 'indigo' };
+          const themes = {
+            slate: { header: '#0f172a', stripe: '#f1f5f9' },
+            blue: { header: '#1d4ed8', stripe: '#eff6ff' },
+            indigo: { header: '#250136', stripe: '#eef2ff' },
+            emerald: { header: '#047857', stripe: '#ecfdf5' },
+            amber: { header: '#ea580c', stripe: '#fff7ed' },
+            rose: { header: '#be123c', stripe: '#fff1f2' }
+          };
+          const theme = themes[settings.themeColor] || themes.slate;
+
+          let tblHtml = `<table style="width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; font-family: ${el.fontFamily.replace(/"/g, "'")}; font-size: ${el.fontSize}px;"><tbody>`;
+          
+          data.forEach((row, ridx) => {
+            const bg = ridx === 0 ? theme.header : '#ffffff';
+            const fg = ridx === 0 ? '#ffffff' : '#000000';
+            tblHtml += `<tr style="background-color: ${bg}; border-bottom: 2px solid #e2e8f0;">`;
+            row.forEach((cell) => {
+              tblHtml += `<td style="padding: 20px; color: ${fg}; border-right: 2px solid #e2e8f0; text-align: ${ridx === 0 ? 'center' : el.textAlign}; ${ridx === 0 ? 'font-weight: 900; text-transform: uppercase;' : ''}">${cell}</td>`;
+            });
+            tblHtml += `</tr>`;
+          });
+          tblHtml += `</tbody></table>`;
+          if (el.caption) {
+            tblHtml = `<div style="margin-bottom: 8px; font-size: 10px; font-weight: bold; color: #64748B; font-style: italic; text-align: center;">${el.caption}</div>` + tblHtml;
+          }
+          contentHtml = tblHtml;
+        } catch (e) {
+          contentHtml = `<div style="color: red;">Invalid Table Error</div>`;
+        }
+      }
+
+      // Safe styling fallbacks
+      const elFontSize = el.fontSize || 16;
+      const elColor = el.color || '#000000';
+      const elFontWeight = el.fontWeight || 'normal';
+      const elTextAlign = el.textAlign || 'left';
+      const rawFamily = el.fontFamily || "'Times New Roman', serif";
+      let family = rawFamily.replace(/"/g, "'");
+      if (family.includes('Computer Modern')) {
+        family = "'Latin Modern Roman', serif";
+      }
+
+      html += `
+        <div style="position: absolute; left: ${el.x || 0}px; top: ${el.y || 0}px; width: ${elWidth}; height: ${elHeight}; font-size: ${elFontSize}px; color: ${elColor}; font-family: ${family}; font-weight: ${elFontWeight}; text-align: ${elTextAlign}; white-space: pre-wrap; line-height: 1.5;">
+          ${contentHtml}
+        </div>
+      `;
+    }
+
+    if (p > 1) {
+       // Estimate intro start page. Since it's dynamic, default back to roughly 3 if not provided efficiently.
+       const introPage = introStartPage || 4; // Typical: Title, Dedication, Remerciement
+       const pageStr = p < introPage ? toRoman(p - 1).toLowerCase() : (p - introPage + 1);
+       html += `
+        <div style="position: absolute; bottom: 40px; left: 0; right: 0; text-align: center; font-family: 'Latin Modern Roman', serif; font-size: 10pt; color: #64748B; font-weight: bold;">
+           <span style="padding: 4px 16px; border-top: 1px solid #e2e8f0;">${pageStr}</span>
+        </div>
+       `;
+    }
+
+    html += `</div>\n`;
+  }
+
+  html += `</body></html>`;
+  return html;
+};
+
+// Generate semantic, flowing HTML for DOCX
+const createDocxHtml = (elements) => {
+  const sorted = [...elements].sort((a,b) => (a.page - b.page) || (a.y - b.y));
+  let html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><style>body { font-family: 'Times New Roman', serif; line-height: 1.5; color: #000; }</style></head><body>`;
+  
+  let currentTitle = '';
+  
+  for(const el of sorted) {
+    const elFontSize = el.fontSize || 16;
+    const elColor = el.color || '#000';
+    const elTextAlign = el.textAlign || 'left';
+
+    if (el.type === 'heading') {
+      const fontSize = Math.min(24, Math.max(14, elFontSize));
+      html += `<h2 style="color: ${elColor}; text-align: ${elTextAlign}; font-size: ${fontSize}pt; font-weight: bold; margin-top: 24px; margin-bottom: 12px;">${(el.content || '').replace(/<[^>]*>?/gm, '')}</h2>`;
+    } else if (el.type === 'text') {
+      // Clean arbitrary absolutly div positioning
+      const cleanContent = (el.content || '').replace(/font-size:\s*\d+pt;/g, `font-size: ${elFontSize}pt;`)
+                                     .replace(/color:\s*#[a-zA-Z0-9]+;/g, `color: ${elColor};`);
+      html += `<div style="text-align: ${elTextAlign}; margin-bottom: 12px;">${cleanContent}</div>`;
+    } else if (el.type === 'image') {
+       if (el.content) {
+         html += `<div style="text-align: center; margin: 20px 0;">`;
+         html += `<img src="${el.content}" style="width: 500px; max-width: 100%; height: auto;" />`;
+         if (el.caption) html += `<p style="text-align: center; font-style: italic; color: #555; margin-top: 8px;">${el.caption}</p>`;
+         html += `</div>`;
+       }
+    } else if (el.type === 'table') {
+      try {
+        const data = JSON.parse(el.content || '[]');
+        let tblHtml = `<table style="width: 100%; border-collapse: collapse; margin: 20px 0; border: 1px solid #000;"><tbody>`;
+        data.forEach((row, ridx) => {
+          tblHtml += `<tr>`;
+          row.forEach((cell) => {
+            if (ridx === 0) {
+              tblHtml += `<th style="border: 1px solid #000; padding: 8px; text-align: center; background-color: #f1f5f9;">${cell}</th>`;
+            } else {
+              tblHtml += `<td style="border: 1px solid #000; padding: 8px; text-align: ${elTextAlign};">${cell}</td>`;
+            }
+          });
+          tblHtml += `</tr>`;
+        });
+        tblHtml += `</tbody></table>`;
+        if (el.caption) {
+          tblHtml = `<p style="text-align: center; font-style: italic; font-weight: bold; margin-bottom: 4px;">${el.caption}</p>` + tblHtml;
+        }
+        html += tblHtml;
+      } catch(e) {}
+    }
+  }
+  html += `</body></html>`;
+  return html;
+};
+
+// @desc    Export a rapport to PDF
+// @route   GET /api/export/:id/pdf
+// @access  Private
+const exportToPdf = async (req, res) => {
+  let browser;
+  try {
+    const rapport = await Rapport.findById(req.params.id);
+    if (!rapport) return res.status(404).json({ message: 'Rapport not found' });
+
+    // Use visualLayout! Fallback to 1 page if undefined
+    const layout = rapport.visualLayout || [];
+    
+    // Dynamically calculate the total number of pages from the highest element "page" value
+    const numPages = layout.length > 0 ? Math.max(...layout.map(e => e.page || 1)) : 1;
+
+    // Estimate introStartPage based on visualLayout
+    const introEl = layout.find(e => e.id === 'intro-l');
+    const introStartPage = introEl ? introEl.page : 4;
+
+    const htmlContent = createPdfHtml(layout, numPages, introStartPage);
+
+    browser = await puppeteer.launch({ 
+      headless: true, // Switched to modern standard
+      executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--font-render-hinting=none']
+    });
+    
+    const page = await browser.newPage();
+    // Setting viewport exactly matching our 794x1123 canvas
+    await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 2 });
+    
+    // networkidle0 waits for all local/remote fonts to load
+    await page.setContent(htmlContent, { waitUntil: 'networkidle0', timeout: 30000 });
+    // Additional wait to guarantee web fonts process
+    await new Promise(r => setTimeout(r, 1500));
+
+    // Print to PDF exactly the size of A4 without puppeteer margins (our css handles it)
+    const pdfBuffer = await page.pdf({
+      width: '794px',
+      height: '1123px',
+      printBackground: true,
+      margin: { top: '0', bottom: '0', left: '0', right: '0' },
+      pageRanges: '' // Print all
+    });
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Length': pdfBuffer.length,
+      'Content-Disposition': `attachment; filename="rapport_${rapport._id}.pdf"`
+    });
+
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('PDF Export Error:', error);
+    res.status(500).json({ message: error.message });
+  } finally {
+    if (browser) await browser.close();
+  }
+};
+
+// @desc    Export a rapport to DOCX
+// @route   GET /api/export/:id/docx
+// @access  Private
+const exportToDocx = async (req, res) => {
+  try {
+    const rapport = await Rapport.findById(req.params.id);
+    if (!rapport) return res.status(404).json({ message: 'Rapport not found' });
+
+    const layout = rapport.visualLayout || [];
+    const htmlContent = createDocxHtml(layout);
+
+    const docxBuffer = await HTMLToDOCX(htmlContent, null, {
+      table: { row: { cantSplit: true } },
+      footer: true,
+      pageNumber: true,
+      orientation: 'portrait',
+      margins: { top: 1440, right: 1440, bottom: 1440, left: 1440 } // 1 inch margins (1440 twips)
+    });
+
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'Content-Disposition': `attachment; filename="rapport_${rapport._id}.docx"`
+    });
+
+    res.send(docxBuffer);
+  } catch (error) {
+    console.error('DOCX Export Error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export { exportToPdf, exportToDocx };
+
