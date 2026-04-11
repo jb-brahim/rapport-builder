@@ -24,12 +24,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="light">
+    <html lang="en" className="light" suppressHydrationWarning>
       <head>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/dreampulse/computer-modern-web-font@master/fonts.css" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;900&family=Montserrat:wght@400;900&family=Roboto:wght@400;900&family=Open+Sans:wght@400;700&family=Playfair+Display:wght@400;900&family=Merriweather:wght@400;900&family=Outfit:wght@400;900&family=Ubuntu+Mono&display=swap" />
       </head>
-      <body className="font-sans antialiased text-[#250136] relative min-h-screen overflow-x-hidden selection:bg-primary/30">
+      <body className="font-sans antialiased text-[#250136] relative min-h-screen overflow-x-hidden selection:bg-primary/30" suppressHydrationWarning>
         {/* Dynamic Glowing Mesh Background */}
         <div className="fixed inset-0 z-[-1] bg-[#FFF8F2] pointer-events-none overflow-hidden">
           <div className="absolute top-[-15%] left-[-10%] w-[70%] h-[70%] bg-[#F59E51]/15 rounded-full blur-[140px] animate-pulse duration-[12s]" />
