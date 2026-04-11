@@ -27,7 +27,11 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: [
+      process.env.FRONTEND_URL, 
+      'http://localhost:3000', 
+      'https://rapport-builder.vercel.app'
+    ].filter(Boolean),
     credentials: true,
   })
 );
