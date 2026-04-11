@@ -222,7 +222,7 @@ const exportToPdf = async (req, res) => {
 
     browser = await puppeteer.launch({ 
       headless: true, // Switched to modern standard
-      executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--font-render-hinting=none']
     });
     
