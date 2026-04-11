@@ -21,6 +21,9 @@ connectDB();
 
 const app = express();
 
+// Trust the proxy (Render's load balancer) so secure cookies can be set over "HTTP"
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
