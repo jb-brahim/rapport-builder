@@ -409,221 +409,203 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
   const { title, content, images, tables } = getActiveContent();
 
   return (
-    <div className="flex flex-col h-[750px] -mx-8 -my-8 bg-[#FDFCFB] border border-[#250136]/5 rounded-3xl overflow-hidden shadow-2xl">
-      {/* 1. SaaS Header */}
-      <div className="h-14 border-b border-[#250136]/5 bg-white flex items-center justify-between px-8 shrink-0">
-        <div className="flex items-center gap-6 flex-1">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-[#250136] flex items-center justify-center text-white font-black text-[10px]">6</div>
-            <span className="font-bold text-[#250136] text-[11px] uppercase tracking-wider">{t('wizard.step6')}</span>
-          </div>
-          
-          <div className="flex items-center gap-2 ml-4">
-            {[1, 2, 3, 4, 5, 6, 7].map(step => (
-              <div 
-                key={step} 
-                className={cn(
-                  "h-1 rounded-full transition-all duration-500",
-                  step === 6 ? "w-6 bg-primary" : step < 6 ? "w-2 bg-primary/30" : "w-2 bg-[#250136]/5"
-                )}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Button
-            size="sm"
-            onClick={() => saveChapter(activeItem.cIdx)}
-            disabled={isSaving === activeItem.cIdx}
-            className={cn(
-              "h-9 rounded-full px-5 font-bold gap-2 transition-all text-[10px]",
-              savedIdx === activeItem.cIdx ? "bg-emerald-500 text-white" : "bg-[#250136] text-white hover:bg-primary"
-            )}
-          >
-            {isSaving === activeItem.cIdx ? <div className="w-3 h-3 border-2 border-white/30 border-t-white animate-spin rounded-full" /> : <Save className="w-3.5 h-3.5" />}
-            {savedIdx === activeItem.cIdx ? "SUCCÈS" : "ENREGISTRER"}
-          </Button>
-        </div>
-      </div>
-
-      {/* 2. Main 3-Pane Area */}
-      <div className="flex-1 flex overflow-hidden">
+    <div className="flex w-full h-[780px] bg-white border border-[#250136]/10 rounded-[2rem] overflow-hidden shadow-[0_32px_64px_-16px_rgba(37,1,54,0.1)] transition-all duration-700">
+      
+      {/* 1. Outline Pane (Left) */}
+      <div className="w-[300px] border-r border-[#250136]/5 bg-slate-50/50 flex flex-col shrink-0">
         
-        {/* LEFT: Outline/Tree */}
-        <div className="w-[280px] border-r border-[#250136]/5 bg-slate-50/50 flex flex-col">
-          <div className="p-4 border-b border-[#250136]/5">
-            <input 
-              placeholder="Chercher une section..." 
-              className="w-full bg-white border border-[#250136]/10 rounded-xl px-3 py-2 text-[10px] font-bold outline-none focus:ring-2 focus:ring-primary/20"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-            />
+        {/* Outline Header: Search + Actions */}
+        <div className="p-5 border-b border-[#250136]/5 space-y-4 bg-white/40 backdrop-blur-md">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black uppercase tracking-widest text-[#250136]/40">Document</span>
+            <Button 
+              size="sm" 
+              onClick={() => saveChapter(activeItem.cIdx)}
+              disabled={isSaving === activeItem.cIdx}
+              className={cn(
+                "h-7 px-3 rounded-full text-[9px] font-black transition-all",
+                savedIdx === activeItem.cIdx ? "bg-emerald-500 hover:bg-emerald-600" : "bg-[#250136] hover:bg-primary"
+              )}
+            >
+              {isSaving === activeItem.cIdx ? "SAVING..." : savedIdx === activeItem.cIdx ? "SAVED" : "SAVE ALL"}
+            </Button>
+          </div>
+          <input 
+            placeholder="Search segments..." 
+            className="w-full bg-white/50 border border-[#250136]/10 rounded-xl px-4 py-2 text-[11px] font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-slate-300"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        <div className="flex-1 flex overflow-hidden">
+          {/* Level Icons Toolbar */}
+          <div className="w-14 border-r border-[#250136]/5 flex flex-col items-center py-6 gap-6 bg-white/20">
+             <button onClick={addChapter} className="w-8 h-8 rounded-xl bg-[#250136] text-white flex items-center justify-center font-black text-xs hover:scale-110 transition-transform shadow-lg shadow-[#250136]/20" title="Add Chapter">CH</button>
+             <button onClick={() => {
+               const newSections = [...(activeChapter?.sections || []), { title: '', content: '', subsections: [] }];
+               updateChapter(activeItem.cIdx, 'sections', newSections);
+             }} className="w-8 h-8 rounded-full border-2 border-primary/20 text-primary flex items-center justify-center font-black text-[11px] hover:bg-primary hover:text-white transition-all" title="Add Section">Ⅰ</button>
+             <button onClick={() => {
+               if (activeItem.type === 'section') {
+                 const newSections = [...activeChapter.sections];
+                 if (!newSections[activeItem.sIdx!].subsections) newSections[activeItem.sIdx!].subsections = [];
+                 newSections[activeItem.sIdx!].subsections!.push({ title: '', content: '', subsections: [] });
+                 updateChapter(activeItem.cIdx, 'sections', newSections);
+               }
+             }} className="w-8 h-8 rounded-lg border-2 border-emerald-100 text-emerald-600 flex items-center justify-center font-black text-[11px] hover:bg-emerald-500 hover:text-white transition-all" title="Add Subsection">1</button>
           </div>
 
-          <div className="flex flex-1 overflow-hidden">
-            {/* Toolbar Icons */}
-            <div className="w-12 border-r border-[#250136]/5 flex flex-col items-center py-6 gap-5 bg-white/20">
-               <button onClick={addChapter} className="w-7 h-7 rounded-lg bg-[#250136] text-white flex items-center justify-center font-black text-[9px] hover:scale-110 transition-transform shadow-md">CH</button>
-               <button onClick={() => {
-                 const newSections = [...(activeChapter?.sections || []), { title: '', content: '', subsections: [] }];
-                 updateChapter(activeItem.cIdx, 'sections', newSections);
-               }} className="w-7 h-7 rounded-full border-2 border-primary/20 text-primary flex items-center justify-center font-black text-[10px] hover:bg-primary hover:text-white transition-all">I</button>
-               <button onClick={() => {
-                 if (activeItem.type === 'section') {
-                   const newSections = [...activeChapter.sections];
-                   if (!newSections[activeItem.sIdx!].subsections) newSections[activeItem.sIdx!].subsections = [];
-                   newSections[activeItem.sIdx!].subsections!.push({ title: '', content: '', subsections: [] });
-                   updateChapter(activeItem.cIdx, 'sections', newSections);
-                 }
-               }} className="w-7 h-7 rounded-lg border-2 border-emerald-200 text-emerald-600 flex items-center justify-center font-black text-[10px] hover:bg-emerald-500 hover:text-white transition-all">1</button>
-               <button onClick={() => {
-                 if (activeItem.type === 'subsection') {
-                    const newSections = [...activeChapter.sections];
-                    const ss = newSections[activeItem.sIdx!].subsections![activeItem.ssIdx!];
-                    if (!ss.subsections) ss.subsections = [];
-                    ss.subsections.push({ title: '', content: '' });
-                    updateChapter(activeItem.cIdx, 'sections', newSections);
-                 }
-               }} className="w-7 h-7 rounded-lg border-2 border-blue-200 text-blue-600 flex items-center justify-center font-black text-[10px] hover:bg-blue-500 hover:text-white transition-all">a</button>
-            </div>
+          {/* Tree Navigation */}
+          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+            <div className="space-y-4">
+              {chaptersConfig.map((ch, cIdx) => (
+                <div key={cIdx} className="space-y-1">
+                  <div 
+                    onClick={() => setActiveItem({ type: 'chapter-intro', cIdx })}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer transition-all",
+                      activeItem.cIdx === cIdx && activeItem.type === 'chapter-intro' ? "bg-white shadow-sm ring-1 ring-[#250136]/5" : "hover:bg-white/40"
+                    )}
+                  >
+                    <div className="w-5 h-5 rounded-md bg-[#250136] text-white flex items-center justify-center text-[9px] font-black">{cIdx + 1}</div>
+                    <span className={cn("text-[12px] font-bold truncate", activeItem.cIdx === cIdx && activeItem.type === 'chapter-intro' ? "text-primary" : "text-[#250136]/60")}>
+                      {ch.title || `Chapter ${cIdx + 1}`}
+                    </span>
+                  </div>
 
-            {/* Tree */}
-            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#250136]/20 mb-3 block px-1">Navigation</span>
-              <div className="space-y-4">
-                {chaptersConfig.map((ch, cIdx) => (
-                  <div key={cIdx} className="space-y-1">
-                    <div 
-                      onClick={() => setActiveItem({ type: 'chapter-intro', cIdx })}
-                      className={cn(
-                        "flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer transition-all",
-                        activeItem.cIdx === cIdx && activeItem.type === 'chapter-intro' ? "bg-white shadow-sm ring-1 ring-[#250136]/5" : "hover:bg-white/40"
-                      )}
-                    >
-                      <div className="w-4 h-4 rounded-md bg-[#250136] text-white flex items-center justify-center text-[8px] font-black">{cIdx + 1}</div>
-                      <span className={cn("text-[11px] font-bold truncate", activeItem.cIdx === cIdx && activeItem.type === 'chapter-intro' ? "text-primary" : "text-[#250136]/60")}>
-                        {ch.title || `Chap ${cIdx + 1}`}
-                      </span>
-                    </div>
-
-                    <div className="ml-3 pl-2 border-l border-[#250136]/5 space-y-1">
-                      {ch.sections.map((sec, sIdx) => (
-                        <div key={sIdx} className="space-y-1">
+                  <div className="ml-4 pl-3 border-l border-[#250136]/5 space-y-1">
+                    {ch.sections.map((sec, sIdx) => (
+                      <div key={sIdx} className="space-y-1">
+                        <div 
+                          onClick={() => setActiveItem({ type: 'section', cIdx, sIdx })}
+                          className={cn(
+                            "flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer transition-all text-[11px] font-bold",
+                            activeItem.cIdx === cIdx && activeItem.type === 'section' && activeItem.sIdx === sIdx ? "text-primary bg-white shadow-sm" : "text-slate-400 hover:text-[#250136]"
+                          )}
+                        >
+                          <span className="opacity-20">Ⅰ.</span> {sec.title || "Section..."}
+                        </div>
+                        {sec.subsections?.map((ss, ssIdx) => (
                           <div 
-                            onClick={() => setActiveItem({ type: 'section', cIdx, sIdx })}
+                            key={ssIdx}
+                            onClick={() => setActiveItem({ type: 'subsection', cIdx, sIdx, ssIdx })}
                             className={cn(
-                              "flex items-center gap-2 px-2 py-1 rounded-md cursor-pointer transition-all text-[10px] font-bold",
-                              activeItem.cIdx === cIdx && activeItem.type === 'section' && activeItem.sIdx === sIdx ? "text-primary bg-white shadow-sm" : "text-slate-400 hover:text-[#250136]"
+                              "ml-4 px-2 py-1 rounded-md cursor-pointer transition-all text-[10px] font-medium border-l border-transparent",
+                              activeItem.cIdx === cIdx && activeItem.type === 'subsection' && activeItem.ssIdx === ssIdx ? "text-emerald-600 bg-white shadow-sm" : "text-slate-400 hover:text-emerald-500"
                             )}
                           >
-                            <span className="opacity-30">Ⅰ.</span> {sec.title || "Section..."}
+                            {ssIdx + 1}. {ss.title || "Subsection..."}
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
-
-        {/* CENTER: Editor */}
-        <div className="flex-1 bg-white shadow-[inset_0_0_50px_rgba(0,0,0,0.02)] flex flex-col">
-          <div className="p-10 max-w-2xl mx-auto w-full flex-1 overflow-y-auto custom-scrollbar space-y-8">
-            <div className="space-y-1">
-               <span className="text-[10px] font-black text-primary uppercase tracking-widest">{activeItem.type.replace('-', ' ')}</span>
-               <input 
-                 value={title}
-                 onChange={e => updateActiveContent({ title: e.target.value })}
-                 placeholder="Titre de l'élément..."
-                 className="w-full text-4xl font-black text-[#250136] outline-none placeholder:text-slate-100"
-               />
-            </div>
-
-            <div className="space-y-4">
-               <Textarea 
-                 value={content}
-                 onChange={e => e.target.value.length <= MAX_CHARS && updateActiveContent({ content: e.target.value })}
-                 placeholder="Commencez à rédiger..."
-                 className="min-h-[400px] text-lg leading-relaxed border-none shadow-none focus-visible:ring-0 p-0 resize-none font-medium text-slate-700 pb-10"
-               />
-
-               <ImageManager 
-                 images={images} 
-                 onUpdate={imgs => updateActiveContent({ images: imgs })}
-               />
-               <TableManager 
-                 tables={tables}
-                 onUpdate={tbls => updateActiveContent({ tables: tbls })}
-               />
-            </div>
-          </div>
-          
-          <div className="h-10 border-t border-slate-50 flex items-center justify-between px-8 text-[9px] font-black text-slate-300 tracking-widest bg-white">
-             <span>{content.length} / {MAX_CHARS} CARACTÈRES</span>
-             <span className="text-primary/40 italic">BROUILLON AUTOMATIQUE</span>
-          </div>
-        </div>
-
-        {/* RIGHT: Live Preview */}
-        <div className="w-[380px] border-l border-[#250136]/5 bg-[#fcfbf9] overflow-y-auto custom-scrollbar p-10">
-           <div className="flex items-center justify-between mb-8">
-              <span className="text-[9px] font-black text-primary uppercase tracking-[0.2em]">Live Preview</span>
-              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 rounded-full border border-emerald-100">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[8px] font-black text-emerald-600 uppercase">Synchronisé</span>
-              </div>
-           </div>
-
-           <div className="bg-white p-8 rounded-2xl shadow-xl shadow-[#250136]/5 border border-white space-y-6">
-              <h2 className="text-xl font-black text-[#250136] border-b-2 border-[#250136]/5 pb-4">
-                {activeChapter?.title || "Chapitre sans titre"}
-              </h2>
-              <div className="text-xs leading-relaxed text-slate-600 space-y-4 text-justify">
-                 <p className="font-medium bg-slate-50 p-3 rounded-lg border-l-4 border-primary text-[11px] italic mb-6">{activeChapter?.introduction}</p>
-                 
-                 {activeChapter?.sections.map((s, si) => (
-                   <div key={si} className="space-y-3">
-                      <h3 className="font-black text-[#250136] text-[13px] mt-8 flex gap-2">
-                        <span className="text-primary">{toRoman(si + 1)}.</span> {s.title}
-                      </h3>
-                      <p className="whitespace-pre-wrap">{s.content}</p>
-                      
-                      {s.images?.map((img, imi) => (
-                        <div key={imi} className="my-6">
-                           <img src={img.src} className="w-full rounded-xl shadow-xl border border-slate-100" />
-                           <p className="text-center text-[9px] mt-2 italic text-slate-400">Fig {si+1}.{imi+1} — {img.caption}</p>
-                        </div>
-                      ))}
-
-                      {s.subsections?.map((ss, ssi) => (
-                        <div key={ssi} className="pl-5 border-l-2 border-slate-100 space-y-3 mt-4">
-                          <h4 className="font-bold text-[#250136] text-[11px] flex gap-2">
-                            <span className="text-emerald-500">{ssi + 1}.</span> {ss.title}
-                          </h4>
-                          <p className="text-slate-500 whitespace-pre-wrap">{ss.content}</p>
-
-                          {ss.subsections?.map((sss, sssi) => (
-                            <div key={sssi} className="pl-4 border-l border-slate-50 space-y-2 mt-2">
-                              <h5 className="font-bold text-[#250136] text-[10px] flex gap-2 italic">
-                                <span className="text-blue-400">{String.fromCharCode(97 + sssi)}.</span> {sss.title}
-                              </h5>
-                              <p className="text-slate-400 text-[11px]">{sss.content}</p>
-                            </div>
-                          ))}
-                        </div>
-                      ))}
-                   </div>
-                 ))}
-              </div>
-           </div>
-        </div>
-
       </div>
+
+      {/* 2. Editor Pane (Center) */}
+      <div className="flex-1 bg-white shadow-[inset_0_0_80px_rgba(0,0,0,0.01)] flex flex-col">
+        <div className="p-16 max-w-3xl mx-auto w-full flex-1 overflow-y-auto custom-scrollbar space-y-10">
+          <div className="space-y-2">
+             <span className="text-[11px] font-black text-primary uppercase tracking-[0.3em]">{activeItem.type.replace('-', ' ')}</span>
+             <input 
+               value={title}
+               onChange={e => updateActiveContent({ title: e.target.value })}
+               placeholder="Write heading..."
+               className="w-full text-5xl font-black text-[#250136] outline-none placeholder:text-slate-100 selection:bg-primary/10 transition-all"
+             />
+          </div>
+
+          <div className="space-y-8">
+             <Textarea 
+               value={content}
+               onChange={e => e.target.value.length <= MAX_CHARS && updateActiveContent({ content: e.target.value })}
+               placeholder="Write your content here..."
+               className="min-h-[500px] text-xl leading-[1.8] border-none shadow-none focus-visible:ring-0 p-0 resize-none font-medium text-slate-700 pb-20 selection:bg-primary/5"
+             />
+
+             <ImageManager 
+               images={images} 
+               onUpdate={imgs => updateActiveContent({ images: imgs })}
+             />
+             <TableManager 
+               tables={tables}
+               onUpdate={tbls => updateActiveContent({ tables: tbls })}
+             />
+          </div>
+        </div>
+        
+        <div className="h-12 border-t border-[#250136]/5 flex items-center justify-between px-10 text-[10px] font-black text-slate-300 tracking-[0.2em] bg-white/50 backdrop-blur-sm">
+           <div className="flex items-center gap-4">
+             <span>{content.length} / {MAX_CHARS} CHARS</span>
+             <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+             <span>{content.split(/\s+/).filter(Boolean).length} WORDS</span>
+           </div>
+           <span className="text-primary/40 italic">AUTO-SYNC ENABLED</span>
+        </div>
+      </div>
+
+      {/* 3. Preview Pane (Right) */}
+      <div className="w-[420px] border-l border-[#250136]/5 bg-[#FCFBFA] overflow-y-auto custom-scrollbar p-12">
+         <div className="flex items-center justify-between mb-10">
+            <span className="text-[10px] font-black text-[#250136]/30 uppercase tracking-[0.3em]">Live Feed</span>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 rounded-full border border-emerald-100/50">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[9px] font-black text-emerald-600 uppercase">Synced</span>
+            </div>
+         </div>
+
+         <div className="bg-white p-10 rounded-[2.5rem] shadow-[0_40px_80px_-20px_rgba(37,1,54,0.08)] border border-white space-y-8 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl" />
+            
+            <h2 className="text-2xl font-black text-[#250136] border-b-4 border-[#250136]/5 pb-6">
+              {activeChapter?.title || "Untitled Chapter"}
+            </h2>
+            
+            <div className="text-[13px] leading-[1.7] text-slate-600 space-y-6 text-justify">
+               <p className="font-semibold bg-[#250136]/[0.02] p-5 rounded-2xl border-l-[6px] border-primary text-[12px] italic text-[#250136]/80 mb-8">{activeChapter?.introduction}</p>
+               
+               {activeChapter?.sections.map((s, si) => (
+                 <div key={si} className="space-y-4">
+                    <h3 className="font-black text-[#250136] text-[15px] mt-10 flex gap-3 items-baseline">
+                      <span className="text-primary text-[11px] font-black tracking-widest">{toRoman(si + 1)}.</span> 
+                      <span className="flex-1">{s.title}</span>
+                    </h3>
+                    <p className="whitespace-pre-wrap">{s.content}</p>
+                    
+                    {s.images?.map((img, imi) => (
+                      <div key={imi} className="my-8 group relative">
+                         <img src={img.src} className="w-full rounded-2xl shadow-2xl border border-slate-100 group-hover:scale-[1.02] transition-transform duration-500" />
+                         <p className="text-center text-[10px] mt-3 font-bold text-slate-400 uppercase tracking-widest">Figure {si+1}.{imi+1} — {img.caption}</p>
+                      </div>
+                    ))}
+
+                    {s.subsections?.map((ss, ssi) => (
+                      <div key={ssi} className="pl-6 border-l-2 border-slate-50 space-y-4 mt-6">
+                        <h4 className="font-black text-[#250136] text-[13px] flex gap-2">
+                          <span className="text-emerald-500">{ssi + 1}.</span> {ss.title}
+                        </h4>
+                        <p className="text-slate-500 whitespace-pre-wrap">{ss.content}</p>
+                      </div>
+                    ))}
+                 </div>
+               ))}
+               
+               {activeChapter?.conclusion && (
+                 <div className="pt-8 border-t-2 border-[#250136]/5 mt-12">
+                    <h3 className="font-black text-primary text-[11px] mb-3 uppercase tracking-widest">CHAPTER CONCLUSION</h3>
+                    <p className="font-bold text-[#250136]/70 leading-relaxed">{activeChapter.conclusion}</p>
+                 </div>
+               )}
+            </div>
+         </div>
+      </div>
+
     </div>
   );
 }
-
-
