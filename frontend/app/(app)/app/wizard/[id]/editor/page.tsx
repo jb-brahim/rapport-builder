@@ -224,6 +224,88 @@ const rom = (n: number) => {
   return map[n] || n.toString();
 };
 
+const parseSmartSegments = (
+  content: string,
+  images: any[] | undefined,
+  tables: any[] | undefined,
+  baseId: string,
+  stylesText: string,
+  counters: { fig: number; tbl: number }
+) => {
+  if (!content && !images?.length && !tables?.length) return [];
+  
+  const segs: any[] = [];
+  const usedImages = new Set<number>();
+  const usedTables = new Set<number>();
+
+  const parts = content ? content.split(/(\[FIGURE \d+\]|\[TABLEAU \d+\])/i) : [];
+
+  parts.forEach((part, i) => {
+    const figMatch = part.match(/\[FIGURE (\d+)\]/i);
+    if (figMatch) {
+       const idx = parseInt(figMatch[1]) - 1;
+       usedImages.add(idx);
+       if (images && images[idx]) {
+         counters.fig++;
+         segs.push({
+           id: `${baseId}-smart-img-${i}`,
+           type: 'image',
+           content: images[idx].src,
+           caption: `Figure ${counters.fig}: ${images[idx].caption || ''}`
+         });
+       } else {
+         segs.push({ id: `${baseId}-smart-text-${i}`, type: 'text', content: `<div style="color:red; font-weight:bold;">${part} (Introuvable)</div>` });
+       }
+       return;
+    }
+
+    const tabMatch = part.match(/\[TABLEAU (\d+)\]/i);
+    if (tabMatch) {
+       const idx = parseInt(tabMatch[1]) - 1;
+       usedTables.add(idx);
+       if (tables && tables[idx]) {
+         counters.tbl++;
+         segs.push({
+           id: `${baseId}-smart-tbl-${i}`,
+           type: 'table',
+           content: JSON.stringify([tables[idx].headers, ...tables[idx].rows]),
+           caption: `Tableau ${counters.tbl}: ${tables[idx].caption || ''}`
+         });
+       } else {
+         segs.push({ id: `${baseId}-smart-text-${i}`, type: 'text', content: `<div style="color:red; font-weight:bold;">${part} (Introuvable)</div>` });
+       }
+       return;
+    }
+
+    if (part.trim().length > 0) {
+      segs.push({
+        id: `${baseId}-smart-text-${i}`,
+        type: 'text',
+        content: `<div style="${stylesText}">${part.replace(/\n/g, '<br/>')}</div>`
+      });
+    }
+  });
+
+  if (images) {
+    images.forEach((img, idx) => {
+      if (!usedImages.has(idx)) {
+        counters.fig++;
+        segs.push({ id: `${baseId}-unused-img-${idx}`, type: 'image', content: img.src, caption: `Figure ${counters.fig}: ${img.caption || ''}` });
+      }
+    });
+  }
+
+  if (tables) {
+    tables.forEach((tbl, idx) => {
+      if (!usedTables.has(idx)) {
+        counters.tbl++;
+        segs.push({ id: `${baseId}-unused-tbl-${idx}`, type: 'table', content: JSON.stringify([tbl.headers, ...tbl.rows]), caption: `Tableau ${counters.tbl}: ${tbl.caption || ''}` });
+      }
+    });
+  }
+  return segs;
+};
+
 const getChapterSegments = (chapter: any, chapIdx: number, counters: { fig: number; tbl: number }): any[] => {
   const segments: any[] = [];
   const styles = {
@@ -233,86 +315,24 @@ const getChapterSegments = (chapter: any, chapIdx: number, counters: { fig: numb
     text: 'font-size: 12pt; font-weight: normal; color: #000000; display: block; margin-bottom: 8px;'
   };
 
-  // 1. Title Heading
   segments.push({
     id: `chap-${chapIdx}-label`,
     type: 'heading',
     content: `CHAPITRE ${chapIdx + 1}: ${chapter.title?.toUpperCase() || ''}`
   });
 
-  // 2. Introduction
-  if (chapter.introduction) {
-    segments.push({
-      id: `chap-${chapIdx}-intro-txt`,
-      type: 'text',
-      content: `<div style="${styles.text}">${chapter.introduction}</div>`
-    });
-  }
+  segments.push(...parseSmartSegments(chapter.introduction || '', chapter.images, chapter.tables, `chap-${chapIdx}-intro`, styles.text, counters));
 
-  // 3. Intro Images & Tables
-  if (chapter.images) {
-    chapter.images.forEach((img: any, i: number) => {
-      counters.fig++;
-      segments.push({
-        id: `chap-${chapIdx}-intro-img-${i}`,
-        type: 'image',
-        content: img.src,
-        caption: `Figure ${counters.fig}: ${img.caption || ''}`
-      });
-    });
-  }
-  if (chapter.tables) {
-    chapter.tables.forEach((tbl: any, i: number) => {
-      counters.tbl++;
-      segments.push({
-        id: `chap-${chapIdx}-intro-tbl-${i}`,
-        type: 'table',
-        content: JSON.stringify([tbl.headers, ...tbl.rows]),
-        caption: `Tableau ${counters.tbl}: ${tbl.caption || ''}`
-      });
-    });
-  }
-
-  // 4. Recursive Sections
   if (chapter.sections) {
     chapter.sections.forEach((s: any, sIdx: number) => {
-      // Level 1
       segments.push({
         id: `chap-${chapIdx}-s-${sIdx}-label`,
         type: 'text',
         content: `<div style="${styles.l1}">${rom(sIdx + 1)}. ${s.title?.toUpperCase() || ''}</div>`
       });
-      if (s.content) {
-        segments.push({
-          id: `chap-${chapIdx}-s-${sIdx}-txt`,
-          type: 'text',
-          content: `<div style="${styles.text}">${s.content}</div>`
-        });
-      }
-      if (s.images) {
-        s.images.forEach((img: any, i: number) => {
-          counters.fig++;
-          segments.push({
-            id: `chap-${chapIdx}-s-${sIdx}-img-${i}`,
-            type: 'image',
-            content: img.src,
-            caption: `Figure ${counters.fig}: ${img.caption || ''}`
-          });
-        });
-      }
-      if (s.tables) {
-        s.tables.forEach((tbl: any, i: number) => {
-          counters.tbl++;
-          segments.push({
-            id: `chap-${chapIdx}-s-${sIdx}-tbl-${i}`,
-            type: 'table',
-            content: JSON.stringify([tbl.headers, ...tbl.rows]),
-            caption: `Tableau ${counters.tbl}: ${tbl.caption || ''}`
-          });
-        });
-      }
+      
+      segments.push(...parseSmartSegments(s.content || '', s.images, s.tables, `chap-${chapIdx}-s-${sIdx}`, styles.text, counters));
 
-      // Level 2
       if (s.subsections) {
         s.subsections.forEach((ss: any, ssIdx: number) => {
           segments.push({
@@ -320,37 +340,9 @@ const getChapterSegments = (chapter: any, chapIdx: number, counters: { fig: numb
             type: 'text',
             content: `<div style="${styles.l2}">${ssIdx + 1}. ${ss.title || ''}</div>`
           });
-          if (ss.content) {
-            segments.push({
-              id: `chap-${chapIdx}-s-${sIdx}-ss-${ssIdx}-txt`,
-              type: 'text',
-              content: `<div style="${styles.text}; margin-left: 20px;">${ss.content}</div>`
-            });
-          }
-          if (ss.images) {
-            ss.images.forEach((img: any, i: number) => {
-              counters.fig++;
-              segments.push({
-                id: `chap-${chapIdx}-s-${sIdx}-ss-${ssIdx}-img-${i}`,
-                type: 'image',
-                content: img.src,
-                caption: `Figure ${counters.fig}: ${img.caption || ''}`
-              });
-            });
-          }
-          if (ss.tables) {
-            ss.tables.forEach((tbl: any, i: number) => {
-              counters.tbl++;
-              segments.push({
-                id: `chap-${chapIdx}-s-${sIdx}-ss-${ssIdx}-tbl-${i}`,
-                type: 'table',
-                content: JSON.stringify([tbl.headers, ...tbl.rows]),
-                caption: `Tableau ${counters.tbl}: ${tbl.caption || ''}`
-              });
-            });
-          }
+          
+          segments.push(...parseSmartSegments(ss.content || '', ss.images, ss.tables, `chap-${chapIdx}-s-${sIdx}-ss-${ssIdx}`, `${styles.text} margin-left: 20px;`, counters));
 
-          // Level 3
           if (ss.subsections) {
             ss.subsections.forEach((sss: any, sIdx3: number) => {
               segments.push({
@@ -358,35 +350,8 @@ const getChapterSegments = (chapter: any, chapIdx: number, counters: { fig: numb
                 type: 'text',
                 content: `<div style="${styles.l3}">${String.fromCharCode(97 + sIdx3)}) ${sss.title || ''}</div>`
               });
-              if (sss.content) {
-                segments.push({
-                  id: `chap-${chapIdx}-s-${sIdx}-ss-${ssIdx}-sss-${sIdx3}-txt`,
-                  type: 'text',
-                  content: `<div style="${styles.text}; margin-left: 40px;">${sss.content}</div>`
-                });
-              }
-              if (sss.images) {
-                sss.images.forEach((img: any, i: number) => {
-                  counters.fig++;
-                  segments.push({
-                    id: `chap-${chapIdx}-s-${sIdx}-ss-${ssIdx}-sss-${sIdx3}-img-${i}`,
-                    type: 'image',
-                    content: img.src,
-                    caption: `Figure ${counters.fig}: ${img.caption || ''}`
-                  });
-                });
-              }
-              if (sss.tables) {
-                sss.tables.forEach((tbl: any, i: number) => {
-                  counters.tbl++;
-                  segments.push({
-                    id: `chap-${chapIdx}-s-${sIdx}-ss-${ssIdx}-sss-${sIdx3}-tbl-${i}`,
-                    type: 'table',
-                    content: JSON.stringify([tbl.headers, ...tbl.rows]),
-                    caption: `Tableau ${counters.tbl}: ${tbl.caption || ''}`
-                  });
-                });
-              }
+              
+              segments.push(...parseSmartSegments(sss.content || '', sss.images, sss.tables, `chap-${chapIdx}-s-${sIdx}-ss-${ssIdx}-sss-${sIdx3}`, `${styles.text} margin-left: 40px;`, counters));
             });
           }
         });
