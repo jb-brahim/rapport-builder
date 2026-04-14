@@ -8,6 +8,7 @@ import { Plus, Trash2, GripVertical, Layers, Save, ChevronDown, ChevronRight, Ha
 import { GrammarChecker } from '@/components/grammar-checker';
 import { useTranslation } from '@/app/context/language-context';
 import { cn } from '@/lib/utils';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 
 interface TableData {
   headers: string[];
@@ -525,12 +526,18 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
 
   return (
     <div className="flex w-full h-[780px] bg-white border border-[#250136]/10 rounded-[2rem] overflow-hidden shadow-[0_32px_64px_-16px_rgba(37,1,54,0.1)] transition-all duration-700">
+      <ResizablePanelGroup direction="horizontal" className="w-full h-full">
       
       {/* 1. Outline Pane (Left) */}
-      <div className={cn(
-        "border-r border-[#250136]/5 bg-slate-50/50 flex flex-col shrink-0 transition-all duration-300",
-        isSidebarOpen ? "w-[300px]" : "w-14"
-      )}>
+      <ResizablePanel
+        defaultSize={20}
+        minSize={4}
+        maxSize={40}
+        className={cn(
+          "bg-slate-50/50 flex flex-col",
+          !isSidebarOpen && "!flex-[0_0_56px] !max-w-[56px] !min-w-[56px]"
+        )}
+      >
         
         {/* Outline Header */}
         <div className={cn("h-[60px] flex items-center border-b border-[#250136]/5 bg-white/40 backdrop-blur-md shrink-0 relative", isSidebarOpen ? "justify-between px-5" : "justify-center")}>
@@ -671,10 +678,12 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
           </div>
           )}
         </div>
-      </div>
+      </ResizablePanel>
+
+      <ResizableHandle withHandle />
 
       {/* 2. Editor Pane (Center) */}
-      <div className="flex-1 bg-white shadow-[inset_0_0_80px_rgba(0,0,0,0.01)] flex flex-col">
+      <ResizablePanel defaultSize={45} minSize={20} className="bg-white shadow-[inset_0_0_80px_rgba(0,0,0,0.01)] flex flex-col">
         <div className="p-10 w-full flex-1 overflow-y-auto custom-scrollbar space-y-10">
           <div className="space-y-2">
              <span className="text-[11px] font-black text-primary uppercase tracking-[0.3em]">{activeItem.type.replace('-', ' ')}</span>
@@ -726,13 +735,17 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
              </Button>
            </div>
         </div>
-      </div>
+      </ResizablePanel>
+
+      <ResizableHandle withHandle />
 
       {/* 3. Preview Pane (Right) - Visual PDF Viewer */}
-      <div className={cn(
-        "shrink-0 bg-[#e2e4e9] overflow-y-auto custom-scrollbar p-8 transition-all duration-300",
-        isSidebarOpen ? "w-[420px]" : "w-[600px]"
-      )}>
+      <ResizablePanel
+        defaultSize={35}
+        minSize={25}
+        maxSize={60}
+        className="bg-[#e2e4e9] overflow-y-auto custom-scrollbar p-8"
+      >
          <div className="flex items-center justify-between mb-4">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2">Visual Preview</span>
          </div>
@@ -790,8 +803,8 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
               {activeItem.cIdx + 2}
             </div>
          </div>
-      </div>
-
+      </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 }
