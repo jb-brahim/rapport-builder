@@ -22,24 +22,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check for stored user on mount
+  // Check for stored user and verify session on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        localStorage.removeItem('user');
+    const checkAuth = async () => {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          // Verify session with backend
+          const response = await fetch('/api/auth/profile', {
+            credentials: 'include',
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            const userData = { 
+              id: data._id, 
+              email: data.email, 
+              name: data.profile?.name || data.name || data.email.split('@')[0] 
+            };
+            setUser(userData);
+            localStorage.setItem('user', JSON.stringify(userData));
+          } else {
+            // Session expired or invalid
+            localStorage.removeItem('user');
+            setUser(null);
+          }
+        } catch (e) {
+          console.error('Initial auth check failed', e);
+          // Don't clear user here to allow offline mode or handle temporary network errors
+          setUser(JSON.parse(storedUser));
+        }
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    };
+
+    checkAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Call backend API
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://rapport-builder.onrender.com/api'}/auth/login`, {
+      // Call backend API via proxy
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -54,7 +78,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userData = { id: data._id, email: data.email, name: data.profile?.name || data.name || email.split('@')[0] };
       
       localStorage.setItem('user', JSON.stringify(userData));
-      // token is handled via HttpOnly cookie by the backend
       setUser(userData);
     } finally {
       setIsLoading(false);
@@ -64,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signup = async (email: string, password: string, name: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://rapport-builder.onrender.com/api'}/auth/register`, {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, name }),
@@ -79,7 +102,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userData = { id: data._id, email: data.email, name: data.profile?.name || data.name || name };
       
       localStorage.setItem('user', JSON.stringify(userData));
-      // token is handled via HttpOnly cookie by the backend
       setUser(userData);
     } finally {
       setIsLoading(false);
@@ -88,7 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://rapport-builder.onrender.com/api'}/auth/logout`, {
+      await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
       });
