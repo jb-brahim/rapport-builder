@@ -675,7 +675,7 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
 
       {/* 2. Editor Pane (Center) */}
       <div className="flex-1 bg-white shadow-[inset_0_0_80px_rgba(0,0,0,0.01)] flex flex-col">
-        <div className="p-16 max-w-3xl mx-auto w-full flex-1 overflow-y-auto custom-scrollbar space-y-10">
+        <div className="p-10 w-full flex-1 overflow-y-auto custom-scrollbar space-y-10">
           <div className="space-y-2">
              <span className="text-[11px] font-black text-primary uppercase tracking-[0.3em]">{activeItem.type.replace('-', ' ')}</span>
              <input 
