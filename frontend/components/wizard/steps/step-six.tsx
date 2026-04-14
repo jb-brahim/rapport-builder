@@ -183,8 +183,11 @@ const TableManager = ({ tables = [], onUpdate }: { tables?: TableData[], onUpdat
 
       {isOpen && tables.map((tbl, tIdx) => (
         <div key={tIdx} className="bg-slate-50/50 border border-black/5 rounded-2xl p-4 space-y-4">
-           <div className="flex items-center justify-between">
-              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Tableau {tIdx + 1}</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                 <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Tableau {tIdx + 1}</span>
+                 <code className="text-[8px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded font-bold border border-emerald-100">[TABLEAU {tIdx + 1}]</code>
+              </div>
               <Button 
                 onClick={() => onUpdate(tables.filter((_, i) => i !== tIdx))}
                 variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-400 hover:text-red-500 hover:bg-red-50"
@@ -299,9 +302,12 @@ const ImageManager = ({ images = [], onUpdate }: { images?: { src: string, capti
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {images.map((img, i) => (
             <div key={i} className="group relative bg-white border border-black/5 rounded-2xl p-3 shadow-sm hover:shadow-md transition-all">
-              <div className="relative aspect-video rounded-xl overflow-hidden bg-slate-50 border border-black/5 mb-3">
-                 <img src={img.src} className="w-full h-full object-contain" />
-                 <button 
+              <div className="group relative rounded-xl border-2 border-dashed border-slate-200 overflow-hidden bg-slate-50 aspect-video flex flex-col justify-between">
+                <div className="absolute top-2 left-2 z-10">
+                   <code className="text-[8px] bg-white/90 backdrop-blur-sm text-blue-600 px-1.5 py-0.5 rounded shadow-sm font-bold border border-blue-100">[FIGURE {i + 1}]</code>
+                </div>
+                <img src={img.src} alt="img" className="w-full h-full object-cover absolute inset-0 opacity-40 group-hover:opacity-100 transition-opacity" />
+                <button 
                    onClick={() => onUpdate(images.filter((_, idx) => idx !== i))}
                    className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                  >
@@ -325,6 +331,73 @@ const ImageManager = ({ images = [], onUpdate }: { images?: { src: string, capti
           ))}
         </div>
       )}
+    </div>
+  );
+};
+
+const RenderSmartContent = ({ content, images = [], tables = [], sectionIndex }: { content: string, images?: any[], tables?: any[], sectionIndex: number }) => {
+  if (!content && !images.length && !tables.length) return null;
+
+  const usedFigures = new Set<number>();
+  const usedTables = new Set<number>();
+
+  const parts = content.split(/(\[FIGURE \d+\]|\[TABLEAU \d+\])/i);
+
+  const renderImage = (img: any, idx: number, key: string) => (
+    <div key={key} className="my-10 flex flex-col items-center w-full clear-both">
+       <img src={img.src} className="max-w-[85%] border border-slate-200" />
+       <p className="text-center text-[9px] mt-4 text-slate-400 font-serif">Figure {sectionIndex+1}.{idx+1} — {img.caption}</p>
+    </div>
+  );
+
+  const renderTable = (tbl: any, idx: number, key: string) => (
+    <div key={key} className="my-10 w-full flex flex-col items-center clear-both overflow-x-auto">
+       <table className="w-[90%] text-[10px] border-collapse bg-white shadow-sm border border-slate-200">
+         <thead>
+           <tr className="bg-slate-50">
+             {tbl.headers.map((h: string, i: number) => <th key={i} className="border border-slate-200 p-2 text-center text-slate-700 font-bold">{h}</th>)}
+           </tr>
+         </thead>
+         <tbody>
+           {tbl.rows.map((row: string[], r: number) => (
+             <tr key={r}>
+               {row.map((cell: string, c: number) => <td key={c} className="border border-slate-200 p-2 text-center text-slate-600">{cell}</td>)}
+             </tr>
+           ))}
+         </tbody>
+       </table>
+       <p className="text-center text-[9px] mt-4 text-slate-400 font-serif">Tableau {sectionIndex+1}.{idx+1} — {tbl.caption}</p>
+    </div>
+  );
+
+  const blockElements = parts.map((part, i) => {
+    const figMatch = part.match(/\[FIGURE (\d+)\]/i);
+    if (figMatch) {
+       const idx = parseInt(figMatch[1]) - 1;
+       usedFigures.add(idx);
+       if (images[idx]) return renderImage(images[idx], idx, `fig-${i}`);
+       return <span key={i} className="text-red-400 font-bold bg-red-50/50 px-1 rounded mx-1">{part} (Introuvable)</span>;
+    }
+
+    const tabMatch = part.match(/\[TABLEAU (\d+)\]/i);
+    if (tabMatch) {
+       const idx = parseInt(tabMatch[1]) - 1;
+       usedTables.add(idx);
+       if (tables[idx]) return renderTable(tables[idx], idx, `tab-${i}`);
+       return <span key={i} className="text-red-400 font-bold bg-red-50/50 px-1 rounded mx-1">{part} (Introuvable)</span>;
+    }
+
+    return <span key={i} className="whitespace-pre-wrap">{part}</span>;
+  });
+
+  const unusedImages = images.map((img, i) => !usedFigures.has(i) ? renderImage(img, i, `ufig-${i}`) : null);
+  const unusedTables = tables.map((tbl, i) => !usedTables.has(i) ? renderTable(tbl, i, `utab-${i}`) : null);
+
+  return (
+    <div className="w-full text-slate-600 block">
+      {blockElements}
+      {unusedImages}
+      {unusedTables}
     </div>
   );
 };
@@ -681,28 +754,23 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
                       <span>{getPrefix(1, si)}</span> 
                       <span>{s.title}</span>
                     </h3>
-                    <p className="whitespace-pre-wrap text-slate-600">{s.content}</p>
                     
-                    {s.images?.map((img, imi) => (
-                      <div key={imi} className="my-10 flex flex-col items-center">
-                         <img src={img.src} className="max-w-[85%] border border-slate-200" />
-                         <p className="text-center text-[8px] mt-4 text-slate-400">Figure {si+1}.{imi+1} — {img.caption}</p>
-                      </div>
-                    ))}
+                    <RenderSmartContent content={s.content} images={s.images} tables={s.tables} sectionIndex={si} />
 
                     {s.subsections?.map((ss, ssi) => (
                       <div key={ssi} className="pl-6 space-y-6 mt-10">
                         <h4 className="font-bold text-emerald-600 text-[10px] flex gap-2">
                           <span>{getPrefix(2, ssi, si)}</span> {ss.title}
                         </h4>
-                        <p className="whitespace-pre-wrap text-slate-600">{ss.content}</p>
+                        
+                        <RenderSmartContent content={ss.content} images={ss.images} tables={ss.tables} sectionIndex={si} />
 
                         {ss.subsections?.map((sss, sssi) => (
                           <div key={sssi} className="pl-6 space-y-4 mt-8">
                             <h5 className="font-bold text-black text-[10px] flex gap-2">
                               <span>{getPrefix(3, sssi, ssi, si)}</span> {sss.title}
                             </h5>
-                            <p className="text-slate-600">{sss.content}</p>
+                            <RenderSmartContent content={sss.content} images={sss.images} tables={sss.tables} sectionIndex={si} />
                           </div>
                         ))}
                       </div>
