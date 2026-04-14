@@ -6,6 +6,7 @@ import { useTranslation } from '../../../../context/language-context';
 import { useRouter, useParams } from 'next/navigation';
 import { apiClient } from '../../../../../lib/api';
 import { Check } from 'lucide-react';
+import { cn } from '../../../../../lib/utils';
 import WizardHeader from '../../../../../components/wizard/wizard-header';
 import WizardContainer from '../../../../../components/wizard/wizard-container';
 import ProgressTracker from '../../../../../components/wizard/progress-tracker';
@@ -147,6 +148,8 @@ export default function WizardPage() {
     conclusion: !!(formData.conclusion && formData.conclusion.trim().length > 20),
   }), [formData, currentStep, chaptersConfig]);
 
+  const isWideMode = currentStep === 4 || currentStep === 6;
+
   if (isLoading || isFetching) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center">
@@ -187,9 +190,18 @@ export default function WizardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* Left/Center Section - Active Step Form Area */}
-        <div className="lg:col-span-7 xl:col-span-8 flex flex-col h-[650px]">
-          <div className="glass-panel flex flex-col overflow-hidden shadow-md flex-1 bg-white/60 dark:bg-card/40">
-            <div className="flex-1 p-8 overflow-y-auto custom-scrollbar">
+        <div className={cn(
+          "flex flex-col transition-all duration-700 ease-in-out",
+          isWideMode ? "lg:col-span-12 xl:col-span-12 min-h-[800px]" : "lg:col-span-7 xl:col-span-8 h-[650px]"
+        )}>
+          <div className={cn(
+            "glass-panel flex flex-col overflow-hidden shadow-md flex-1 bg-white/60 dark:bg-card/40 transition-all",
+            isWideMode && "rounded-[1.5rem] bg-transparent shadow-none border-none"
+          )}>
+            <div className={cn(
+              "flex-1 overflow-y-auto custom-scrollbar transition-all",
+              !isWideMode ? "p-8" : "p-0"
+            )}>
               <WizardContainer
                 rapportId={rapportId}
                 currentStep={currentStep}
@@ -207,88 +219,90 @@ export default function WizardPage() {
           </div>
         </div>
 
-        {/* Right Sidebar - Live Document Only */}
-        <div className="lg:col-span-5 xl:col-span-4 flex flex-col h-[650px]">
-          <div className="glass-panel p-6 flex flex-col gap-4 border-transparent shadow-md bg-white/40 dark:bg-card/30 flex-1">
-            
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="font-semibold tracking-tight text-lg text-foreground/90">{t('common.stepPreview', { defaultValue: 'Live Document' })}</h3>
-              {/* Optional: we can indicate AI or Sync status quietly up here if needed, but it's already in the main header */}
-              <div className="flex items-center gap-1.5 px-2 py-1 bg-primary/10 rounded-full">
-                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                </span>
-                <span className="text-[10px] font-bold text-primary tracking-widest uppercase">Auto-Sync</span>
+        {/* Right Sidebar - Live Document Only - Hidden in Wide Mode */}
+        {!isWideMode && (
+          <div className="lg:col-span-5 xl:col-span-4 flex flex-col h-[650px] animate-in fade-in slide-in-from-right-4 duration-700">
+            <div className="glass-panel p-6 flex flex-col gap-4 border-transparent shadow-md bg-white/40 dark:bg-card/30 flex-1">
+              
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="font-semibold tracking-tight text-lg text-foreground/90">{t('common.stepPreview', { defaultValue: 'Live Document' })}</h3>
+                {/* Optional: we can indicate AI or Sync status quietly up here if needed, but it's already in the main header */}
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-primary/10 rounded-full">
+                   <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                  </span>
+                  <span className="text-[10px] font-bold text-primary tracking-widest uppercase">Auto-Sync</span>
+                </div>
               </div>
-            </div>
-            
-            {/* Embedded Document Preview */}
-            <div className="flex-1 bg-white dark:bg-black/20 border border-slate-200/60 dark:border-white/5 rounded-xl overflow-hidden shadow-sm flex flex-col">
-              <div className="flex-1 relative custom-scrollbar overflow-y-auto w-full p-1">
-                <WizardContainer
-                  rapportId={rapportId}
-                  currentStep={currentStep}
-                  formData={formData}
-                  chaptersConfig={chaptersConfig}
-                  onUpdateField={handleUpdateField}
-                  setChaptersConfig={setChaptersConfig}
-                  onNext={() => {}}
-                  onPrevious={() => {}}
-                  onSubmit={() => {}}
-                  totalSteps={totalSteps}
-                  embeddedMode={false}
-                  onlyPreview={true}
-                />
+              
+              {/* Embedded Document Preview */}
+              <div className="flex-1 bg-white dark:bg-black/20 border border-slate-200/60 dark:border-white/5 rounded-xl overflow-hidden shadow-sm flex flex-col">
+                <div className="flex-1 relative custom-scrollbar overflow-y-auto w-full p-1">
+                  <WizardContainer
+                    rapportId={rapportId}
+                    currentStep={currentStep}
+                    formData={formData}
+                    chaptersConfig={chaptersConfig}
+                    onUpdateField={handleUpdateField}
+                    setChaptersConfig={setChaptersConfig}
+                    onNext={() => {}}
+                    onPrevious={() => {}}
+                    onSubmit={() => {}}
+                    totalSteps={totalSteps}
+                    embeddedMode={false}
+                    onlyPreview={true}
+                  />
+                </div>
               </div>
-            </div>
-            
-            {/* Detailed Document Outline */}
-            <div className="pt-4 border-t border-slate-200/60 dark:border-white/10 space-y-2 mt-auto">
-              <h4 className="text-[10px] text-foreground/40 uppercase tracking-widest font-bold mb-3">Document Outline</h4>
-              <div className="space-y-1.5 h-[280px] overflow-y-auto custom-scrollbar pr-1">
-                {[
-                  { label: t('wizard.step1'), key: 'cover' },
-                  { label: t('wizard.step2'), key: 'dedicace' },
-                  { label: t('wizard.step3'), key: 'remerciements' },
-                  { label: t('wizard.step4'), key: 'toc' },
-                  { label: t('wizard.step5'), key: 'introduction' },
-                  { label: t('wizard.step6'), key: 'chapters' },
-                  { label: t('wizard.step7'), key: 'conclusion' },
-                ].map((item, idx) => {
-                   const stepNum = idx + 1;
-                   const isCurrent = currentStep === stepNum;
-                   const hasContent = completedFields[item.key as keyof typeof completedFields];
-                   
-                   return (
-                    <div key={idx} className={`flex items-center gap-3 p-2.5 rounded-lg border transition-all duration-300 ${
-                      isCurrent ? 'bg-primary/10 border-primary/30 shadow-sm translate-x-1' : 
-                      hasContent ? 'bg-emerald-50 border-emerald-200/60' : 
-                      'bg-white/40 dark:bg-white/5 border-slate-100 dark:border-white/5 opacity-60'
-                    }`}>
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold ${
-                        hasContent && !isCurrent ? 'bg-emerald-100 text-emerald-600' :
-                        isCurrent ? 'bg-primary text-white scale-110' : 
-                        'bg-slate-200/60 dark:bg-black/40 text-foreground/40'
+              
+              {/* Detailed Document Outline */}
+              <div className="pt-4 border-t border-slate-200/60 dark:border-white/10 space-y-2 mt-auto">
+                <h4 className="text-[10px] text-foreground/40 uppercase tracking-widest font-bold mb-3">Document Outline</h4>
+                <div className="space-y-1.5 h-[280px] overflow-y-auto custom-scrollbar pr-1">
+                  {[
+                    { label: t('wizard.step1'), key: 'cover' },
+                    { label: t('wizard.step2'), key: 'dedicace' },
+                    { label: t('wizard.step3'), key: 'remerciements' },
+                    { label: t('wizard.step4'), key: 'toc' },
+                    { label: t('wizard.step5'), key: 'introduction' },
+                    { label: t('wizard.step6'), key: 'chapters' },
+                    { label: t('wizard.step7'), key: 'conclusion' },
+                  ].map((item, idx) => {
+                     const stepNum = idx + 1;
+                     const isCurrent = currentStep === stepNum;
+                     const hasContent = completedFields[item.key as keyof typeof completedFields];
+                     
+                     return (
+                      <div key={idx} className={`flex items-center gap-3 p-2.5 rounded-lg border transition-all duration-300 ${
+                        isCurrent ? 'bg-primary/10 border-primary/30 shadow-sm translate-x-1' : 
+                        hasContent ? 'bg-emerald-50 border-emerald-200/60' : 
+                        'bg-white/40 dark:bg-white/5 border-slate-100 dark:border-white/5 opacity-60'
                       }`}>
-                        {hasContent && !isCurrent ? <Check className="w-3 h-3" strokeWidth={4} /> : stepNum}
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold ${
+                          hasContent && !isCurrent ? 'bg-emerald-100 text-emerald-600' :
+                          isCurrent ? 'bg-primary text-white scale-110' : 
+                          'bg-slate-200/60 dark:bg-black/40 text-foreground/40'
+                        }`}>
+                          {hasContent && !isCurrent ? <Check className="w-3 h-3" strokeWidth={4} /> : stepNum}
+                        </div>
+                        <span className={`text-[11px] font-semibold tracking-wide flex-1 ${
+                          isCurrent ? 'text-primary' : hasContent ? 'text-emerald-700' : 'text-foreground/40'
+                        }`}>
+                          {item.label}
+                        </span>
+                        {hasContent && !isCurrent && (
+                          <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full">Ready</span>
+                        )}
                       </div>
-                      <span className={`text-[11px] font-semibold tracking-wide flex-1 ${
-                        isCurrent ? 'text-primary' : hasContent ? 'text-emerald-700' : 'text-foreground/40'
-                      }`}>
-                        {item.label}
-                      </span>
-                      {hasContent && !isCurrent && (
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full">Ready</span>
-                      )}
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
 
+            </div>
           </div>
-        </div>
+        )}
 
       </div>
     </div>
