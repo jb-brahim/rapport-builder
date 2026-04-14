@@ -308,34 +308,85 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
   const { t, language } = useTranslation();
   const [isSaving, setIsSaving] = useState<number | null>(null);
   const [savedIdx, setSavedIdx] = useState<number | null>(null);
-  const [expandedChapters, setExpandedChapters] = useState<Record<number, boolean>>({ 0: true });
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  
+  const [activeItem, setActiveItem] = useState<{
+    type: 'chapter-intro' | 'chapter-conclusion' | 'section' | 'subsection' | 'sub-subsection';
+    cIdx: number;
+    sIdx?: number;
+    ssIdx?: number;
+    sssIdx?: number;
+  }>({ type: 'chapter-intro', cIdx: 0 });
 
-  const toggleSection = (id: string) => {
-    setExpandedSections(prev => ({ ...prev, [id]: !prev[id] }));
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const activeChapter = chaptersConfig[activeItem.cIdx];
+
+  const getActiveContent = () => {
+    if (!activeChapter) return { title: '', content: '' };
+    
+    switch (activeItem.type) {
+      case 'chapter-intro':
+        return { title: activeChapter.title || 'Introduction', content: activeChapter.introduction || '' };
+      case 'chapter-conclusion':
+        return { title: 'Conclusion', content: activeChapter.conclusion || '' };
+      case 'section':
+        if (activeItem.sIdx === undefined) return { title: '', content: '' };
+        const s = activeChapter.sections[activeItem.sIdx];
+        return { title: s?.title || '', content: s?.content || '', images: s?.images, tables: s?.tables };
+      case 'subsection':
+        if (activeItem.sIdx === undefined || activeItem.ssIdx === undefined) return { title: '', content: '' };
+        const ss = activeChapter.sections[activeItem.sIdx].subsections?.[activeItem.ssIdx];
+        return { title: ss?.title || '', content: ss?.content || '', images: ss?.images, tables: ss?.tables };
+      case 'sub-subsection':
+        if (activeItem.sIdx === undefined || activeItem.ssIdx === undefined || activeItem.sssIdx === undefined) return { title: '', content: '' };
+        const sss = activeChapter.sections[activeItem.sIdx].subsections?.[activeItem.ssIdx].subsections?.[activeItem.sssIdx];
+        return { title: sss?.title || '', content: sss?.content || '', images: sss?.images, tables: sss?.tables };
+      default:
+        return { title: '', content: '' };
+    }
+  };
+
+  const updateActiveContent = (updates: { title?: string, content?: string, images?: any[], tables?: any[] }) => {
+    const updated = [...chaptersConfig];
+    const ch = updated[activeItem.cIdx];
+    
+    if (activeItem.type === 'chapter-intro') {
+      if (updates.title !== undefined) ch.title = updates.title;
+      if (updates.content !== undefined) ch.introduction = updates.content;
+    } else if (activeItem.type === 'chapter-conclusion') {
+      if (updates.content !== undefined) ch.conclusion = updates.content;
+    } else if (activeItem.type === 'section') {
+      const s = ch.sections[activeItem.sIdx!];
+      if (updates.title !== undefined) s.title = updates.title;
+      if (updates.content !== undefined) s.content = updates.content;
+      if (updates.images !== undefined) s.images = updates.images;
+      if (updates.tables !== undefined) s.tables = updates.tables;
+    } else if (activeItem.type === 'subsection') {
+      const ss = ch.sections[activeItem.sIdx!].subsections![activeItem.ssIdx!];
+      if (updates.title !== undefined) ss.title = updates.title;
+      if (updates.content !== undefined) ss.content = updates.content;
+      if (updates.images !== undefined) ss.images = updates.images;
+      if (updates.tables !== undefined) ss.tables = updates.tables;
+    } else if (activeItem.type === 'sub-subsection') {
+      const sss = ch.sections[activeItem.sIdx!].subsections![activeItem.ssIdx!].subsections![activeItem.sssIdx!];
+      if (updates.title !== undefined) sss.title = updates.title;
+      if (updates.content !== undefined) sss.content = updates.content;
+      if (updates.images !== undefined) sss.images = updates.images;
+      if (updates.tables !== undefined) sss.tables = updates.tables;
+    }
+    
+    setChaptersConfig(updated);
   };
 
   const addChapter = () => {
     setChaptersConfig([...chaptersConfig, { title: '', introduction: '', sections: [], conclusion: '' }]);
-    setExpandedChapters({ ...expandedChapters, [chaptersConfig.length]: true });
+    setActiveItem({ type: 'chapter-intro', cIdx: chaptersConfig.length });
   };
 
   const updateChapter = (index: number, field: keyof Chapter, value: any) => {
     const updated = [...chaptersConfig];
     updated[index] = { ...updated[index], [field]: value };
     setChaptersConfig(updated);
-  };
-
-  const removeChapter = async (index: number) => {
-    try {
-      if (rapportId !== 'new') {
-        await apiClient(`/wizard/${rapportId}/chapter/${index}`, { method: 'DELETE' });
-      }
-      const updated = chaptersConfig.filter((_, i) => i !== index);
-      setChaptersConfig(updated);
-    } catch (e) {
-      console.error(e);
-    }
   };
 
   const saveChapter = async (index: number) => {
@@ -355,530 +406,224 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
     }
   };
 
+  const { title, content, images, tables } = getActiveContent();
+
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header */}
-      <div className="text-center space-y-3">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-500/10 to-indigo-500/10 text-sm font-medium text-foreground/60 mb-2">
-          <Layers className="w-3.5 h-3.5 text-blue-400" />
-          {t('wizard.stepLabel')} 6 — {t('wizard.step6')}
+    <div className="flex flex-col h-[750px] -mx-8 -my-8 bg-[#FDFCFB] border border-[#250136]/5 rounded-3xl overflow-hidden shadow-2xl">
+      {/* 1. SaaS Header */}
+      <div className="h-14 border-b border-[#250136]/5 bg-white flex items-center justify-between px-8 shrink-0">
+        <div className="flex items-center gap-6 flex-1">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-[#250136] flex items-center justify-center text-white font-black text-[10px]">6</div>
+            <span className="font-bold text-[#250136] text-[11px] uppercase tracking-wider">{t('wizard.step6')}</span>
+          </div>
+          
+          <div className="flex items-center gap-2 ml-4">
+            {[1, 2, 3, 4, 5, 6, 7].map(step => (
+              <div 
+                key={step} 
+                className={cn(
+                  "h-1 rounded-full transition-all duration-500",
+                  step === 6 ? "w-6 bg-primary" : step < 6 ? "w-2 bg-primary/30" : "w-2 bg-[#250136]/5"
+                )}
+              />
+            ))}
+          </div>
         </div>
-        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-[#250136]">
-          {t('step6.title')}
-        </h2>
-        <p className="text-muted-foreground max-w-lg mx-auto text-sm leading-relaxed">
-          Structurez le contenu de vos chapitres avec des sections hiérarchisées (Ⅰ, 1, a).
-        </p>
+
+        <div className="flex items-center gap-3">
+          <Button
+            size="sm"
+            onClick={() => saveChapter(activeItem.cIdx)}
+            disabled={isSaving === activeItem.cIdx}
+            className={cn(
+              "h-9 rounded-full px-5 font-bold gap-2 transition-all text-[10px]",
+              savedIdx === activeItem.cIdx ? "bg-emerald-500 text-white" : "bg-[#250136] text-white hover:bg-primary"
+            )}
+          >
+            {isSaving === activeItem.cIdx ? <div className="w-3 h-3 border-2 border-white/30 border-t-white animate-spin rounded-full" /> : <Save className="w-3.5 h-3.5" />}
+            {savedIdx === activeItem.cIdx ? "SUCCÈS" : "ENREGISTRER"}
+          </Button>
+        </div>
       </div>
 
-      <div className="space-y-6">
-        {chaptersConfig.map((chapter, idx) => (
-          <div key={idx} className="border border-black/[0.06] bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all">
-            {/* Chapter Header Flashy */}
-            <div 
-              className={cn(
-                "p-6 flex justify-between items-center cursor-pointer transition-colors",
-                expandedChapters[idx] ? "bg-slate-50/80" : "bg-white hover:bg-slate-50/50"
-              )}
-              onClick={() => setExpandedChapters({ ...expandedChapters, [idx]: !expandedChapters[idx] })}
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-2xl bg-[#250136] text-white flex items-center justify-center font-black text-lg shadow-lg shadow-[#250136]/20">
-                  {idx + 1}
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-[#250136] flex items-center gap-2">
-                    {chapter.title || `${t('step6.chapter')} ${idx + 1}`}
-                  </h3>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-foreground/30">
-                    {chapter.sections.length} Sections • {expandedChapters[idx] ? 'Réduire' : 'Développer'}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2" onClick={e => e.stopPropagation()}>
-                <Button
-                  size="sm"
-                  onClick={() => saveChapter(idx)}
-                  disabled={isSaving === idx}
-                  className={cn(
-                    "rounded-full px-4 text-xs font-bold gap-1.5 transition-all duration-300 shadow-sm border",
-                    savedIdx === idx 
-                      ? "bg-emerald-500 border-emerald-600 text-white hover:bg-emerald-600 opacity-100" 
-                      : "bg-white border-black/10 hover:bg-black/5 text-[#250136]/70"
-                  )}
-                >
-                  {isSaving === idx ? (
-                    <div className="w-3 h-3 border-2 border-slate-300 border-t-slate-800 animate-spin rounded-full mr-1.5" />
-                  ) : savedIdx === idx ? (
-                    <Check className="w-4 h-4 text-white animate-in zoom-in duration-300" />
-                  ) : (
-                    <Save className="w-3.5 h-3.5" />
-                  )}
-                  {isSaving === idx ? t('common.submitting') : savedIdx === idx ? "Enregistré avec succès !" : t('step6.saveChapter')}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeChapter(idx)}
-                  className="rounded-full w-9 h-9 p-0 text-red-400 hover:text-red-500 hover:bg-red-50"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-                <div className="w-10 h-10 flex items-center justify-center text-foreground/20">
-                  {expandedChapters[idx] ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                </div>
-              </div>
+      {/* 2. Main 3-Pane Area */}
+      <div className="flex-1 flex overflow-hidden">
+        
+        {/* LEFT: Outline/Tree */}
+        <div className="w-[280px] border-r border-[#250136]/5 bg-slate-50/50 flex flex-col">
+          <div className="p-4 border-b border-[#250136]/5">
+            <input 
+              placeholder="Chercher une section..." 
+              className="w-full bg-white border border-[#250136]/10 rounded-xl px-3 py-2 text-[10px] font-bold outline-none focus:ring-2 focus:ring-primary/20"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <div className="flex flex-1 overflow-hidden">
+            {/* Toolbar Icons */}
+            <div className="w-12 border-r border-[#250136]/5 flex flex-col items-center py-6 gap-5 bg-white/20">
+               <button onClick={addChapter} className="w-7 h-7 rounded-lg bg-[#250136] text-white flex items-center justify-center font-black text-[9px] hover:scale-110 transition-transform shadow-md">CH</button>
+               <button onClick={() => {
+                 const newSections = [...(activeChapter?.sections || []), { title: '', content: '', subsections: [] }];
+                 updateChapter(activeItem.cIdx, 'sections', newSections);
+               }} className="w-7 h-7 rounded-full border-2 border-primary/20 text-primary flex items-center justify-center font-black text-[10px] hover:bg-primary hover:text-white transition-all">I</button>
+               <button onClick={() => {
+                 if (activeItem.type === 'section') {
+                   const newSections = [...activeChapter.sections];
+                   if (!newSections[activeItem.sIdx!].subsections) newSections[activeItem.sIdx!].subsections = [];
+                   newSections[activeItem.sIdx!].subsections!.push({ title: '', content: '', subsections: [] });
+                   updateChapter(activeItem.cIdx, 'sections', newSections);
+                 }
+               }} className="w-7 h-7 rounded-lg border-2 border-emerald-200 text-emerald-600 flex items-center justify-center font-black text-[10px] hover:bg-emerald-500 hover:text-white transition-all">1</button>
+               <button onClick={() => {
+                 if (activeItem.type === 'subsection') {
+                    const newSections = [...activeChapter.sections];
+                    const ss = newSections[activeItem.sIdx!].subsections![activeItem.ssIdx!];
+                    if (!ss.subsections) ss.subsections = [];
+                    ss.subsections.push({ title: '', content: '' });
+                    updateChapter(activeItem.cIdx, 'sections', newSections);
+                 }
+               }} className="w-7 h-7 rounded-lg border-2 border-blue-200 text-blue-600 flex items-center justify-center font-black text-[10px] hover:bg-blue-500 hover:text-white transition-all">a</button>
             </div>
 
-            {expandedChapters[idx] && (
-              <div className="p-8 space-y-8 animate-in slide-in-from-top-2 duration-300">
-                {/* Title and Intro */}
-                <div className="space-y-4 pt-2">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#250136]/40 ml-1 flex items-center gap-2">
-                      <Type className="w-3 h-3" /> {t('step6.chapterTitle')}
-                    </label>
-                    <Input
-                      value={chapter.title || ''}
-                      onChange={(e) => updateChapter(idx, 'title', e.target.value)}
-                      placeholder="ex: État de l'art du Deep Learning"
-                      className="rounded-2xl border-black/[0.08] h-12 font-bold text-[#250136] bg-white shadow-sm focus:ring-4 focus:ring-blue-500/5 transition-all"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#250136]/40 ml-1 flex items-center gap-2">
-                       <AlignLeft className="w-3 h-3" /> {t('step6.chapterIntro')}
-                    </label>
-                    <div className="space-y-1">
-                      <Textarea
-                        value={chapter.introduction || ''}
-                        onChange={(e) => {
-                          if (e.target.value.length <= MAX_CHARS) {
-                            updateChapter(idx, 'introduction', e.target.value);
-                          }
-                        }}
-                        placeholder="Introduisez brièvement l'objectif de ce chapitre..."
-                        rows={3}
-                        className={cn(
-                          "rounded-2xl border-black/[0.08] text-sm resize-none bg-white shadow-sm focus:ring-4 transition-all",
-                          (chapter.introduction?.length || 0) > MAX_CHARS * 0.9 ? "border-amber-400 ring-amber-50" : "focus:ring-blue-500/5"
-                        )}
-                      />
-                      <div className="flex justify-between items-center px-1">
-                        <span className={cn(
-                          "text-[9px] font-bold uppercase",
-                          (chapter.introduction?.length || 0) >= MAX_CHARS ? "text-red-500 animate-pulse" : "text-slate-400"
-                        )}>
-                          {chapter.introduction?.length || 0} / {MAX_CHARS} CARACTÈRES
-                        </span>
-                        {(chapter.introduction?.length || 0) >= MAX_CHARS && (
-                          <span className="text-[9px] font-black text-red-500 uppercase tracking-tighter">
-                            ⚠️ Limite atteinte - Ajoutez une nouvelle section
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <ImageManager 
-                    images={chapter.images} 
-                    onUpdate={(imgs) => updateChapter(idx, 'images', imgs)} 
-                  />
-                  <TableManager 
-                    tables={chapter.tables}
-                    onUpdate={(tbls) => updateChapter(idx, 'tables', tbls)}
-                  />
-                </div>
-
-                <div className="h-px bg-black/[0.05]" />
-
-                {/* Sections Hierarchy */}
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between mb-2">
-                     <h4 className="text-xs font-black uppercase tracking-widest text-[#250136]">Contenu du Chapitre</h4>
-                     <Button 
-                       onClick={() => {
-                         const sIdx = chapter.sections?.length || 0;
-                         const sectionId = `ch-${idx}-s-${sIdx}`;
-                         const newSections = [...(chapter.sections || []), { title: '', content: '', subsections: [] }];
-                         updateChapter(idx, 'sections', newSections);
-                         setExpandedSections(prev => ({ ...prev, [sectionId]: true }));
-                       }}
-                       variant="outline" 
-                       size="sm" 
-                       className="rounded-xl border-dashed border-2 text-[10px] font-bold gap-2 px-4 hover:bg-blue-50 hover:border-blue-200 transition-all"
-                     >
-                       <Plus className="w-3 h-3" /> AJOUTER SECTION (Ⅰ)
-                     </Button>
-                  </div>
-
-                  <div className="space-y-6">
-                    {chapter.sections?.map((section, sIdx) => {
-                      const sectionId = `ch-${idx}-s-${sIdx}`;
-                      const isExpanded = expandedSections[sectionId];
-                      return (
-                        <div key={sIdx} className="group relative bg-slate-50/50 rounded-[2rem] p-6 border border-black/[0.03] hover:border-blue-500/20 transition-all">
-                          {/* Level 1 Section Header */}
-                          <div className="flex items-center gap-4 cursor-pointer" onClick={() => toggleSection(sectionId)}>
-                             <div className="w-8 h-8 rounded-lg bg-white border border-black/5 shadow-sm flex items-center justify-center font-bold text-[#250136] text-xs shrink-0">
-                               {toRoman(sIdx + 1)}
-                             </div>
-                             <div className="flex-1">
-                                <h5 className={cn("text-sm font-bold transition-colors", section.title ? "text-[#250136]" : "text-foreground/30 italic")}>
-                                  {section.title || "Titre de la Section..."}
-                                </h5>
-                                <p className="text-[9px] font-bold uppercase tracking-wider text-foreground/20">
-                                  {section.subsections?.length || 0} Sous-sections • {isExpanded ? 'Réduire' : 'Développer'}
-                                </p>
-                             </div>
-                             <div className="flex items-center gap-2">
-                               <Button 
-                                 onClick={(e) => {
-                                   e.stopPropagation();
-                                   const newSections = chapter.sections.filter((_, i) => i !== sIdx);
-                                   updateChapter(idx, 'sections', newSections);
-                                 }}
-                                 variant="ghost" size="sm" className="text-red-400 hover:text-red-500"
-                               >
-                                 <Trash2 className="w-4 h-4" />
-                               </Button>
-                               <div className="text-foreground/20">
-                                 {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                               </div>
-                             </div>
-                          </div>
-
-                          {isExpanded && (
-                            <div className="mt-6 space-y-6 animate-in slide-in-from-top-1 duration-200">
-                              <div className="space-y-4">
-                                <div className="space-y-1.5">
-                                  <label className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#250136]/30 ml-1">Titre de la Division</label>
-                                  <Input 
-                                    placeholder="ex: Concepts de base..."
-                                    value={section.title}
-                                    onChange={(e) => {
-                                      const newSections = [...chapter.sections];
-                                      newSections[sIdx].title = e.target.value;
-                                      updateChapter(idx, 'sections', newSections);
-                                    }}
-                                    className="rounded-xl border-black/10 font-bold text-sm bg-white h-11"
-                                  />
-                                </div>
-                                <div className="space-y-1.5">
-                                  <label className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#250136]/30 ml-1">Contenu Détailé</label>
-                                  <div className="space-y-1">
-                                    <Textarea 
-                                      placeholder="Rédigez le contenu de cette section ici..."
-                                      value={section.content}
-                                      onChange={(e) => {
-                                        if (e.target.value.length <= MAX_CHARS) {
-                                          const newSections = [...chapter.sections];
-                                          newSections[sIdx].content = e.target.value;
-                                          updateChapter(idx, 'sections', newSections);
-                                        }
-                                      }}
-                                      className={cn(
-                                        "rounded-xl border-black/10 text-xs min-h-[80px] bg-white resize-none",
-                                        (section.content?.length || 0) > MAX_CHARS * 0.9 ? "border-amber-400" : ""
-                                      )}
-                                    />
-                                    <div className="flex justify-between items-center px-1">
-                                      <span className={cn(
-                                        "text-[8px] font-bold uppercase",
-                                        (section.content?.length || 0) >= MAX_CHARS ? "text-red-500" : "text-slate-400"
-                                      )}>
-                                        {section.content?.length || 0} / {MAX_CHARS}
-                                      </span>
-                                      {(section.content?.length || 0) >= MAX_CHARS && (
-                                        <span className="text-[8px] font-black text-red-500 uppercase">⚠️ Limite atteinte</span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <ImageManager 
-                                  images={section.images} 
-                                  onUpdate={(imgs) => {
-                                    const newSections = [...chapter.sections];
-                                    newSections[sIdx].images = imgs;
-                                    updateChapter(idx, 'sections', newSections);
-                                  }} 
-                                />
-                                <TableManager 
-                                  tables={section.tables}
-                                  onUpdate={(tbls) => {
-                                    const newSections = [...chapter.sections];
-                                    newSections[sIdx].tables = tbls;
-                                    updateChapter(idx, 'sections', newSections);
-                                  }}
-                                />
-                              </div>
-
-                              {/* Nested Level 2 Subsections (1, 2, 3) */}
-                              <div className="pl-12 space-y-4 border-l-2 border-dashed border-slate-200">
-                                <div className="flex items-center justify-between mb-2">
-                                   <label className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-400">Sous-divisions</label>
-                                   <button 
-                                      onClick={() => {
-                                        const ssIdx = section.subsections?.length || 0;
-                                        const subId = `${sectionId}-ss-${ssIdx}`;
-                                        const newSections = [...chapter.sections];
-                                        if (!newSections[sIdx].subsections) newSections[sIdx].subsections = [];
-                                        newSections[sIdx].subsections?.push({ title: '', content: '', subsections: [] });
-                                        updateChapter(idx, 'sections', newSections);
-                                        setExpandedSections(prev => ({ ...prev, [subId]: true }));
-                                      }}
-                                      className="text-[10px] font-bold text-blue-500 hover:text-blue-600 transition-colors flex items-center gap-2"
-                                    >
-                                      <Plus className="w-3.5 h-3.5" /> AJOUTER NIVEAU 2 (1, 2, 3)
-                                    </button>
-                                </div>
-
-                                {section.subsections?.map((sub, ssIdx) => {
-                                  const subId = `${sectionId}-ss-${ssIdx}`;
-                                  const isSubExpanded = expandedSections[subId];
-                                  return (
-                                    <div key={ssIdx} className="group/sub bg-white/40 p-4 rounded-2xl border border-black/[0.02]">
-                                      <div className="flex items-center gap-3 cursor-pointer" onClick={() => toggleSection(subId)}>
-                                        <div className="w-6 h-6 rounded bg-slate-100 flex items-center justify-center font-bold text-slate-500 text-[10px] shrink-0">
-                                          {ssIdx + 1}
-                                        </div>
-                                        <div className="flex-1">
-                                           <h6 className={cn("text-xs font-bold", sub.title ? "text-[#250136]" : "text-foreground/30")}>
-                                              {sub.title || "Titre Sous-section..."}
-                                           </h6>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                          <Button 
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              const newSections = [...chapter.sections];
-                                              newSections[sIdx].subsections = newSections[sIdx].subsections?.filter((_, i) => i !== ssIdx);
-                                              updateChapter(idx, 'sections', newSections);
-                                            }}
-                                            variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-300 hover:text-red-500"
-                                          >
-                                            <Trash2 className="w-3 h-3" />
-                                          </Button>
-                                          {isSubExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                                        </div>
-                                      </div>
-
-                                      {isSubExpanded && (
-                                        <div className="mt-4 space-y-4 animate-in slide-in-from-top-1 duration-150">
-                                           <div className="space-y-3">
-                                              <Input 
-                                                placeholder="Titre Sous-section..."
-                                                value={sub.title}
-                                                onChange={(e) => {
-                                                  const newSections = [...chapter.sections];
-                                                  newSections[sIdx].subsections![ssIdx].title = e.target.value;
-                                                  updateChapter(idx, 'sections', newSections);
-                                                }}
-                                                className="rounded-lg border-black/5 font-semibold text-xs h-9 bg-white"
-                                              />
-                                              <div className="space-y-1">
-                                                <Textarea 
-                                                  placeholder="Texte Sous-section..."
-                                                  value={sub.content}
-                                                  onChange={(e) => {
-                                                    if (e.target.value.length <= MAX_CHARS) {
-                                                      const newSections = [...chapter.sections];
-                                                      newSections[sIdx].subsections![ssIdx].content = e.target.value;
-                                                      updateChapter(idx, 'sections', newSections);
-                                                    }
-                                                  }}
-                                                  className={cn(
-                                                    "rounded-lg border-black/5 text-[10px] min-h-[60px] bg-white resize-none",
-                                                    (sub.content?.length || 0) > MAX_CHARS * 0.9 ? "border-amber-400" : ""
-                                                  )}
-                                                />
-                                                <div className="flex justify-between items-center px-1">
-                                                  <span className={cn(
-                                                    "text-[8px] font-bold uppercase",
-                                                    (sub.content?.length || 0) >= MAX_CHARS ? "text-red-500" : "text-slate-400"
-                                                  )}>
-                                                    {sub.content?.length || 0} / {MAX_CHARS}
-                                                  </span>
-                                                </div>
-                                              </div>
-                                           </div>
-
-                                           <ImageManager 
-                                              images={sub.images} 
-                                              onUpdate={(imgs) => {
-                                                const newSections = [...chapter.sections];
-                                                newSections[sIdx].subsections![ssIdx].images = imgs;
-                                                updateChapter(idx, 'sections', newSections);
-                                              }} 
-                                            />
-                                            <TableManager 
-                                              tables={sub.tables}
-                                              onUpdate={(tbls) => {
-                                                const newSections = [...chapter.sections];
-                                                newSections[sIdx].subsections![ssIdx].tables = tbls;
-                                                updateChapter(idx, 'sections', newSections);
-                                              }}
-                                            />
-
-                                           {/* Nested Level 3 Sub-subsections (a, b, c) */}
-                                           <div className="pl-10 space-y-3 pt-2 border-l-2 border-slate-100">
-                                              <div className="flex items-center justify-between">
-                                                <span className="text-[9px] font-black text-slate-300 uppercase">Détails de sous-section</span>
-                                                <button 
-                                                  onClick={() => {
-                                                    const newSections = [...chapter.sections];
-                                                    if (!newSections[sIdx].subsections![ssIdx].subsections) newSections[sIdx].subsections![ssIdx].subsections = [];
-                                                    newSections[sIdx].subsections![ssIdx].subsections?.push({ title: '', content: '' });
-                                                    updateChapter(idx, 'sections', newSections);
-                                                  }}
-                                                  className="text-[9px] font-bold text-blue-400 hover:text-blue-500 transition-colors flex items-center gap-1.5"
-                                                >
-                                                  <Plus className="w-3 h-3" /> AJOUTER NIVEAU 3 (a, b, c)
-                                                </button>
-                                              </div>
-
-                                              {sub.subsections?.map((sss, sssIdx) => (
-                                                <div key={sssIdx} className="bg-slate-50/50 p-3 rounded-xl border border-black/[0.02] space-y-2">
-                                                  <div className="flex items-center gap-3">
-                                                    <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center font-bold text-slate-400 text-[9px] shrink-0 border border-black/5">
-                                                      {String.fromCharCode(97 + sssIdx)}
-                                                    </div>
-                                                    <Input 
-                                                      placeholder="Titre division 'a'..."
-                                                      value={sss.title}
-                                                      onChange={(e) => {
-                                                        const newSections = [...chapter.sections];
-                                                        newSections[sIdx].subsections![ssIdx].subsections![sssIdx].title = e.target.value;
-                                                        updateChapter(idx, 'sections', newSections);
-                                                      }}
-                                                      className="rounded-lg border-black/5 text-[10px] h-8 bg-white"
-                                                    />
-                                                    <Button 
-                                                      onClick={() => {
-                                                        const newSections = [...chapter.sections];
-                                                        newSections[sIdx].subsections![ssIdx].subsections = newSections[sIdx].subsections![ssIdx].subsections?.filter((_, i) => i !== sssIdx);
-                                                        updateChapter(idx, 'sections', newSections);
-                                                      }}
-                                                      variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-300 hover:text-red-500"
-                                                    >
-                                                      <Trash2 className="w-3 h-3" />
-                                                    </Button>
-                                                  </div>
-                                                  <div className="space-y-1">
-                                                    <Textarea 
-                                                      placeholder="Rédigez ici..."
-                                                      value={sss.content}
-                                                      onChange={(e) => {
-                                                        if (e.target.value.length <= MAX_CHARS) {
-                                                          const newSections = [...chapter.sections];
-                                                          newSections[sIdx].subsections![ssIdx].subsections![sssIdx].content = e.target.value;
-                                                          updateChapter(idx, 'sections', newSections);
-                                                        }
-                                                      }}
-                                                      className={cn(
-                                                        "rounded-lg border-black/5 text-[10px] min-h-[50px] bg-white resize-none",
-                                                        (sss.content?.length || 0) > MAX_CHARS * 0.9 ? "border-amber-400" : ""
-                                                      )}
-                                                    />
-                                                    <div className="text-[7px] font-bold text-slate-400 text-right">
-                                                      {sss.content?.length || 0} / {MAX_CHARS}
-                                                    </div>
-                                                  </div>
-                                                  <ImageManager 
-                                                    images={sss.images} 
-                                                    onUpdate={(imgs) => {
-                                                      const newSections = [...chapter.sections];
-                                                      newSections[sIdx].subsections![ssIdx].subsections![sssIdx].images = imgs;
-                                                      updateChapter(idx, 'sections', newSections);
-                                                    }} 
-                                                  />
-                                                  <TableManager 
-                                                    tables={sss.tables}
-                                                    onUpdate={(tbls) => {
-                                                      const newSections = [...chapter.sections];
-                                                      newSections[sIdx].subsections![ssIdx].subsections![sssIdx].tables = tbls;
-                                                      updateChapter(idx, 'sections', newSections);
-                                                    }}
-                                                  />
-                                                </div>
-                                              ))}
-                                           </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="h-px bg-black/[0.05]" />
-
-                {/* Conclusion */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#250136]/40 ml-1 flex items-center gap-2">
-                    <AlignLeft className="w-3 h-3" /> {t('step6.chapterConclusion')}
-                  </label>
-                  <div className="space-y-1">
-                    <Textarea
-                      value={chapter.conclusion || ''}
-                      onChange={(e) => {
-                        if (e.target.value.length <= MAX_CHARS) {
-                          updateChapter(idx, 'conclusion', e.target.value);
-                        }
-                      }}
-                      placeholder="Synthétisez les points clés de ce chapitre..."
-                      rows={4}
+            {/* Tree */}
+            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#250136]/20 mb-3 block px-1">Navigation</span>
+              <div className="space-y-4">
+                {chaptersConfig.map((ch, cIdx) => (
+                  <div key={cIdx} className="space-y-1">
+                    <div 
+                      onClick={() => setActiveItem({ type: 'chapter-intro', cIdx })}
                       className={cn(
-                        "rounded-2xl border-black/[0.08] text-sm resize-none bg-white shadow-sm focus:ring-4 transition-all",
-                        (chapter.conclusion?.length || 0) > MAX_CHARS * 0.9 ? "border-amber-400 ring-amber-50" : "focus:ring-blue-500/5"
+                        "flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer transition-all",
+                        activeItem.cIdx === cIdx && activeItem.type === 'chapter-intro' ? "bg-white shadow-sm ring-1 ring-[#250136]/5" : "hover:bg-white/40"
                       )}
-                    />
-                    <div className="flex justify-between items-center px-1">
-                      <span className={cn(
-                        "text-[9px] font-bold uppercase",
-                        (chapter.conclusion?.length || 0) >= MAX_CHARS ? "text-red-500" : "text-slate-400"
-                      )}>
-                        {chapter.conclusion?.length || 0} / {MAX_CHARS} CARACTÈRES
+                    >
+                      <div className="w-4 h-4 rounded-md bg-[#250136] text-white flex items-center justify-center text-[8px] font-black">{cIdx + 1}</div>
+                      <span className={cn("text-[11px] font-bold truncate", activeItem.cIdx === cIdx && activeItem.type === 'chapter-intro' ? "text-primary" : "text-[#250136]/60")}>
+                        {ch.title || `Chap ${cIdx + 1}`}
                       </span>
                     </div>
+
+                    <div className="ml-3 pl-2 border-l border-[#250136]/5 space-y-1">
+                      {ch.sections.map((sec, sIdx) => (
+                        <div key={sIdx} className="space-y-1">
+                          <div 
+                            onClick={() => setActiveItem({ type: 'section', cIdx, sIdx })}
+                            className={cn(
+                              "flex items-center gap-2 px-2 py-1 rounded-md cursor-pointer transition-all text-[10px] font-bold",
+                              activeItem.cIdx === cIdx && activeItem.type === 'section' && activeItem.sIdx === sIdx ? "text-primary bg-white shadow-sm" : "text-slate-400 hover:text-[#250136]"
+                            )}
+                          >
+                            <span className="opacity-30">Ⅰ.</span> {sec.title || "Section..."}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-
-                {/* Grammar Checker */}
-                <GrammarChecker
-                  text={[chapter.title, chapter.introduction, chapter.conclusion].filter(Boolean).join('\n\n')}
-                  language={formData.language || language}
-                  onApply={(newText: string) => {
-                    const parts = newText.split(/\n\n/);
-                    if (parts.length >= 1) updateChapter(idx, 'title', parts[0]);
-                    if (parts.length >= 2) updateChapter(idx, 'introduction', parts.slice(1, -1).join('\n\n'));
-                    if (parts.length >= 2) updateChapter(idx, 'conclusion', parts[parts.length - 1]);
-                  }}
-                />
+                ))}
               </div>
-            )}
+            </div>
           </div>
-        ))}
+        </div>
 
-        <Button
-          onClick={addChapter}
-          variant="outline"
-          className="w-full justify-center gap-3 border-dashed border-2 py-10 rounded-[2.5rem] border-black/5 hover:border-blue-500/20 hover:bg-blue-50/50 transition-all text-sm font-bold text-foreground/30 hover:text-[#250136] group"
-        >
-          <div className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Plus className="w-6 h-6" />
+        {/* CENTER: Editor */}
+        <div className="flex-1 bg-white shadow-[inset_0_0_50px_rgba(0,0,0,0.02)] flex flex-col">
+          <div className="p-10 max-w-2xl mx-auto w-full flex-1 overflow-y-auto custom-scrollbar space-y-8">
+            <div className="space-y-1">
+               <span className="text-[10px] font-black text-primary uppercase tracking-widest">{activeItem.type.replace('-', ' ')}</span>
+               <input 
+                 value={title}
+                 onChange={e => updateActiveContent({ title: e.target.value })}
+                 placeholder="Titre de l'élément..."
+                 className="w-full text-4xl font-black text-[#250136] outline-none placeholder:text-slate-100"
+               />
+            </div>
+
+            <div className="space-y-4">
+               <Textarea 
+                 value={content}
+                 onChange={e => e.target.value.length <= MAX_CHARS && updateActiveContent({ content: e.target.value })}
+                 placeholder="Commencez à rédiger..."
+                 className="min-h-[400px] text-lg leading-relaxed border-none shadow-none focus-visible:ring-0 p-0 resize-none font-medium text-slate-700 pb-10"
+               />
+
+               <ImageManager 
+                 images={images} 
+                 onUpdate={imgs => updateActiveContent({ images: imgs })}
+               />
+               <TableManager 
+                 tables={tables}
+                 onUpdate={tbls => updateActiveContent({ tables: tbls })}
+               />
+            </div>
           </div>
-          {t('step6.addChapter')}
-        </Button>
+          
+          <div className="h-10 border-t border-slate-50 flex items-center justify-between px-8 text-[9px] font-black text-slate-300 tracking-widest bg-white">
+             <span>{content.length} / {MAX_CHARS} CARACTÈRES</span>
+             <span className="text-primary/40 italic">BROUILLON AUTOMATIQUE</span>
+          </div>
+        </div>
+
+        {/* RIGHT: Live Preview */}
+        <div className="w-[380px] border-l border-[#250136]/5 bg-[#fcfbf9] overflow-y-auto custom-scrollbar p-10">
+           <div className="flex items-center justify-between mb-8">
+              <span className="text-[9px] font-black text-primary uppercase tracking-[0.2em]">Live Preview</span>
+              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 rounded-full border border-emerald-100">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[8px] font-black text-emerald-600 uppercase">Synchronisé</span>
+              </div>
+           </div>
+
+           <div className="bg-white p-8 rounded-2xl shadow-xl shadow-[#250136]/5 border border-white space-y-6">
+              <h2 className="text-xl font-black text-[#250136] border-b-2 border-[#250136]/5 pb-4">
+                {activeChapter?.title || "Chapitre sans titre"}
+              </h2>
+              <div className="text-xs leading-relaxed text-slate-600 space-y-4 text-justify">
+                 <p className="font-medium bg-slate-50 p-3 rounded-lg border-l-4 border-primary text-[11px] italic mb-6">{activeChapter?.introduction}</p>
+                 
+                 {activeChapter?.sections.map((s, si) => (
+                   <div key={si} className="space-y-3">
+                      <h3 className="font-black text-[#250136] text-[13px] mt-8 flex gap-2">
+                        <span className="text-primary">{toRoman(si + 1)}.</span> {s.title}
+                      </h3>
+                      <p className="whitespace-pre-wrap">{s.content}</p>
+                      
+                      {s.images?.map((img, imi) => (
+                        <div key={imi} className="my-6">
+                           <img src={img.src} className="w-full rounded-xl shadow-xl border border-slate-100" />
+                           <p className="text-center text-[9px] mt-2 italic text-slate-400">Fig {si+1}.{imi+1} — {img.caption}</p>
+                        </div>
+                      ))}
+
+                      {s.subsections?.map((ss, ssi) => (
+                        <div key={ssi} className="pl-5 border-l-2 border-slate-100 space-y-3 mt-4">
+                          <h4 className="font-bold text-[#250136] text-[11px] flex gap-2">
+                            <span className="text-emerald-500">{ssi + 1}.</span> {ss.title}
+                          </h4>
+                          <p className="text-slate-500 whitespace-pre-wrap">{ss.content}</p>
+
+                          {ss.subsections?.map((sss, sssi) => (
+                            <div key={sssi} className="pl-4 border-l border-slate-50 space-y-2 mt-2">
+                              <h5 className="font-bold text-[#250136] text-[10px] flex gap-2 italic">
+                                <span className="text-blue-400">{String.fromCharCode(97 + sssi)}.</span> {sss.title}
+                              </h5>
+                              <p className="text-slate-400 text-[11px]">{sss.content}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                   </div>
+                 ))}
+              </div>
+           </div>
+        </div>
+
       </div>
     </div>
   );
 }
+
 
