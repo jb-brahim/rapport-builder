@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2, GripVertical, Layers, Save, ChevronDown, ChevronRight, Hash, Type, AlignLeft, ImagePlus, Check } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Layers, Save, ChevronDown, ChevronRight, Hash, Type, AlignLeft, ImagePlus, Check, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { GrammarChecker } from '@/components/grammar-checker';
 import { useTranslation } from '@/app/context/language-context';
 import { cn } from '@/lib/utils';
@@ -335,6 +335,7 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
   const [savedIdx, setSavedIdx] = useState<number | null>(null);
   const [indexingStyle, setIndexingStyle] = useState<keyof typeof INDEXING_PRESETS>('academic');
   const [showStyleMenu, setShowStyleMenu] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
   const [activeItem, setActiveItem] = useState<{
     type: 'chapter-intro' | 'chapter-conclusion' | 'section' | 'subsection' | 'sub-subsection';
@@ -453,13 +454,17 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
     <div className="flex w-full h-[780px] bg-white border border-[#250136]/10 rounded-[2rem] overflow-hidden shadow-[0_32px_64px_-16px_rgba(37,1,54,0.1)] transition-all duration-700">
       
       {/* 1. Outline Pane (Left) */}
-      <div className="w-[300px] border-r border-[#250136]/5 bg-slate-50/50 flex flex-col shrink-0">
+      <div className={cn(
+        "border-r border-[#250136]/5 bg-slate-50/50 flex flex-col shrink-0 transition-all duration-300",
+        isSidebarOpen ? "w-[300px]" : "w-14"
+      )}>
         
         {/* Outline Header */}
-        <div className="p-5 border-b border-[#250136]/5 bg-white/40 backdrop-blur-md">
-          <div className="flex items-center justify-center">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#250136]/40">Document Structure</span>
-          </div>
+        <div className={cn("h-[60px] flex items-center border-b border-[#250136]/5 bg-white/40 backdrop-blur-md shrink-0 relative", isSidebarOpen ? "justify-between px-5" : "justify-center")}>
+          {isSidebarOpen && <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#250136]/40">Structure</span>}
+          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#250136] transition-colors">
+            {isSidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
+          </button>
 
           {showStyleMenu && (
             <div className="absolute top-[50px] left-[70px] w-[260px] z-50 bg-white/95 backdrop-blur-xl border border-[#250136]/10 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-2xl p-5 animate-in fade-in zoom-in-95 duration-200">
@@ -527,7 +532,8 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
           </div>
 
           {/* Tree Navigation */}
-          <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
+          {isSidebarOpen && (
+            <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
             <div className="space-y-2">
               {chaptersConfig.map((ch, cIdx) => (
                 <div key={cIdx} className="space-y-0.5">
@@ -590,6 +596,7 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
               ))}
             </div>
           </div>
+          )}
         </div>
       </div>
 
@@ -611,7 +618,7 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
                value={content}
                onChange={e => e.target.value.length <= MAX_CHARS && updateActiveContent({ content: e.target.value })}
                placeholder="Write your content here..."
-               className="min-h-[120px] bg-slate-50 border border-slate-200/60 rounded-xl text-sm leading-[1.8] focus-visible:ring-1 focus-visible:ring-primary/20 p-5 resize-y font-medium text-slate-600 selection:bg-primary/10 shadow-inner"
+               className="w-full min-h-[120px] bg-slate-50 border border-slate-200/60 rounded-xl text-sm leading-[1.8] focus-visible:ring-1 focus-visible:ring-primary/20 p-5 resize-y font-medium text-slate-600 selection:bg-primary/10 shadow-inner break-words"
              />
 
              <ImageManager 
@@ -649,7 +656,7 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
       </div>
 
       {/* 3. Preview Pane (Right) - Visual PDF Viewer */}
-      <div className="w-[420px] bg-[#e2e4e9] overflow-y-auto custom-scrollbar p-8">
+      <div className="w-[420px] shrink-0 bg-[#e2e4e9] overflow-y-auto custom-scrollbar p-8">
          <div className="flex items-center justify-between mb-4">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2">Visual Preview</span>
          </div>
