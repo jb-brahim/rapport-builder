@@ -664,7 +664,7 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2">Visual Preview</span>
          </div>
 
-         <div className="bg-white w-full max-w-[210mm] min-h-[297mm] mx-auto p-16 shadow-md border border-slate-300 font-serif text-slate-800 relative z-0" style={{ backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.05) 1px, transparent 1px)', backgroundSize: '16px 16px' }}>
+         <div className="bg-white w-full aspect-[1/1.414] mx-auto p-10 shadow-md border border-slate-300 font-serif text-slate-800 relative z-0" style={{ backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.05) 1px, transparent 1px)', backgroundSize: '16px 16px' }}>
             
             <h2 className="text-[13px] font-bold text-red-600 uppercase text-center mb-20 tracking-wider">
               {activeChapter?.title ? `CHAPITRE ${activeItem.cIdx + 1}: ${activeChapter.title}` : `CHAPITRE ${activeItem.cIdx + 1}:`}
