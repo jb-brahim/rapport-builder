@@ -17,6 +17,7 @@
   --ring: #F59E51;
   --radius: 1rem;
   --sidebar-width: 280px;
+  --sidebar-collapsed-width: 80px;
 }
 
 @theme inline {
