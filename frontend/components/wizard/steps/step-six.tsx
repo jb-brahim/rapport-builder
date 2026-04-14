@@ -656,7 +656,10 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
       </div>
 
       {/* 3. Preview Pane (Right) - Visual PDF Viewer */}
-      <div className="w-[420px] shrink-0 bg-[#e2e4e9] overflow-y-auto custom-scrollbar p-8">
+      <div className={cn(
+        "shrink-0 bg-[#e2e4e9] overflow-y-auto custom-scrollbar p-8 transition-all duration-300",
+        isSidebarOpen ? "w-[420px]" : "w-[600px]"
+      )}>
          <div className="flex items-center justify-between mb-4">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2">Visual Preview</span>
          </div>
