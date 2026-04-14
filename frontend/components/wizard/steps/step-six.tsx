@@ -644,57 +644,51 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
         </div>
       </div>
 
-      {/* 3. Preview Pane (Right) - Overleaf-Style PDF Viewer */}
-      <div className="w-[420px] bg-[#525659] overflow-y-auto custom-scrollbar p-6">
-         <div className="flex items-center justify-between mb-6 bg-black/20 rounded-lg px-3 py-2 shadow-inner">
-            <span className="text-[10px] font-bold text-white/80 uppercase tracking-widest pl-1">Document.pdf</span>
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] font-bold text-white/50">100%</span>
-              <div className="w-[1px] h-3 bg-white/20" />
-              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500/20 rounded-sm">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[8px] font-bold text-emerald-100 uppercase">Live</span>
-              </div>
-            </div>
+      {/* 3. Preview Pane (Right) - Visual PDF Viewer */}
+      <div className="w-[420px] bg-[#e2e4e9] overflow-y-auto custom-scrollbar p-8">
+         <div className="flex items-center justify-between mb-4">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2">Visual Preview</span>
          </div>
 
-         <div className="bg-white w-full max-w-[210mm] min-h-[297mm] mx-auto p-12 shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-black/10 font-serif text-black space-y-6">
+         <div className="bg-white w-full max-w-[210mm] min-h-[297mm] mx-auto p-16 shadow-md border border-slate-300 font-serif text-slate-800 relative z-0" style={{ backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.05) 1px, transparent 1px)', backgroundSize: '16px 16px' }}>
             
-            <h2 className="text-2xl font-bold border-b-2 border-black pb-4 mb-6">
-              {activeChapter?.title || "Untitled Chapter"}
+            <h2 className="text-[13px] font-bold text-red-600 uppercase text-center mb-20 tracking-wider">
+              {activeChapter?.title ? `CHAPITRE ${activeItem.cIdx + 1}: ${activeChapter.title}` : `CHAPITRE ${activeItem.cIdx + 1}:`}
             </h2>
             
-            <div className="text-[14px] leading-relaxed space-y-6 text-justify">
-               <p className="font-semibold px-4 py-3 border-l-4 border-black/80 italic text-black/80 mb-8">{activeChapter?.introduction}</p>
+            <div className="text-[10px] leading-[2.5] space-y-10 text-justify">
+               {activeChapter?.introduction && (
+                 <p className="text-slate-600 mb-12">{activeChapter.introduction}</p>
+               )}
                
                {activeChapter?.sections.map((s, si) => (
-                 <div key={si} className="space-y-4">
-                    <h3 className="font-bold text-[16px] mt-10 flex gap-3 items-baseline">
-                      <span className="font-bold">{getPrefix(1, si)}</span> 
-                      <span className="flex-1">{s.title}</span>
+                 <div key={si} className="space-y-6 mt-16">
+                    <h3 className="font-bold text-red-600 text-[11px] uppercase tracking-wide flex gap-2">
+                      <span>{getPrefix(1, si)}</span> 
+                      <span>{s.title}</span>
                     </h3>
-                    <p className="whitespace-pre-wrap">{s.content}</p>
+                    <p className="whitespace-pre-wrap text-slate-600">{s.content}</p>
                     
                     {s.images?.map((img, imi) => (
-                      <div key={imi} className="my-8 flex flex-col items-center">
-                         <img src={img.src} className="max-w-[90%] border border-black/10" />
-                         <p className="text-center text-[11px] mt-3 font-semibold uppercase tracking-wide">Figure {si+1}.{imi+1} — {img.caption}</p>
+                      <div key={imi} className="my-10 flex flex-col items-center">
+                         <img src={img.src} className="max-w-[85%] border border-slate-200" />
+                         <p className="text-center text-[8px] mt-4 text-slate-400">Figure {si+1}.{imi+1} — {img.caption}</p>
                       </div>
                     ))}
 
                     {s.subsections?.map((ss, ssi) => (
-                      <div key={ssi} className="pl-4 space-y-3 mt-6 border-l border-transparent">
-                        <h4 className="font-bold text-[14px] flex gap-2">
+                      <div key={ssi} className="pl-6 space-y-6 mt-10">
+                        <h4 className="font-bold text-emerald-600 text-[10px] flex gap-2">
                           <span>{getPrefix(2, ssi, si)}</span> {ss.title}
                         </h4>
-                        <p className="whitespace-pre-wrap">{ss.content}</p>
+                        <p className="whitespace-pre-wrap text-slate-600">{ss.content}</p>
 
                         {ss.subsections?.map((sss, sssi) => (
-                          <div key={sssi} className="pl-4 space-y-2 mt-3">
-                            <h5 className="font-bold text-[13px] flex gap-2 italic">
+                          <div key={sssi} className="pl-6 space-y-4 mt-8">
+                            <h5 className="font-bold text-black text-[10px] flex gap-2">
                               <span>{getPrefix(3, sssi, ssi, si)}</span> {sss.title}
                             </h5>
-                            <p className="text-[13px]">{sss.content}</p>
+                            <p className="text-slate-600">{sss.content}</p>
                           </div>
                         ))}
                       </div>
@@ -703,11 +697,15 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
                ))}
                
                {activeChapter?.conclusion && (
-                 <div className="pt-8 border-t border-black/20 mt-12">
-                    <h3 className="font-bold text-[13px] mb-3 uppercase tracking-widest">Conclusion</h3>
-                    <p className="leading-relaxed">{activeChapter.conclusion}</p>
+                 <div className="pt-12 mt-16 text-center">
+                    <p className="text-slate-600 italic">{activeChapter.conclusion}</p>
                  </div>
                )}
+            </div>
+            
+            {/* Mock Page Number at bottom */}
+            <div className="absolute bottom-10 left-0 right-0 text-center text-[8px] font-bold text-slate-400 font-sans">
+              {activeItem.cIdx + 2}
             </div>
          </div>
       </div>
