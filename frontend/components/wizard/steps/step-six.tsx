@@ -114,6 +114,8 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, currentImages
 };
 
 const TableManager = ({ tables = [], onUpdate }: { tables?: TableData[], onUpdate: (tbls: TableData[]) => void }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   const addTable = () => {
     const newTbl: TableData = {
       headers: ['Col 1', 'Col 2', 'Col 3'],
@@ -121,6 +123,7 @@ const TableManager = ({ tables = [], onUpdate }: { tables?: TableData[], onUpdat
       caption: ''
     };
     onUpdate([...tables, newTbl]);
+    setIsOpen(true);
   };
 
   const updateTable = (idx: number, updates: Partial<TableData>) => {
@@ -159,22 +162,26 @@ const TableManager = ({ tables = [], onUpdate }: { tables?: TableData[], onUpdat
   };
 
   return (
-    <div className="space-y-4 pt-4 border-t border-black/[0.03]">
+    <div className="space-y-4 pt-4 border-t border-[#250136]/5">
       <div className="flex items-center justify-between">
-         <label className="text-[10px] font-black uppercase tracking-widest text-[#250136]/50 ml-1 flex items-center gap-2">
-           <Layers className="w-3 h-3" /> Tableaux de Données
-         </label>
-         <Button 
-           onClick={addTable}
-           variant="ghost" 
-           size="sm" 
-           className="h-7 text-[9px] font-bold gap-1.5 border border-dashed rounded-lg hover:border-emerald-400 hover:text-emerald-500"
-         >
-           <Plus className="w-3 h-3" /> AJOUTER TABLEAU
-         </Button>
+         <button onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#250136]/50 ml-1 hover:text-primary transition-colors outline-none cursor-pointer">
+           {isOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+           <Layers className="w-3 h-3" /> Tableaux de Données <span className="opacity-50">({tables.length})</span>
+         </button>
+         
+         {isOpen && (
+           <Button 
+             onClick={addTable}
+             variant="ghost" 
+             size="sm" 
+             className="h-7 text-[9px] font-bold gap-1.5 border border-dashed rounded-lg hover:border-emerald-400 hover:text-emerald-500"
+           >
+             <Plus className="w-3 h-3" /> AJOUTER TABLEAU
+           </Button>
+         )}
       </div>
 
-      {tables.map((tbl, tIdx) => (
+      {isOpen && tables.map((tbl, tIdx) => (
         <div key={tIdx} className="bg-slate-50/50 border border-black/5 rounded-2xl p-4 space-y-4">
            <div className="flex items-center justify-between">
               <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Tableau {tIdx + 1}</span>
@@ -260,26 +267,35 @@ const TableManager = ({ tables = [], onUpdate }: { tables?: TableData[], onUpdat
 };
 
 const ImageManager = ({ images = [], onUpdate }: { images?: { src: string, caption: string }[], onUpdate: (imgs: { src: string, caption: string }[]) => void }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <div className="space-y-4 pt-2">
+    <div className="space-y-4 pt-4 border-t border-[#250136]/5">
       <div className="flex items-center justify-between">
-         <label className="text-[10px] font-black uppercase tracking-widest text-[#250136]/50 ml-1 flex items-center gap-2">
-           <ImagePlus className="w-3 h-3" /> Illustrations & Figures
-         </label>
-         <div className="relative">
-            <input 
-              type="file" 
-              accept="image/*" 
-              className="absolute inset-0 opacity-0 cursor-pointer" 
-              onChange={(e) => handleImageUpload(e, images, onUpdate)}
-            />
-            <Button variant="ghost" size="sm" className="h-7 text-[9px] font-bold gap-1.5 border border-dashed rounded-lg hover:border-blue-400 hover:text-blue-500">
-              <Plus className="w-3 h-3" /> AJOUTER FIGURE
-            </Button>
-         </div>
+         <button onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#250136]/50 ml-1 hover:text-primary transition-colors outline-none cursor-pointer">
+           {isOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+           <ImagePlus className="w-3 h-3" /> Illustrations & Figures <span className="opacity-50">({images.length})</span>
+         </button>
+         
+         {isOpen && (
+           <div className="relative">
+              <input 
+                type="file" 
+                accept="image/*" 
+                className="absolute inset-0 opacity-0 cursor-pointer z-10" 
+                onChange={(e) => {
+                  handleImageUpload(e, images, onUpdate);
+                  setIsOpen(true);
+                }}
+              />
+              <Button variant="ghost" size="sm" className="h-7 text-[9px] font-bold gap-1.5 border border-dashed rounded-lg hover:border-blue-400 hover:text-blue-500">
+                <Plus className="w-3 h-3" /> AJOUTER FIGURE
+              </Button>
+           </div>
+         )}
       </div>
 
-      {images.length > 0 && (
+      {isOpen && images.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {images.map((img, i) => (
             <div key={i} className="group relative bg-white border border-black/5 rounded-2xl p-3 shadow-sm hover:shadow-md transition-all">
@@ -439,41 +455,19 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
       {/* 1. Outline Pane (Left) */}
       <div className="w-[300px] border-r border-[#250136]/5 bg-slate-50/50 flex flex-col shrink-0">
         
-        {/* Outline Header: Search + Actions */}
-        <div className="p-5 border-b border-[#250136]/5 space-y-4 bg-white/40 backdrop-blur-md">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#250136]/40">Document</span>
-            <div className="flex items-center gap-2">
-              <Button 
-                size="sm" 
-                variant="ghost"
-                onClick={() => setShowStyleMenu(!showStyleMenu)}
-                className="h-7 w-7 p-0 rounded-full hover:bg-slate-100"
-                title="Style du document"
-              >
-                <Layers className="w-3.5 h-3.5 text-slate-400" />
-              </Button>
-              <Button 
-                size="sm" 
-                onClick={() => saveChapter(activeItem.cIdx)}
-                disabled={isSaving === activeItem.cIdx}
-                className={cn(
-                  "h-7 px-3 rounded-full text-[9px] font-black transition-all",
-                  savedIdx === activeItem.cIdx ? "bg-emerald-500 hover:bg-emerald-600" : "bg-[#250136] hover:bg-primary"
-                )}
-              >
-                {isSaving === activeItem.cIdx ? "SAVING..." : savedIdx === activeItem.cIdx ? "SAVED" : "SAVE ALL"}
-              </Button>
-            </div>
+        {/* Outline Header */}
+        <div className="p-5 border-b border-[#250136]/5 bg-white/40 backdrop-blur-md">
+          <div className="flex items-center justify-center">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#250136]/40">Document Structure</span>
           </div>
 
           {showStyleMenu && (
-            <div className="absolute top-[50px] left-5 right-5 z-50 bg-white/95 backdrop-blur-xl border border-[#250136]/10 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-2xl p-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="absolute top-[50px] left-[70px] w-[260px] z-50 bg-white/95 backdrop-blur-xl border border-[#250136]/10 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-2xl p-5 animate-in fade-in zoom-in-95 duration-200">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Hierarchy Presets</span>
                 <button onClick={() => setShowStyleMenu(false)} className="text-slate-300 hover:text-red-400 transition-colors">×</button>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-2">
                 {[
                   { id: 'academic', label: 'Academic', desc: 'I. / 1. / a.' },
                   { id: 'numeric', label: 'Technical', desc: '1 / 1.1 / 1.1.1' },
@@ -486,31 +480,28 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
                     key={s.id}
                     onClick={() => { setIndexingStyle(s.id as any); setShowStyleMenu(false); }}
                     className={cn(
-                      "group flex flex-col items-start p-3 rounded-xl border text-left transition-all duration-300",
+                      "group flex items-center justify-between p-2.5 rounded-xl border transition-all duration-300 w-full",
                       indexingStyle === s.id ? "border-primary bg-primary/5 shadow-inner" : "border-slate-100 hover:border-primary/30 hover:bg-slate-50"
                     )}
                   >
                     <span className={cn("text-[10px] font-black uppercase tracking-tighter transition-colors", indexingStyle === s.id ? "text-primary" : "text-slate-400 group-hover:text-slate-600")}>{s.label}</span>
-                    <span className="text-[9px] font-medium text-slate-300 mt-0.5">{s.desc}</span>
+                    <span className="text-[9px] font-medium text-slate-300">{s.desc}</span>
                   </button>
                 ))}
               </div>
-              <div className="mt-4 pt-3 border-t border-slate-50 text-[8px] font-bold text-slate-300 text-center uppercase tracking-widest leading-relaxed">
-                Applies to navigation tree and preview
-              </div>
             </div>
           )}
-          <input 
-            placeholder="Search segments..." 
-            className="w-full bg-white/50 border border-[#250136]/10 rounded-xl px-4 py-2 text-[11px] font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-slate-300"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-          />
         </div>
 
         <div className="flex-1 flex overflow-hidden">
           {/* Level Icons Toolbar */}
-          <div className="w-14 border-r border-[#250136]/5 flex flex-col items-center py-6 gap-4 bg-white/20">
+          <div className="w-14 border-r border-[#250136]/5 flex flex-col items-center py-6 gap-4 bg-white/20 relative">
+             <button onClick={() => setShowStyleMenu(!showStyleMenu)} className={cn("w-8 h-8 rounded-full flex items-center justify-center transition-all mb-4 outline-none", showStyleMenu ? "bg-primary text-white shadow-md" : "text-slate-400 hover:bg-slate-100 hover:text-slate-600")} title="Style Settings">
+               <Layers className="w-4 h-4" />
+             </button>
+             
+             <div className="w-6 h-[1px] bg-[#250136]/5 mb-2" />
+
              <button onClick={addChapter} className="w-8 h-8 rounded-xl bg-[#250136] text-white flex items-center justify-center font-black text-xs hover:scale-110 transition-transform shadow-lg shadow-[#250136]/20" title="Add Chapter">CH</button>
              <button onClick={() => {
                const newSections = [...(activeChapter?.sections || []), { title: '', content: '', subsections: [] }];
@@ -620,7 +611,7 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
                value={content}
                onChange={e => e.target.value.length <= MAX_CHARS && updateActiveContent({ content: e.target.value })}
                placeholder="Write your content here..."
-               className="min-h-[500px] text-xl leading-[1.8] border-none shadow-none focus-visible:ring-0 p-0 resize-none font-medium text-slate-700 pb-20 selection:bg-primary/5"
+               className="min-h-[120px] bg-slate-50 border border-slate-200/60 rounded-xl text-sm leading-[1.8] focus-visible:ring-1 focus-visible:ring-primary/20 p-5 resize-y font-medium text-slate-600 selection:bg-primary/10 shadow-inner"
              />
 
              <ImageManager 
@@ -640,7 +631,20 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
              <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
              <span>{content.split(/\s+/).filter(Boolean).length} WORDS</span>
            </div>
-           <span className="text-primary/40 italic">AUTO-SYNC ENABLED</span>
+           
+           <div className="flex items-center gap-6">
+             <span className="text-primary/40 italic">AUTO-SYNC ENABLED</span>
+             <Button 
+               onClick={() => saveChapter(activeItem.cIdx)}
+               disabled={isSaving === activeItem.cIdx}
+               className={cn(
+                 "h-8 px-5 rounded-full text-[10px] font-black transition-all",
+                 savedIdx === activeItem.cIdx ? "bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/20" : "bg-[#250136] hover:bg-primary shadow-lg shadow-[#250136]/20"
+               )}
+             >
+               {isSaving === activeItem.cIdx ? "SAVING..." : savedIdx === activeItem.cIdx ? "SAVED!" : "SAVE MANUALLY"}
+             </Button>
+           </div>
         </div>
       </div>
 
