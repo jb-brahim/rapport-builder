@@ -42,6 +42,15 @@ interface StepSixProps {
 
 const MAX_CHARS = 3500;
 
+const INDEXING_PRESETS = {
+  academic: { l1: (i: number) => toRoman(i + 1) + '.', l2: (i: number) => (i + 1) + '.', l3: (i: number) => String.fromCharCode(97 + i) + '.' },
+  numeric: { l1: (i: number) => (i + 1), l2: (i: number, p: string) => p + '.' + (i + 1), l3: (i: number, p: string) => p + '.' + (i + 1) },
+  bullets: { l1: () => '●', l2: () => '○', l3: () => '■' },
+  arrows: { l1: () => '➔', l2: () => '➤', l3: () => '■' },
+  stars: { l1: () => '★', l2: () => '✧', l3: () => '❖' },
+  modern: { l1: () => '➢', l2: () => '○', l3: () => '▪' },
+};
+
 const toRoman = (num: number) => {
   if (num <= 0) return '';
   const roman: [string, number][] = [
@@ -308,6 +317,8 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
   const { t, language } = useTranslation();
   const [isSaving, setIsSaving] = useState<number | null>(null);
   const [savedIdx, setSavedIdx] = useState<number | null>(null);
+  const [indexingStyle, setIndexingStyle] = useState<keyof typeof INDEXING_PRESETS>('academic');
+  const [showStyleMenu, setShowStyleMenu] = useState(false);
   
   const [activeItem, setActiveItem] = useState<{
     type: 'chapter-intro' | 'chapter-conclusion' | 'section' | 'subsection' | 'sub-subsection';
@@ -316,6 +327,20 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
     ssIdx?: number;
     sssIdx?: number;
   }>({ type: 'chapter-intro', cIdx: 0 });
+
+  const getPrefix = (level: 1 | 2 | 3, index: number, pIndex?: number, ppIndex?: number) => {
+    const style = INDEXING_PRESETS[indexingStyle];
+    if (level === 1) return style.l1(index);
+    if (level === 2) {
+      const parentPrefix = indexingStyle === 'numeric' ? (pIndex! + 1).toString() : '';
+      return (style as any).l2(index, parentPrefix);
+    }
+    if (level === 3) {
+      const parentPrefix = indexingStyle === 'numeric' ? (pIndex! + 1) + '.' + (ppIndex! + 1) : '';
+      return (style as any).l3(index, parentPrefix);
+    }
+    return '';
+  };
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -418,18 +443,63 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
         <div className="p-5 border-b border-[#250136]/5 space-y-4 bg-white/40 backdrop-blur-md">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black uppercase tracking-widest text-[#250136]/40">Document</span>
-            <Button 
-              size="sm" 
-              onClick={() => saveChapter(activeItem.cIdx)}
-              disabled={isSaving === activeItem.cIdx}
-              className={cn(
-                "h-7 px-3 rounded-full text-[9px] font-black transition-all",
-                savedIdx === activeItem.cIdx ? "bg-emerald-500 hover:bg-emerald-600" : "bg-[#250136] hover:bg-primary"
-              )}
-            >
-              {isSaving === activeItem.cIdx ? "SAVING..." : savedIdx === activeItem.cIdx ? "SAVED" : "SAVE ALL"}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                size="sm" 
+                variant="ghost"
+                onClick={() => setShowStyleMenu(!showStyleMenu)}
+                className="h-7 w-7 p-0 rounded-full hover:bg-slate-100"
+                title="Style du document"
+              >
+                <Layers className="w-3.5 h-3.5 text-slate-400" />
+              </Button>
+              <Button 
+                size="sm" 
+                onClick={() => saveChapter(activeItem.cIdx)}
+                disabled={isSaving === activeItem.cIdx}
+                className={cn(
+                  "h-7 px-3 rounded-full text-[9px] font-black transition-all",
+                  savedIdx === activeItem.cIdx ? "bg-emerald-500 hover:bg-emerald-600" : "bg-[#250136] hover:bg-primary"
+                )}
+              >
+                {isSaving === activeItem.cIdx ? "SAVING..." : savedIdx === activeItem.cIdx ? "SAVED" : "SAVE ALL"}
+              </Button>
+            </div>
           </div>
+
+          {showStyleMenu && (
+            <div className="absolute top-[50px] left-5 right-5 z-50 bg-white/95 backdrop-blur-xl border border-[#250136]/10 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-2xl p-5 animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Hierarchy Presets</span>
+                <button onClick={() => setShowStyleMenu(false)} className="text-slate-300 hover:text-red-400 transition-colors">×</button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { id: 'academic', label: 'Academic', desc: 'I. / 1. / a.' },
+                  { id: 'numeric', label: 'Technical', desc: '1 / 1.1 / 1.1.1' },
+                  { id: 'bullets', label: 'Classic Bullets', desc: '● / ○ / ■' },
+                  { id: 'arrows', label: 'Directional', desc: '➔ / ➤ / ■' },
+                  { id: 'stars', label: 'Geometric', desc: '★ / ✧ / ❖' },
+                  { id: 'modern', label: 'Minimalist', desc: '➢ / ○ / ▪' },
+                ].map((s) => (
+                  <button 
+                    key={s.id}
+                    onClick={() => { setIndexingStyle(s.id as any); setShowStyleMenu(false); }}
+                    className={cn(
+                      "group flex flex-col items-start p-3 rounded-xl border text-left transition-all duration-300",
+                      indexingStyle === s.id ? "border-primary bg-primary/5 shadow-inner" : "border-slate-100 hover:border-primary/30 hover:bg-slate-50"
+                    )}
+                  >
+                    <span className={cn("text-[10px] font-black uppercase tracking-tighter transition-colors", indexingStyle === s.id ? "text-primary" : "text-slate-400 group-hover:text-slate-600")}>{s.label}</span>
+                    <span className="text-[9px] font-medium text-slate-300 mt-0.5">{s.desc}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-50 text-[8px] font-bold text-slate-300 text-center uppercase tracking-widest leading-relaxed">
+                Applies to navigation tree and preview
+              </div>
+            </div>
+          )}
           <input 
             placeholder="Search segments..." 
             className="w-full bg-white/50 border border-[#250136]/10 rounded-xl px-4 py-2 text-[11px] font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-slate-300"
@@ -454,6 +524,15 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
                  updateChapter(activeItem.cIdx, 'sections', newSections);
                }
              }} className="w-8 h-8 rounded-lg border-2 border-emerald-100 text-emerald-600 flex items-center justify-center font-black text-[11px] hover:bg-emerald-500 hover:text-white transition-all" title="Add Subsection">1</button>
+             <button onClick={() => {
+               if (activeItem.type === 'subsection') {
+                  const newSections = [...activeChapter.sections];
+                  const ss = newSections[activeItem.sIdx!].subsections![activeItem.ssIdx!];
+                  if (!ss.subsections) ss.subsections = [];
+                  ss.subsections.push({ title: '', content: '' } as any);
+                  updateChapter(activeItem.cIdx, 'sections', newSections);
+               }
+             }} className="w-8 h-8 rounded-lg border-2 border-blue-100 text-blue-600 flex items-center justify-center font-black text-[11px] hover:bg-blue-500 hover:text-white transition-all" title="Add Sub-subsection">a</button>
           </div>
 
           {/* Tree Navigation */}
@@ -484,18 +563,33 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
                             activeItem.cIdx === cIdx && activeItem.type === 'section' && activeItem.sIdx === sIdx ? "text-primary bg-white shadow-sm" : "text-slate-400 hover:text-[#250136]"
                           )}
                         >
-                          <span className="opacity-20">Ⅰ.</span> {sec.title || "Section..."}
+                          <span className="opacity-40">{getPrefix(1, sIdx)}</span> {sec.title || "Section..."}
                         </div>
+                        
                         {sec.subsections?.map((ss, ssIdx) => (
-                          <div 
-                            key={ssIdx}
-                            onClick={() => setActiveItem({ type: 'subsection', cIdx, sIdx, ssIdx })}
-                            className={cn(
-                              "ml-4 px-2 py-1 rounded-md cursor-pointer transition-all text-[10px] font-medium border-l border-transparent",
-                              activeItem.cIdx === cIdx && activeItem.type === 'subsection' && activeItem.ssIdx === ssIdx ? "text-emerald-600 bg-white shadow-sm" : "text-slate-400 hover:text-emerald-500"
-                            )}
-                          >
-                            {ssIdx + 1}. {ss.title || "Subsection..."}
+                          <div key={ssIdx} className="space-y-1">
+                            <div 
+                              onClick={() => setActiveItem({ type: 'subsection', cIdx, sIdx, ssIdx })}
+                              className={cn(
+                                "ml-4 px-2 py-1 rounded-md cursor-pointer transition-all text-[10px] font-medium border-l border-transparent",
+                                activeItem.cIdx === cIdx && activeItem.type === 'subsection' && activeItem.ssIdx === ssIdx ? "text-emerald-600 bg-white shadow-sm" : "text-slate-400 hover:text-emerald-500"
+                              )}
+                            >
+                              <span className="opacity-40 mr-1">{getPrefix(2, ssIdx, sIdx)}</span> {ss.title || "Subsection..."}
+                            </div>
+                            
+                            {ss.subsections?.map((sss, sssIdx) => (
+                              <div 
+                                key={sssIdx}
+                                onClick={() => setActiveItem({ type: 'sub-subsection', cIdx, sIdx, ssIdx, sssIdx })}
+                                className={cn(
+                                  "ml-8 px-2 py-0.5 rounded-md cursor-pointer transition-all text-[9px] font-medium opacity-70",
+                                  activeItem.cIdx === cIdx && activeItem.type === 'sub-subsection' && activeItem.sssIdx === sssIdx ? "text-blue-600 bg-white shadow-sm" : "text-slate-400 hover:text-blue-500"
+                                )}
+                              >
+                                <span className="opacity-40 mr-1">{getPrefix(3, sssIdx, ssIdx, sIdx)}</span> {sss.title || "Detail..."}
+                              </div>
+                            ))}
                           </div>
                         ))}
                       </div>
@@ -573,7 +667,7 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
                {activeChapter?.sections.map((s, si) => (
                  <div key={si} className="space-y-4">
                     <h3 className="font-black text-[#250136] text-[15px] mt-10 flex gap-3 items-baseline">
-                      <span className="text-primary text-[11px] font-black tracking-widest">{toRoman(si + 1)}.</span> 
+                      <span className="text-primary text-[11px] font-black tracking-widest">{getPrefix(1, si)}</span> 
                       <span className="flex-1">{s.title}</span>
                     </h3>
                     <p className="whitespace-pre-wrap">{s.content}</p>
@@ -588,9 +682,18 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
                     {s.subsections?.map((ss, ssi) => (
                       <div key={ssi} className="pl-6 border-l-2 border-slate-50 space-y-4 mt-6">
                         <h4 className="font-black text-[#250136] text-[13px] flex gap-2">
-                          <span className="text-emerald-500">{ssi + 1}.</span> {ss.title}
+                          <span className="text-emerald-500">{getPrefix(2, ssi, si)}</span> {ss.title}
                         </h4>
                         <p className="text-slate-500 whitespace-pre-wrap">{ss.content}</p>
+
+                        {ss.subsections?.map((sss, sssi) => (
+                          <div key={sssi} className="pl-4 border-l border-slate-50 space-y-2 mt-2">
+                            <h5 className="font-bold text-[#250136] text-[11px] flex gap-2 italic">
+                              <span className="text-blue-400">{getPrefix(3, sssi, ssi, si)}</span> {sss.title}
+                            </h5>
+                            <p className="text-slate-400 text-[11px]">{sss.content}</p>
+                          </div>
+                        ))}
                       </div>
                     ))}
                  </div>
