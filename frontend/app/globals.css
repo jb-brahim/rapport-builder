@@ -20,21 +20,6 @@
   --sidebar-collapsed-width: 80px;
 }
 
-[data-theme='dark'], .dark {
-  --background: #0B0112; 
-  --foreground: #F3F4F6;
-  
-  --primary: #F59E51;
-  --secondary: #804A8A;
-  
-  --muted: #1e1e2d;
-  --muted-foreground: #94a3b8;
-  
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.1);
-  --ring: #F59E51;
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -48,12 +33,11 @@
 @layer base {
   * {
     @apply border-border;
-    transition: background-color 0.5s ease, border-color 0.5s ease, color 0.5s ease;
   }
   body {
-    background-color: var(--background) !important;
-    color: var(--foreground);
-    @apply min-h-screen antialiased;
+    background-color: #FFF8F2 !important;
+    color: #250136;
+    @apply transition-colors duration-500 min-h-screen antialiased;
   }
 }
 

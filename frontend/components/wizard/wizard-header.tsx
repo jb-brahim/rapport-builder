@@ -38,7 +38,7 @@ export default function WizardHeader({ indicatorRef, onManualSave }: WizardHeade
             disabled={status === 'saving'}
             className={cn(
               "h-9 px-6 rounded-full text-[10px] font-black transition-all text-white flex items-center gap-2",
-              status === 'saved' ? "bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/20" : "bg-foreground hover:bg-primary shadow-lg shadow-foreground/20"
+              status === 'saved' ? "bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/20" : "bg-[#250136] hover:bg-primary shadow-lg shadow-[#250136]/20"
             )}
           >
             {status === 'saving' ? (
@@ -62,7 +62,7 @@ export default function WizardHeader({ indicatorRef, onManualSave }: WizardHeade
         <div
           ref={indicatorRef}
           data-status="idle"
-          className="glass-panel px-4 py-2 flex items-center gap-2 backdrop-blur-md border-white/40 dark:border-white/10 shadow-sm"
+          className="glass-panel px-4 py-2 flex items-center gap-2 backdrop-blur-md border-white/40 shadow-sm"
         >
           {status === 'saving' ? (
             <>

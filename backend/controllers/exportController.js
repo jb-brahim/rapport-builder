@@ -40,7 +40,11 @@ const generateAutoTables = (elements, introStartPage) => {
     const isHeading = el.type === 'heading' || el.id?.includes('-label') || el.id?.includes('-l');
     if (isHeading) {
       // Skip the TOC/TOF/TOT labels themselves and things like Cover/Title
-      const skipList = ['toc-l', 'tof-l', 'tot-l', 'ministry', 'univ-header', 'pfe-label', 'main-title', 'academic-year'];
+      const skipList = [
+        'toc-l', 'tof-l', 'tot-l', 'ministry', 'univ-header', 'pfe-label', 
+        'main-title', 'academic-year', 'presented-by-label', 'supervised-by-label',
+        'team-names', 'supervisor-name', 'project-label'
+      ];
       if (!skipList.includes(el.id)) {
         let title = (el.content || '').replace(/<[^>]*>/g, '').trim();
         // Handle specific labels that might have weird formatting
@@ -65,7 +69,7 @@ const generateAutoTables = (elements, introStartPage) => {
   const formatList = (items) => {
     if (items.length === 0) return `<div style="color: #94a3b8; font-style: italic; font-size: 12px; margin-top: 20px;">Aucune entrée trouvée.</div>`;
     
-    return `<div style="margin-top: 30px; width: 100%;">` + 
+    return `<div style="margin-top: 12px; width: 100%;">` + 
       items.map(item => `
         <div style="display: flex; align-items: baseline; margin-bottom: 8px; font-size: 11pt; color: #334155;">
           <span style="flex-shrink: 0; font-weight: ${item.id?.includes('chap-') && !item.id?.includes('-s-') ? 'bold' : 'normal'};">${item.title}</span>
@@ -290,15 +294,15 @@ const exportToPdf = async (req, res) => {
     const htmlContent = createPdfHtml(layout, numPages, introStartPage);
 
     browser = await puppeteer.launch({ 
-      headless: true, // Switched to modern standard
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      headless: true,
       args: [
         '--no-sandbox', 
         '--disable-setuid-sandbox', 
         '--disable-dev-shm-usage', 
         '--font-render-hinting=none',
-        '--single-process', // CRITICAL for 512MB RAM instances (Render free tier)
-        '--no-zygote'
+        '--disable-gpu', // Critical for headless servers
+        '--disable-software-rasterizer',
+        '--single-process'
       ]
     });
     
