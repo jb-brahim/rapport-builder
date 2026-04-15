@@ -415,7 +415,11 @@ const generateAutomatedTableHTML = (elements: EditorElement[], introStartPage: n
       : (el.page - introStartPage + 1).toString();
 
     // TOC Identification (Sections & Chapters)
-    const skipList = ['toc-l', 'tof-l', 'tot-l', 'ministry', 'univ-header', 'pfe-label', 'main-title', 'academic-year'];
+    const skipList = ['toc-l', 'tof-l', 'tot-l', 'ministry', 'univ-header', 'pfe-label', 'main-title', 'academic-year', 'presented-by-label', 'supervised-by-label', 'team-names', 'supervisor-name'];
+    
+    // CRITICAL: Ignore everything on Page 1 (Cover Page)
+    if (el.page === 1) return;
+
     if ((el.type === 'heading' || el.id.includes('-label')) && !skipList.includes(el.id)) {
       const title = el.content.replace(/<[^>]*>/g, '').trim();
       if (title && title.length > 2) {
@@ -440,11 +444,11 @@ const generateAutomatedTableHTML = (elements: EditorElement[], introStartPage: n
   const formatList = (items: any[]) => {
     if (items.length === 0) return `<div style="color: #94a3b8; font-style: italic; font-size: 14px; margin-top: 24px; text-align: center; width: 100%;">Aucune entrée détectée pour le moment.</div>`;
     
-    return `<div style="margin-top: 32px; width: 100%; display: flex; flex-direction: column;">` + 
+    return `<div style="margin-top: 24px; width: 100%; display: flex; flex-direction: column;">` + 
       items.map(item => `
-        <div style="display: flex; align-items: baseline; margin-bottom: 14px; font-size: 11pt; color: #334155; font-family: 'Computer Modern Serif', serif; width: 100%;">
+        <div style="display: flex; align-items: baseline; margin-bottom: 8px; font-size: 11pt; color: #334155; font-family: 'Computer Modern Serif', serif; width: 100%;">
           <span style="flex-shrink: 0; font-weight: ${item.isChapter ? '900' : '500'};">${item.title}</span>
-          <div style="flex-grow: 1; border-bottom: 1.5px dotted #cbd5e1; margin: 0 12px; position: relative; top: -4px;"></div>
+          <div style="flex-grow: 1; border-bottom: 1px dotted #cbd5e1; margin: 0 10px; position: relative; top: -4px;"></div>
           <span style="flex-shrink: 0; font-family: monospace; font-size: 10pt; color: #64748B; font-weight: bold;">${item.page}</span>
         </div>
       `).join('') + 
@@ -719,7 +723,7 @@ export default function VisualEditor() {
       // Manual multi-column team placement
       mergedElements.push(...pfeTeam);
       
-      curY = 1000; // Final footer
+      curY = 970; // Final footer - Moved up from 1000 to prevent page bump
       mergedElements.push(...addElements(pfeFooter));
 
       const globalCounters = { fig: 0, tbl: 0 };

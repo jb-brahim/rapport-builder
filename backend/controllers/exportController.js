@@ -33,6 +33,9 @@ const generateAutoTables = (elements, introStartPage) => {
   for (const el of sorted) {
     const pageStr = el.page < introStartPage ? toRoman(el.page - 1).toLowerCase() : (el.page - introStartPage + 1);
 
+    // CRITICAL: Ignore everything on Page 1 (Cover Page)
+    if (el.page === 1) continue;
+
     // TOC Identification
     const isHeading = el.type === 'heading' || el.id?.includes('-label') || el.id?.includes('-l');
     if (isHeading) {
