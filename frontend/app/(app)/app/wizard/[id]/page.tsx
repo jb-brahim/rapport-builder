@@ -99,6 +99,25 @@ export default function WizardPage() {
     return () => clearTimeout(saveTimer);
   }, [formData, currentStep, isFetching, rapportId, updateSaveIndicator]);
 
+  const handleManualSave = useCallback(async () => {
+    updateSaveIndicator('saving');
+    try {
+      await apiClient(`/rapports/${rapportId}/autosave`, {
+        data: {
+          currentStep,
+          wizardAnswers: formData
+        },
+        method: 'PATCH'
+      });
+      window.dispatchEvent(new Event('manual-save-trigger'));
+      updateSaveIndicator('saved');
+      setTimeout(() => updateSaveIndicator('idle'), 2000);
+    } catch (error) {
+      console.error('Manual save failed:', error);
+      updateSaveIndicator('idle');
+    }
+  }, [formData, currentStep, rapportId, updateSaveIndicator]);
+
   const saveExplicitStep = async (step: number) => {
     try {
       if (step === 1) await apiClient(`/wizard/${rapportId}/cover`, { data: formData });
@@ -182,7 +201,7 @@ export default function WizardPage() {
           />
         </div>
         <div className="order-1 md:order-2 shrink-0">
-          <WizardHeader indicatorRef={saveIndicatorRef} />
+          <WizardHeader indicatorRef={saveIndicatorRef} onManualSave={handleManualSave} />
         </div>
       </div>
 

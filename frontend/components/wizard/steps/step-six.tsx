@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -522,6 +522,16 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
     }
   };
 
+  useEffect(() => {
+    const handler = () => {
+      if (activeItem.cIdx !== undefined) {
+        saveChapter(activeItem.cIdx);
+      }
+    };
+    window.addEventListener('manual-save-trigger', handler);
+    return () => window.removeEventListener('manual-save-trigger', handler);
+  }, [activeItem.cIdx, chaptersConfig]);
+
   const { title, content, images, tables } = getActiveContent();
 
   return (
@@ -723,16 +733,6 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
            
            <div className="flex items-center gap-6">
              <span className="text-primary/40 italic">AUTO-SYNC ENABLED</span>
-             <Button 
-               onClick={() => saveChapter(activeItem.cIdx)}
-               disabled={isSaving === activeItem.cIdx}
-               className={cn(
-                 "h-8 px-5 rounded-full text-[10px] font-black transition-all",
-                 savedIdx === activeItem.cIdx ? "bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/20" : "bg-[#250136] hover:bg-primary shadow-lg shadow-[#250136]/20"
-               )}
-             >
-               {isSaving === activeItem.cIdx ? "SAVING..." : savedIdx === activeItem.cIdx ? "SAVED!" : "SAVE MANUALLY"}
-             </Button>
            </div>
         </div>
       </ResizablePanel>
