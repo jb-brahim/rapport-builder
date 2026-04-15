@@ -277,16 +277,19 @@ const createDocxHtml = (elements) => {
 };
 
 // @desc    Export a rapport to PDF
-// @route   GET /api/export/:id/pdf
 // @access  Private
 const exportToPdf = async (req, res) => {
   let browser;
   try {
-    const rapport = await Rapport.findById(req.params.id);
-    if (!rapport) return res.status(404).json({ message: 'Rapport not found' });
-
-    // Use visualLayout! Fallback to 1 page if undefined
+    console.log(`[Export] Starting PDF export for rapport: ${req.params.id}`);
+    
+    const rapportDoc = await Rapport.findById(req.params.id);
+    if (!rapportDoc) return res.status(404).json({ message: 'Rapport not found' });
+    
+    // Lean data conversion
+    const rapport = rapportDoc.toObject();
     const layout = rapport.visualLayout || [];
+    console.log(`[Export] Data fetched. Elements: ${layout.length}`);
     
     // Safe page calculation to prevent stack errors on large reports
     const numPages = layout.length > 0 ? layout.reduce((max, e) => Math.max(max, e.page || 1), 1) : 1;
@@ -296,37 +299,48 @@ const exportToPdf = async (req, res) => {
     const introStartPage = introEl ? introEl.page : 4;
 
     const htmlContent = createPdfHtml(layout, numPages, introStartPage);
+    console.log(`[Export] HTML Template generated. Length: ${htmlContent.length}`);
 
+    console.log(`[Export] Launching Puppeteer...`);
     browser = await puppeteer.launch({ 
-      headless: true,
+      headless: 'shell', // Use the modern but lightweight engine
       args: [
         '--no-sandbox', 
         '--disable-setuid-sandbox', 
         '--disable-dev-shm-usage', 
         '--font-render-hinting=none',
-        '--disable-gpu', // Critical for headless servers
+        '--disable-gpu',
         '--disable-software-rasterizer',
-        '--single-process'
+        '--single-process',
+        '--no-zygote'
       ]
     });
     
     const page = await browser.newPage();
-    // Setting viewport exactly matching our 794x1123 canvas (removed deviceScaleFactor: 2 to save memory)
+    console.log(`[Export] Page opened.`);
+
+    // Setting viewport exactly matching our 794x1123 canvas
     await page.setViewport({ width: 794, height: 1123 });
     
-    // networkidle0 waits for all local/remote fonts to load
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0', timeout: 30000 });
-    // Additional wait to guarantee web fonts process
-    await new Promise(r => setTimeout(r, 1500));
+    // Use 'load' + manual delay for better stability than 'networkidle0'
+    console.log(`[Export] Setting content (60s timeout)...`);
+    await page.setContent(htmlContent, { waitUntil: 'load', timeout: 60000 });
+    
+    // Manual wait to ensure web fonts and images settle
+    await new Promise(r => setTimeout(r, 2000));
+    console.log(`[Export] Page content loaded.`);
 
-    // Print to PDF exactly the size of A4 without puppeteer margins (our css handles it)
+    // Print to PDF exactly the size of A4 without puppeteer margins
+    console.log(`[Export] Generating PDF buffer...`);
     const pdfBuffer = await page.pdf({
       width: '794px',
       height: '1123px',
       printBackground: true,
       margin: { top: '0', bottom: '0', left: '0', right: '0' },
-      pageRanges: '' // Print all
+      pageRanges: '' 
     });
+
+    console.log(`[Export] PDF generated successfully. Size: ${pdfBuffer.length} bytes`);
 
     res.set({
       'Content-Type': 'application/pdf',
@@ -336,12 +350,16 @@ const exportToPdf = async (req, res) => {
 
     res.send(pdfBuffer);
   } catch (error) {
-    console.error('PDF Export Error:', error);
-    res.status(500).json({ message: error.message });
+    console.error('[Export] FAILED:', error);
+    res.status(500).json({ message: `Export failed: ${error.message}` });
   } finally {
-    if (browser) await browser.close();
+    if (browser) {
+      await browser.close();
+      console.log(`[Export] Browser closed.`);
+    }
   }
 };
+;
 
 // @desc    Export a rapport to DOCX
 // @route   GET /api/export/:id/docx
