@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import User from '../models/User.js';
 import generateToken from '../utils/generateToken.js';
 
@@ -14,7 +15,13 @@ const registerUser = async (req, res) => {
     }
 
     const compiledProfile = profile || { name };
-    if (name && !compiledProfile.name) compiledProfile.name = name; // ensure name is in profile
+    if (name && !compiledProfile.name) compiledProfile.name = name; 
+
+    // Generate Gravatar URL if no photo setup
+    if (!compiledProfile.photoUrl) {
+      const hash = crypto.createHash('md5').update(email.toLowerCase().trim()).digest('hex');
+      compiledProfile.photoUrl = `https://www.gravatar.com/avatar/${hash}?d=identicon&s=200`;
+    }
 
     const user = await User.create({
       email,
@@ -107,6 +114,13 @@ const updateUserProfile = async (req, res) => {
     if (user) {
       user.profile.name = req.body.name || user.profile.name;
       user.profile.photoUrl = req.body.photoUrl || user.profile.photoUrl;
+
+      // Fallback if photo was cleared or is missing
+      if (!user.profile.photoUrl) {
+        const hash = crypto.createHash('md5').update(user.email.toLowerCase().trim()).digest('hex');
+        user.profile.photoUrl = `https://www.gravatar.com/avatar/${hash}?d=identicon&s=200`;
+      }
+
       user.profile.bio = req.body.bio !== undefined ? req.body.bio : user.profile.bio;
       user.profile.university = req.body.university || user.profile.university;
       user.profile.dept = req.body.dept || user.profile.dept;
