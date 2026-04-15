@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2, GripVertical, Layers, Save, ChevronDown, ChevronRight, Hash, Type, AlignLeft, ImagePlus, Check, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Layers, Save, ChevronDown, ChevronRight, Hash, Type, AlignLeft, ImagePlus, Check, PanelLeftClose, PanelLeft, Table as TableIcon } from 'lucide-react';
 import { GrammarChecker } from '@/components/grammar-checker';
 import { useTranslation } from '@/app/context/language-context';
 import { cn } from '@/lib/utils';
@@ -619,6 +619,30 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
                   updateChapter(activeItem.cIdx, 'sections', newSections);
                }
              }} className="w-8 h-8 rounded-lg border-2 border-blue-100 text-blue-600 flex items-center justify-center font-black text-[11px] hover:bg-blue-500 hover:text-white transition-all" title="Add Sub-subsection">a</button>
+
+             <div className="w-6 h-[1px] bg-[#250136]/5 my-2" />
+             
+             <button onClick={() => {
+                const newTbl = {
+                  headers: ['Col 1', 'Col 2', 'Col 3'],
+                  rows: [['Cell', 'Cell', 'Cell'], ['Cell', 'Cell', 'Cell']],
+                  caption: ''
+                };
+                updateActiveContent({ tables: [...(tables || []), newTbl] });
+             }} className="w-8 h-8 rounded-lg border-2 border-purple-100 text-purple-600 flex items-center justify-center hover:bg-purple-500 hover:text-white transition-all" title="Add Table">
+               <TableIcon className="w-4 h-4" />
+             </button>
+             
+             <div className="relative w-8 h-8 overflow-hidden rounded-lg border-2 border-orange-100 text-orange-600 flex items-center justify-center hover:bg-orange-500 hover:text-white transition-all">
+               <input 
+                 type="file" 
+                 title="Add Image"
+                 accept="image/*" 
+                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                 onChange={(e) => handleImageUpload(e, images || [], (newImgs) => updateActiveContent({ images: newImgs }))}
+               />
+               <ImagePlus className="w-4 h-4" />
+             </div>
           </div>
 
           {/* Tree Navigation */}
