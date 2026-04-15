@@ -444,15 +444,15 @@ const generateAutomatedTableHTML = (elements: EditorElement[], introStartPage: n
   const formatList = (items: any[]) => {
     if (items.length === 0) return `<div style="color: #94a3b8; font-style: italic; font-size: 14px; margin-top: 24px; text-align: center; width: 100%;">Aucune entrée détectée pour le moment.</div>`;
     
-    return `<div style="margin-top: 24px; width: 100%; display: flex; flex-direction: column;">` + 
+    return `<table style="width: 100%; border-collapse: collapse; margin-top: 16px;">` + 
       items.map(item => `
-        <div style="display: flex; align-items: baseline; margin-bottom: 8px; font-size: 11pt; color: #334155; font-family: 'Computer Modern Serif', serif; width: 100%;">
-          <span style="flex-shrink: 0; font-weight: ${item.isChapter ? '900' : '500'};">${item.title}</span>
-          <div style="flex-grow: 1; border-bottom: 1px dotted #cbd5e1; margin: 0 10px; position: relative; top: -4px;"></div>
-          <span style="flex-shrink: 0; font-family: monospace; font-size: 10pt; color: #64748B; font-weight: bold;">${item.page}</span>
-        </div>
+        <tr style="line-height: 1.1;">
+          <td style="padding: 4px 0; font-size: 11pt; color: #334155; font-family: 'Computer Modern Serif', serif; font-weight: ${item.isChapter ? '900' : '500'}; white-space: nowrap;">${item.title}</td>
+          <td style="width: 100%; padding: 0 8px; border-bottom: 1.5px dotted #cbd5e1; position: relative; top: -6px;"></td>
+          <td style="padding: 4px 0; text-align: right; font-family: monospace; font-size: 10pt; color: #64748B; font-weight: bold; white-space: nowrap;">${item.page}</td>
+        </tr>
       `).join('') + 
-    `</div>`;
+    `</table>`;
   };
 
   return {
@@ -723,7 +723,7 @@ export default function VisualEditor() {
       // Manual multi-column team placement
       mergedElements.push(...pfeTeam);
       
-      curY = 970; // Final footer - Moved up from 1000 to prevent page bump
+      curY = 900; // Final footer - Moved higher to ensure it never bumps to Page 2
       mergedElements.push(...addElements(pfeFooter));
 
       const globalCounters = { fig: 0, tbl: 0 };
