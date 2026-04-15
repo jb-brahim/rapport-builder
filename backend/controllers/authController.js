@@ -97,4 +97,57 @@ const getUserProfile = async (req, res) => {
   }
 };
 
-export { registerUser, loginUser, logoutUser, getUserProfile };
+// @desc    Update user profile
+// @route   PUT /api/auth/profile
+// @access  Private
+const updateUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+      user.profile.name = req.body.name || user.profile.name;
+      user.profile.photoUrl = req.body.photoUrl || user.profile.photoUrl;
+      user.profile.bio = req.body.bio !== undefined ? req.body.bio : user.profile.bio;
+      user.profile.university = req.body.university || user.profile.university;
+      user.profile.dept = req.body.dept || user.profile.dept;
+      user.profile.year = req.body.year || user.profile.year;
+      user.language = req.body.language || user.language;
+
+      const updatedUser = await user.save();
+
+      res.json({
+        _id: updatedUser._id,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        profile: updatedUser.profile,
+        language: updatedUser.language
+      });
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update user password
+// @route   PUT /api/auth/password
+// @access  Private
+const updateUserPassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (user && (await user.matchPassword(currentPassword))) {
+      user.passwordHash = newPassword; // Pre-save hook hashes it
+      await user.save();
+      res.json({ message: 'Password updated successfully' });
+    } else {
+      res.status(401).json({ message: 'Invalid current password' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export { registerUser, loginUser, logoutUser, getUserProfile, updateUserProfile, updateUserPassword };

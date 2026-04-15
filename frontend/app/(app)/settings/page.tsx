@@ -2,9 +2,12 @@
 
 import { useAuth } from '../../context/auth-context';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Button } from '../../../components/ui/button';
 import { useTranslation } from '../../context/language-context';
+import { md5 } from '@/lib/utils';
+import { toast } from 'sonner';
+import { AlertCircle, Camera, Loader2 } from 'lucide-react';
 import { 
   User, 
   Settings, 
@@ -19,10 +22,29 @@ import {
 } from 'lucide-react';
 
 export default function SettingsPage() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, updateProfile, updatePassword } = useAuth();
   const router = useRouter();
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('profile');
+  
+  // Profile State
+  const [name, setName] = useState('');
+  const [bio, setBio] = useState('');
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Password State
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setName(user.profile?.name || user.name || '');
+      setBio(user.profile?.bio || '');
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -81,13 +103,62 @@ export default function SettingsPage() {
           {activeTab === 'profile' && (
             <div className="glass-panel p-6 border-white/60 space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
               
-              <div className="flex items-center gap-4 pb-6 border-b border-black/5">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/20 shrink-0">
-                  <User className="w-8 h-8 text-white" />
+              <div className="flex items-center gap-6 pb-6 border-b border-black/5">
+                <div 
+                  className="relative group cursor-pointer shrink-0"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-xl shadow-primary/20 overflow-hidden border-4 border-white">
+                    {user?.profile?.photoUrl ? (
+                      <img src={user.profile.photoUrl} alt={name} className="w-full h-full object-cover" />
+                    ) : user?.email ? (
+                      <img 
+                        src={`https://www.gravatar.com/avatar/${md5(user.email.toLowerCase().trim())}?d=mp&s=200`} 
+                        alt={name} 
+                        className="w-full h-full object-cover opacity-80" 
+                      />
+                    ) : (
+                      <User className="w-10 h-10 text-white" />
+                    )}
+                  </div>
+                  <div className="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all backdrop-blur-[2px]">
+                    <Camera className="w-6 h-6 text-white" />
+                  </div>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+
+                      const formData = new FormData();
+                      formData.append('image', file);
+
+                      try {
+                        toast.loading(t('common.loading'));
+                        const response = await fetch('/api/upload', {
+                          method: 'POST',
+                          body: formData,
+                        });
+                        const data = await response.json();
+                        if (data.url) {
+                          await updateProfile({ photoUrl: data.url });
+                          toast.dismiss();
+                          toast.success(t('settings.profile.updateSuccess'));
+                        }
+                      } catch (err) {
+                        toast.dismiss();
+                        toast.error('Upload failed');
+                      }
+                    }}
+                  />
                 </div>
-                <div>
-                  <h3 className="text-lg font-black text-[#250136] mb-0.5 leading-tight">{user?.name || 'Researcher'}</h3>
+                <div className="flex-1">
+                  <h3 className="text-xl font-black text-[#250136] mb-0.5 leading-tight">{name || 'Researcher'}</h3>
                   <p className="text-[10px] font-black text-[#250136]/40 uppercase tracking-widest">{user?.email}</p>
+                  <p className="text-[10px] font-bold text-primary mt-1 uppercase tracking-tight">{t('settings.profile.photoDesc')}</p>
                 </div>
               </div>
 
@@ -99,7 +170,8 @@ export default function SettingsPage() {
                   </div>
                   <input 
                     type="text" 
-                    defaultValue={user?.name || ''}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     className="w-full md:w-2/3 bg-white/80 border border-black/5 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:border-primary/40 transition-all shadow-sm"
                   />
                 </div>
@@ -123,14 +195,31 @@ export default function SettingsPage() {
                     <p className="text-[9px] font-black text-[#250136]/40 uppercase tracking-widest mt-1">Short Description</p>
                   </div>
                   <textarea 
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
                     placeholder={t('settings.profile.researchBioPlaceholder')}
-                    className="w-full md:w-2/3 bg-white/80 border border-black/5 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-primary/40 transition-all shadow-sm min-h-[80px]"
+                    className="w-full md:w-2/3 bg-white/80 border border-black/5 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-primary/40 transition-all shadow-sm min-h-[100px]"
                   />
                 </div>
               </div>
 
               <div className="pt-2 flex justify-end">
-                <Button className="h-10 px-6 rounded-xl bg-[#250136] text-white font-black hover:bg-primary transition-all text-[10px] shadow-xl shadow-black/10 uppercase tracking-widest">
+                <Button 
+                  onClick={async () => {
+                    setIsUpdatingProfile(true);
+                    try {
+                      await updateProfile({ name, bio });
+                      toast.success(t('settings.profile.updateSuccess'));
+                    } catch (err: any) {
+                      toast.error(err.message);
+                    } finally {
+                      setIsUpdatingProfile(false);
+                    }
+                  }}
+                  disabled={isUpdatingProfile}
+                  className="h-10 px-6 rounded-xl bg-[#250136] text-white font-black hover:bg-primary transition-all text-[10px] shadow-xl shadow-black/10 uppercase tracking-widest flex items-center gap-2"
+                >
+                  {isUpdatingProfile ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                   {t('settings.profile.updateProfile')}
                 </Button>
               </div>
@@ -189,6 +278,91 @@ export default function SettingsPage() {
           {activeTab === 'account' && (
             <div className="glass-panel p-6 border-white/60 space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
                
+               <div className="space-y-6">
+                 <div className="flex items-center justify-between px-1">
+                   <h4 className="text-sm font-black text-[#250136] uppercase tracking-widest">{t('settings.account.changePassword')}</h4>
+                   <ShieldCheck className="w-5 h-5 text-emerald-500" />
+                 </div>
+
+                 <div className="bg-white/50 border border-white/60 rounded-2xl overflow-hidden shadow-sm divide-y divide-black/5">
+                    <div className="p-6 space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-[#250136]/50 uppercase tracking-widest ml-1">{t('settings.account.currentPassword')}</label>
+                          <div className="relative">
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#250136]/20" />
+                            <input 
+                              type="password" 
+                              value={currentPassword}
+                              onChange={(e) => setCurrentPassword(e.target.value)}
+                              className="w-full bg-white/80 border border-black/5 rounded-xl pl-11 pr-4 py-2.5 text-sm font-bold outline-none focus:border-primary/40 transition-all shadow-sm"
+                            />
+                          </div>
+                        </div>
+                        <div className="hidden md:block" />
+                        
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-[#250136]/50 uppercase tracking-widest ml-1">{t('settings.account.newPassword')}</label>
+                          <div className="relative">
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#250136]/20" />
+                            <input 
+                              type="password" 
+                              value={newPassword}
+                              onChange={(e) => setNewPassword(e.target.value)}
+                              className="w-full bg-white/80 border border-black/5 rounded-xl pl-11 pr-4 py-2.5 text-sm font-bold outline-none focus:border-primary/40 transition-all shadow-sm"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-[#250136]/50 uppercase tracking-widest ml-1">{t('settings.account.confirmPassword')}</label>
+                          <div className="relative">
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#250136]/20" />
+                            <input 
+                              type="password" 
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              className="w-full bg-white/80 border border-black/5 rounded-xl pl-11 pr-4 py-2.5 text-sm font-bold outline-none focus:border-primary/40 transition-all shadow-sm"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 flex justify-end">
+                        <Button 
+                          onClick={async () => {
+                            if (newPassword !== confirmPassword) {
+                              toast.error("New passwords do not match");
+                              return;
+                            }
+                            if (newPassword.length < 6) {
+                              toast.error("Password must be at least 6 characters");
+                              return;
+                            }
+                            setIsUpdatingPassword(true);
+                            try {
+                              await updatePassword(currentPassword, newPassword);
+                              toast.success(t('settings.account.passwordSuccess'));
+                              setCurrentPassword('');
+                              setNewPassword('');
+                              setConfirmPassword('');
+                            } catch (err: any) {
+                              toast.error(err.message === 'Invalid current password' ? t('settings.account.passwordError') : err.message);
+                            } finally {
+                              setIsUpdatingPassword(false);
+                            }
+                          }}
+                          disabled={isUpdatingPassword || !currentPassword || !newPassword}
+                          className="h-10 px-8 rounded-xl bg-primary text-white font-black hover:bg-[#250136] transition-all text-[10px] shadow-xl shadow-primary/20 uppercase tracking-widest flex items-center gap-2"
+                        >
+                          {isUpdatingPassword ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                          {t('settings.academic.saveChanges')}
+                        </Button>
+                      </div>
+                    </div>
+                 </div>
+               </div>
+
                <div className="space-y-3">
                  <h4 className="text-sm font-black text-[#250136] uppercase tracking-widest px-1">{t('settings.account.securityPreferences')}</h4>
                  <div className="bg-white/50 border border-white/60 rounded-2xl overflow-hidden shadow-sm divide-y divide-black/5">

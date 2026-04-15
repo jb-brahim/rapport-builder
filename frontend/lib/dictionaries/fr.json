@@ -97,7 +97,11 @@
       "emailManaged": "L'email est géré par le fournisseur d'identité.",
       "researchBio": "Biographie de Recherche",
       "researchBioPlaceholder": "Parlez-nous de votre domaine de recherche...",
-      "updateProfile": "Mettre à Jour le Profil"
+      "updateProfile": "Mettre à Jour le Profil",
+      "updateSuccess": "Profil mis à jour avec succès !",
+      "photoTitle": "Photo de profil",
+      "photoDesc": "Cliquez pour changer votre photo",
+      "choosePhoto": "Choisir une photo"
     },
     "academic": {
       "statusTitle": "Statut Académique",
@@ -113,6 +117,12 @@
       "twoFactorDesc": "Sécurisez votre recherche avec l'AMF",
       "aiPrivacy": "Confidentialité de l'Activité IA",
       "aiPrivacyDesc": "Gardez vos brouillons de rapport strictement privés",
+      "changePassword": "Changer le mot de passe",
+      "currentPassword": "Mot de passe actuel",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "passwordSuccess": "Mot de passe mis à jour !",
+      "passwordError": "Mot de passe actuel incorrect",
       "dangerZone": "Zone Dangereuse",
       "deleteTitle": "Supprimer définitivement le compte",
       "deleteDesc": "Cela effacera tous vos rapports, espaces de travail et données IA. Cette action est irréversible.",
@@ -229,5 +239,59 @@
     "perspectivesPlaceholder": "Quelles sont les futures améliorations ou prochaines étapes ?",
     "bibliography": "Bibliographie",
     "bibliographyPlaceholder": "Listez vos références..."
+  },
+  "editor": {
+    "visualEditor": "Éditeur Visuel",
+    "wizard": "Assistant",
+    "save": "Sauvegarder",
+    "export": "Exporter",
+    "selectionInfo": "Infos de Sélection",
+    "manageElement": "Gérer l'Élément",
+    "supprimer": "Supprimer",
+    "deleteElement": "Supprimer l'élément",
+    "appearance": "Apparence & Typographie",
+    "fontFamily": "Police",
+    "fontSize": "Taille",
+    "color": "Couleur",
+    "bold": "Gras",
+    "alignment": "Alignement",
+    "contentEditor": "Éditeur de Contenu",
+    "placeholderContent": "Double-cliquez ici pour ajouter votre texte personnalisé...",
+    "quickEdit": {
+      "title": "Édition Rapide",
+      "desc": "Double-cliquez directement sur le texte sur la page pour modifier le contenu."
+    },
+    "emptySelection": "Sélectionnez un élément pour commencer l'édition",
+    "addNewPage": "Ajouter une Page",
+    "tableOptions": "Options de style",
+    "tableStyles": "Styles de tableau",
+    "structureControls": "Structure",
+    "addRow": "+ Ligne",
+    "removeRow": "- Ligne",
+    "addCol": "+ Col",
+    "removeCol": "- Col",
+    "options": {
+      "headerRow": "Ligne d'en-tête",
+      "firstColumn": "Première colonne",
+      "totalRow": "Ligne des totaux",
+      "lastColumn": "Dernière colonne",
+      "stripeRows": "Lignes à bandes",
+      "stripeColumns": "Colonnes à bandes"
+    },
+    "sections": {
+      "pfeLabel": "PROJET DE FIN D'ÉTUDES",
+      "presentedBy": "Présenté par :",
+      "supervisedBy": "Sous la direction de :",
+      "academicYearLabel": "Année Universitaire :",
+      "reportProject": "RAPPORT DE PROJET",
+      "dedication": "DÉDICACE",
+      "acknowledgments": "REMERCIEMENTS",
+      "abstract": "RÉSUMÉ",
+      "toc": "SOMMAIRE",
+      "tof": "TABLE DES FIGURES",
+      "tot": "TABLE DES TABLEAUX",
+      "intro": "INTRODUCTION GÉNÉRALE",
+      "conclusion": "CONCLUSION GÉNÉRALE"
+    }
   }
 }

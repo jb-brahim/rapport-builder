@@ -3,10 +3,13 @@
 import { useAuth } from '@/app/context/auth-context';
 import { useTranslation } from '@/app/context/language-context';
 import { Search, Bell, Settings, User } from 'lucide-react';
+import { md5 } from '@/lib/utils';
 
 export function TopHeader() {
   const { user } = useAuth();
   const { t, language, setLanguage } = useTranslation();
+
+  const userPhoto = user?.profile?.photoUrl || (user?.email ? `https://www.gravatar.com/avatar/${md5(user.email.toLowerCase().trim())}?d=mp&s=100` : null);
 
   return (
     <header className="sticky top-0 z-40 bg-white/40 backdrop-blur-md border-b border-white/60 px-8 py-4 flex items-center justify-between">
@@ -26,12 +29,16 @@ export function TopHeader() {
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-3 pr-6 border-r border-black/5 font-sans">
           <div className="text-right hidden sm:block">
-            <p className="text-xs font-black text-[#250136] leading-none mb-1">{user?.name || 'Researcher'}</p>
+            <p className="text-xs font-black text-[#250136] leading-none mb-1">{user?.profile?.name || user?.name || 'Researcher'}</p>
             <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">{t('topHeader.universityStudent')}</p>
           </div>
-          <div className="w-10 h-10 rounded-2xl bg-white border border-white/60 flex items-center justify-center overflow-hidden cursor-pointer hover:border-primary/50 transition-colors shadow-sm group">
+          <div className="w-10 h-10 rounded-2xl bg-white border border-white/60 flex items-center justify-center overflow-hidden cursor-pointer hover:border-primary/50 transition-all shadow-sm group">
             <div className="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center group-hover:from-primary/20 transition-all">
-              <User className="w-5 h-5 text-primary" />
+              {userPhoto ? (
+                <img src={userPhoto} alt={user?.name || 'User'} className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-5 h-5 text-primary" />
+              )}
             </div>
           </div>
         </div>

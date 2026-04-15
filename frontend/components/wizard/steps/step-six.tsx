@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2, GripVertical, Layers, Save, ChevronDown, ChevronRight, Hash, Type, AlignLeft, ImagePlus, Check, PanelLeftClose, PanelLeft, Table as TableIcon } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Layers, Save, ChevronDown, ChevronRight, Hash, Type, AlignLeft, ImagePlus, Check, PanelLeftClose, PanelLeft, Table as TableIcon, Palette } from 'lucide-react';
 import { GrammarChecker } from '@/components/grammar-checker';
 import { useTranslation } from '@/app/context/language-context';
 import { cn } from '@/lib/utils';
@@ -42,6 +43,9 @@ interface StepSixProps {
 }
 
 const MAX_CHARS = 3500;
+const A4_WIDTH = 794; // 210mm at 96dpi
+const A4_HEIGHT = 1123; // 297mm at 96dpi
+const A4_MARGIN = 80;
 
 const INDEXING_PRESETS = {
   academic: { l1: (i: number) => toRoman(i + 1) + '.', l2: (i: number) => (i + 1) + '.', l3: (i: number) => String.fromCharCode(97 + i) + '.' },
@@ -114,296 +118,427 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, currentImages
   }
 };
 
-const TableManager = ({ tables = [], onUpdate }: { tables?: TableData[], onUpdate: (tbls: TableData[]) => void }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const ESTIMATE_PX_PER_LINE = 26;
+const ESTIMATE_CHARS_PER_LINE = 75;
 
-  const addTable = () => {
-    const newTbl: TableData = {
-      headers: ['Col 1', 'Col 2', 'Col 3'],
-      rows: [['Cell', 'Cell', 'Cell'], ['Cell', 'Cell', 'Cell']],
-      caption: ''
-    };
-    onUpdate([...tables, newTbl]);
-    setIsOpen(true);
-  };
+const estimateContentHeight = (content: any, type: string) => {
+  if (type === 'image') return 480; 
+  if (type === 'heading') return 100;
+  if (type === 'table') return 300; 
+  if (type === 'raw') return 160; // For chapter headers
+  
+  if (typeof content !== 'string') return 50;
+  
+  const textOnly = content.replace(/<[^>]*>/g, '');
+  const lines = Math.max(1, Math.ceil(textOnly.length / ESTIMATE_CHARS_PER_LINE));
+  return lines * ESTIMATE_PX_PER_LINE + 30; 
+};
 
-  const updateTable = (idx: number, updates: Partial<TableData>) => {
-    const updated = [...tables];
-    updated[idx] = { ...updated[idx], ...updates };
-    onUpdate(updated);
-  };
 
-  const addRow = (tIdx: number) => {
-    const updated = [...tables];
-    const colCount = updated[tIdx].headers.length;
-    updated[tIdx].rows.push(Array(colCount).fill('Cell'));
-    onUpdate(updated);
-  };
 
-  const removeRow = (tIdx: number, rIdx: number) => {
-    const updated = [...tables];
-    updated[tIdx].rows = updated[tIdx].rows.filter((_, i) => i !== rIdx);
-    onUpdate(updated);
-  };
+const RenderSegment = ({ segment, sectionIndex }: { segment: any, sectionIndex: number }) => {
+   const { type, content, images, tables, caption } = segment;
 
-  const addCol = (tIdx: number) => {
-    const updated = [...tables];
-    updated[tIdx].headers.push(`Col ${updated[tIdx].headers.length + 1}`);
-    updated[tIdx].rows = updated[tIdx].rows.map(row => [...row, 'Cell']);
-    onUpdate(updated);
-  };
+   if (type === 'image') {
+     return (
+        <div className="my-10 flex flex-col items-center w-full clear-both group">
+           <div className="relative border-[0.5px] border-slate-300 shadow-sm overflow-hidden bg-slate-50">
+             <img src={content} className="max-w-full" style={{ maxHeight: '400px' }} />
+           </div>
+           {caption && (
+             <p className="text-center text-[10px] mt-4 text-slate-500 font-serif italic font-medium tracking-tight">
+               {caption}
+             </p>
+           )}
+        </div>
+     );
+   }
 
-  const removeCol = (tIdx: number, cIdx: number) => {
-    const updated = [...tables];
-    if (updated[tIdx].headers.length > 1) {
-      updated[tIdx].headers = updated[tIdx].headers.filter((_, i) => i !== cIdx);
-      updated[tIdx].rows = updated[tIdx].rows.map(row => row.filter((_, i) => i !== cIdx));
-      onUpdate(updated);
+   if (type === 'table') {
+     let tbl = { headers: [], rows: [], caption: "" };
+     try {
+       const [h, ...r] = JSON.parse(content);
+       tbl = { headers: h, rows: r, caption: caption || "" };
+     } catch(e) {}
+
+     return (
+        <div className="my-10 w-full flex flex-col items-center clear-both group">
+           <div className="w-[95%] border-[0.5px] border-slate-300 shadow-sm bg-white overflow-hidden">
+             <table className="w-full text-[10px] border-collapse">
+               <thead>
+                 <tr className="bg-slate-50 border-b border-slate-200">
+                   {tbl.headers.map((h: string, i: number) => (
+                     <th key={i} className="border-r border-slate-200 p-2 text-center text-slate-800 font-bold last:border-0">{h}</th>
+                   ))}
+                 </tr>
+               </thead>
+               <tbody>
+                 {tbl.rows.map((row: string[], r: number) => (
+                   <tr key={r} className="border-b border-slate-100 last:border-0">
+                     {row.map((cell: string, c: number) => (
+                       <td key={c} className="border-r border-slate-100 p-2 text-center text-slate-600 last:border-0">{cell}</td>
+                     ))}
+                   </tr>
+                 ))}
+               </tbody>
+             </table>
+           </div>
+           {tbl.caption && (
+             <p className="text-center text-[10px] mt-4 text-slate-500 font-serif italic font-medium tracking-tight">
+               {tbl.caption}
+             </p>
+           )}
+        </div>
+     );
+   }
+
+   if (type === 'heading') {
+      const isConclusion = content?.toLowerCase().includes('conclusion');
+      return (
+        <h3 className={cn(
+          "font-rapport font-black uppercase mb-6 flex gap-3", 
+          isConclusion ? "text-slate-900" : (segment.level === 1 ? "text-[#DC2626]" : "text-emerald-600"),
+          segment.level === 1 ? "text-[13pt] mt-12" : "text-[12pt] mt-8"
+        )}>
+           {content}
+        </h3>
+      );
+   }
+
+   return (
+      <div className="whitespace-pre-wrap leading-[2.2] font-rapport text-[11pt] text-slate-800 mb-6">
+        {content}
+      </div>
+   );
+};
+
+const paginateChapter = (chapter: Chapter, chapIdx: number) => {
+  const MAX_Y = A4_HEIGHT - (A4_MARGIN * 2);
+  const pages: any[][] = [[]];
+  let curY = 0;
+
+  const pushToPage = (seg: any) => {
+    const h = estimateContentHeight(seg.content || '', seg.type);
+    if (curY + h > MAX_Y && pages[pages.length-1].length > 0) {
+      pages.push([]);
+      curY = 0;
     }
+    pages[pages.length - 1].push(seg);
+    curY += h;
+  };
+
+  const parseAndPush = (content: string, images: any[] = [], tables: any[] = [], sectionPrefix: string) => {
+    if (!content) return;
+    const parts = content.split(/(\[FIGURE \d+\]|\[TABLEAU \d+\])/i);
+    parts.forEach((part) => {
+      const figMatch = part.match(/\[FIGURE (\d+)\]/i);
+      if (figMatch) {
+        const idx = parseInt(figMatch[1]) - 1;
+        if (images[idx]) {
+          pushToPage({ type: 'image', content: images[idx].src, caption: `Figure ${sectionPrefix}.${idx+1} — ${images[idx].caption || "Sans titre"}` });
+        } else {
+          pushToPage({ type: 'text', content: <span className="text-red-500 font-bold bg-red-50 px-2 py-0.5 rounded text-[10px]">{part} (Réf. Invalide)</span> });
+        }
+        return;
+      }
+      const tabMatch = part.match(/\[TABLEAU (\d+)\]/i);
+      if (tabMatch) {
+        const idx = parseInt(tabMatch[1]) - 1;
+        if (tables[idx]) {
+          pushToPage({ type: 'table', content: JSON.stringify([tables[idx].headers, ...tables[idx].rows]), caption: `Tableau ${sectionPrefix}.${idx+1} — ${tables[idx].caption || "Sans titre"}` });
+        } else {
+          pushToPage({ type: 'text', content: <span className="text-red-500 font-bold bg-red-50 px-2 py-0.5 rounded text-[10px]">{part} (Réf. Invalide)</span> });
+        }
+        return;
+      }
+      if (part.trim()) pushToPage({ type: 'text', content: part });
+    });
+  };
+
+  // Chapter Header
+  pushToPage({ 
+    type: 'raw', 
+    id: `ch-${chapIdx}-header`,
+    content: (
+      <div className="flex flex-col items-center mb-16">
+        <h2 className="text-[16pt] font-black text-[#DC2626] uppercase text-center tracking-tight leading-tight">
+          {chapter.title ? `CHAPITRE ${chapIdx + 1}: ${chapter.title}` : `CHAPITRE ${chapIdx + 1}`}
+        </h2>
+        <div className="w-16 h-1.5 bg-[#DC2626] mt-6 rounded-full opacity-10" />
+      </div>
+    )
+  });
+
+  // Introduction
+  parseAndPush(chapter.introduction, chapter.images, chapter.tables, `${chapIdx + 1}.0`);
+
+  // Sections
+  chapter.sections.forEach((s, si) => {
+    const sPrefix = `${si + 1}`;
+    pushToPage({ type: 'heading', level: 1, content: `I. ${s.title}`, id: `preview-editor-${chapIdx}-${si}` });
+    parseAndPush(s.content, s.images, s.tables, sPrefix);
+
+    s.subsections?.forEach((ss, ssi) => {
+      const ssPrefix = `${sPrefix}.${ssi + 1}`;
+      pushToPage({ type: 'heading', level: 2, content: `${ssi + 1}. ${ss.title}`, id: `preview-editor-${chapIdx}-${si}-${ssi}` });
+      parseAndPush(ss.content, ss.images, ss.tables, ssPrefix);
+
+      ss.subsections?.forEach((sss, sssi) => {
+        pushToPage({ type: 'heading', level: 2, content: `${String.fromCharCode(97 + sssi)}) ${sss.title}`, id: `preview-editor-${chapIdx}-${si}-${ssi}-${sssi}` });
+        parseAndPush(sss.content, sss.images, sss.tables, `${ssPrefix}.${sssi + 1}`);
+      });
+    });
+  });
+
+  // Conclusion
+  if (chapter.conclusion) {
+     pushToPage({ type: 'raw', content: <div className="mt-16 pt-12 border-t border-slate-100 flex flex-col items-center"><div className="w-10 h-0.5 bg-slate-200 mb-8" /></div> });
+     parseAndPush(chapter.conclusion, chapter.images, chapter.tables, `${chapIdx + 1}.C`);
+  }
+
+  return pages;
+};
+
+
+const AutoResizeTextarea = ({ value, onChange, onBlur, placeholder, className }: any) => {
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.style.height = "auto";
+      ref.current.style.height = ref.current.scrollHeight + "px";
+    }
+  }, [value]);
+
+  return (
+    <textarea
+      ref={ref}
+      value={value}
+      onChange={onChange}
+      onBlur={onBlur}
+      placeholder={placeholder}
+      className={className}
+      rows={1}
+    />
+  );
+};
+
+const TableBlock = ({ tbl, tIdx, onUpdateTable, onDeleteTable }: any) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const updateHeaders = (hIdx: number, val: string) => {
+    const newHeaders = [...tbl.headers];
+    newHeaders[hIdx] = val;
+    onUpdateTable({ ...tbl, headers: newHeaders });
+  };
+
+  const updateCell = (rIdx: number, cIdx: number, val: string) => {
+    const newRows = [...tbl.rows];
+    newRows[rIdx] = [...newRows[rIdx]];
+    newRows[rIdx][cIdx] = val;
+    onUpdateTable({ ...tbl, rows: newRows });
+  };
+
+  const addRow = () => {
+    onUpdateTable({ ...tbl, rows: [...tbl.rows, Array(tbl.headers.length).fill('Cell')] });
+  };
+
+  const removeRow = (rIdx: number) => {
+    onUpdateTable({ ...tbl, rows: tbl.rows.filter((_: any, i: number) => i !== rIdx) });
+  };
+
+  const addCol = () => {
+    const newHeaders = [...tbl.headers, `Col ${tbl.headers.length + 1}`];
+    const newRows = tbl.rows.map((row: any) => [...row, 'Cell']);
+    onUpdateTable({ ...tbl, headers: newHeaders, rows: newRows });
+  };
+
+  const removeCol = (cIdx: number) => {
+    if (tbl.headers.length <= 1) return;
+    const newHeaders = tbl.headers.filter((_: any, i: number) => i !== cIdx);
+    const newRows = tbl.rows.map((row: any) => row.filter((_: any, i: number) => i !== cIdx));
+    onUpdateTable({ ...tbl, headers: newHeaders, rows: newRows });
   };
 
   return (
-    <div className="space-y-4 pt-4 border-t border-[#250136]/5">
-      <div className="flex items-center justify-between">
-         <button onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#250136]/50 ml-1 hover:text-primary transition-colors outline-none cursor-pointer">
-           {isOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-           <Layers className="w-3 h-3" /> Tableaux de Données <span className="opacity-50">({tables.length})</span>
-         </button>
-         
-         {isOpen && (
-           <Button 
-             onClick={addTable}
-             variant="ghost" 
-             size="sm" 
-             className="h-7 text-[9px] font-bold gap-1.5 border border-dashed rounded-lg hover:border-emerald-400 hover:text-emerald-500"
-           >
-             <Plus className="w-3 h-3" /> AJOUTER TABLEAU
-           </Button>
-         )}
+    <div className="bg-emerald-50/80 border border-emerald-100 rounded-xl mx-2 my-1 shadow-sm transition-all overflow-hidden flex flex-col group relative">
+      <div 
+         className="flex items-center justify-between p-2.5 hover:bg-emerald-50 cursor-pointer focus:outline-none"
+         onClick={(e) => {
+           if ((e.target as HTMLElement).tagName !== 'INPUT' && (e.target as HTMLElement).tagName !== 'BUTTON' && !(e.target as HTMLElement).closest('button')) {
+              setIsExpanded(!isExpanded);
+           }
+         }}
+      >
+        <div className="flex items-center gap-4">
+           <div className={cn("w-12 h-12 rounded-[5px] bg-white border flex flex-shrink-0 items-center justify-center shadow-xs transition-colors", isExpanded ? "border-emerald-400 text-emerald-600" : "border-emerald-200 text-emerald-500")}>
+              <TableIcon className="w-5 h-5" />
+           </div>
+           <div>
+             <div className="flex items-center gap-2">
+               <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-tight">Tableau {tIdx + 1}</p>
+               <span className="text-[8px] font-bold text-emerald-600/70 bg-emerald-100/50 px-1.5 py-0.5 rounded-md">{isExpanded ? 'Fermer' : 'Éditer contenu'}</span>
+             </div>
+             <input 
+               value={tbl?.caption || ""}
+               onChange={(e) => onUpdateTable({ ...tbl, caption: e.target.value })}
+               placeholder="Titre du tableau..."
+               className="text-[10px] font-bold text-emerald-500 bg-transparent border-0 outline-none placeholder:text-emerald-300 w-full min-w-[200px] p-0 focus:ring-0 leading-tight mt-0.5"
+             />
+           </div>
+        </div>
+        <button 
+          onClick={() => onDeleteTable?.(tIdx)}
+          className="w-7 h-7 flex items-center justify-center rounded-full text-red-500 hover:bg-red-100 transition-colors opacity-0 group-hover:opacity-100 absolute right-3"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
       </div>
 
-      {isOpen && tables.map((tbl, tIdx) => (
-        <div key={tIdx} className="bg-slate-50/50 border border-black/5 rounded-2xl p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                 <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Tableau {tIdx + 1}</span>
-                 <code className="text-[8px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded font-bold border border-emerald-100">[TABLEAU {tIdx + 1}]</code>
-              </div>
-              <Button 
-                onClick={() => onUpdate(tables.filter((_, i) => i !== tIdx))}
-                variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-400 hover:text-red-500 hover:bg-red-50"
-              >
-                <Trash2 className="w-3 h-3" />
-              </Button>
-           </div>
-
+      {isExpanded && (
+        <div className="p-3 border-t border-emerald-100/50 bg-white/50">
            <div className="overflow-x-auto rounded-xl border border-black/5 bg-white shadow-sm">
               <table className="w-full text-[10px] border-collapse">
                  <thead>
                     <tr className="bg-slate-50 border-b border-black/5">
-                       {tbl.headers.map((header, hIdx) => (
-                          <th key={hIdx} className="p-2 border-r border-black/5 last:border-0">
-                             <div className="flex flex-col gap-1">
+                       {tbl.headers.map((header: string, hIdx: number) => (
+                          <th key={hIdx} className="p-2 border-r border-black/5 last:border-0 group/th">
+                             <div className="flex flex-col gap-1 relative">
                                 <input 
                                    value={header} 
-                                   onChange={(e) => {
-                                      const newHeaders = [...tbl.headers];
-                                      newHeaders[hIdx] = e.target.value;
-                                      updateTable(tIdx, { headers: newHeaders });
-                                   }}
+                                   onChange={(e) => updateHeaders(hIdx, e.target.value)}
                                    className="w-full bg-transparent font-bold text-center outline-none focus:text-blue-500"
                                 />
                                 <button 
-                                  onClick={() => removeCol(tIdx, hIdx)}
-                                  className="text-[8px] text-red-300 hover:text-red-500 opacity-0 group-hover:opacity-100"
-                                >retirer</button>
+                                  onClick={() => removeCol(hIdx)}
+                                  className="w-4 h-4 flex items-center justify-center text-[10px] text-red-400 hover:bg-red-50 opacity-0 group-hover/th:opacity-100 absolute -top-1 -right-1 bg-white rounded-full shadow-sm font-black"
+                                >
+                                  ×
+                                </button>
                              </div>
                           </th>
                        ))}
                        <th className="w-8 p-1">
-                          <button onClick={() => addCol(tIdx)} className="w-6 h-6 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 flex items-center justify-center">+</button>
+                          <button onClick={addCol} className="w-6 h-6 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 flex items-center justify-center font-bold">+</button>
                        </th>
                     </tr>
                  </thead>
                  <tbody>
-                    {tbl.rows.map((row, rIdx) => (
-                       <tr key={rIdx} className="border-b border-black/[0.03] last:border-0 hover:bg-slate-50/50 transition-colors">
-                          {row.map((cell, cIdx) => (
+                    {tbl.rows.map((row: string[], rIdx: number) => (
+                       <tr key={rIdx} className="border-b border-black/[0.03] last:border-0 hover:bg-slate-50/50 transition-colors group/tr">
+                          {row.map((cell: string, cIdx: number) => (
                              <td key={cIdx} className="p-2 border-r border-black/[0.03] last:border-0">
                                 <input 
                                    value={cell} 
-                                   onChange={(e) => {
-                                      const newRows = [...tbl.rows];
-                                      newRows[rIdx][cIdx] = e.target.value;
-                                      updateTable(tIdx, { rows: newRows });
-                                   }}
-                                   className="w-full bg-transparent outline-none focus:text-blue-500"
+                                   onChange={(e) => updateCell(rIdx, cIdx, e.target.value)}
+                                   className="w-full bg-transparent outline-none focus:text-blue-500 text-center"
                                 />
                              </td>
                           ))}
                           <td className="p-1">
-                             <button onClick={() => removeRow(tIdx, rIdx)} className="w-6 h-6 rounded bg-red-50 text-red-400 hover:bg-red-100 flex items-center justify-center">×</button>
+                             <button onClick={() => removeRow(rIdx)} className="w-6 h-6 rounded bg-red-50 text-red-400 hover:bg-red-100 flex items-center justify-center opacity-0 group-hover/tr:opacity-100 transition-opacity">×</button>
                           </td>
                        </tr>
                     ))}
                     <tr>
                        <td colSpan={tbl.headers.length + 1} className="p-1">
-                          <button onClick={() => addRow(tIdx)} className="w-full py-1 text-[8px] font-bold text-slate-400 hover:bg-slate-50 rounded transition-colors uppercase tracking-widest">+ Ajouter une ligne</button>
+                          <button onClick={addRow} className="w-full py-1 text-[8px] font-bold text-slate-400 hover:bg-slate-50 rounded transition-colors uppercase tracking-widest">+ Ajouter une ligne</button>
                        </td>
                     </tr>
                  </tbody>
               </table>
            </div>
-
-           <div className="space-y-1.5">
-              <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 ml-1">Légende du tableau</label>
-              <Input 
-                value={tbl.caption}
-                onChange={(e) => updateTable(tIdx, { caption: e.target.value })}
-                placeholder="ex: Tableau 1 : Comparaison des frameworks..."
-                className="h-9 text-[10px] font-medium rounded-xl border-black/5"
-              />
-           </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-const ImageManager = ({ images = [], onUpdate }: { images?: { src: string, caption: string }[], onUpdate: (imgs: { src: string, caption: string }[]) => void }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="space-y-4 pt-4 border-t border-[#250136]/5">
-      <div className="flex items-center justify-between">
-         <button onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#250136]/50 ml-1 hover:text-primary transition-colors outline-none cursor-pointer">
-           {isOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-           <ImagePlus className="w-3 h-3" /> Illustrations & Figures <span className="opacity-50">({images.length})</span>
-         </button>
-         
-         {isOpen && (
-           <div className="relative">
-              <input 
-                type="file" 
-                accept="image/*" 
-                className="absolute inset-0 opacity-0 cursor-pointer z-10" 
-                onChange={(e) => {
-                  handleImageUpload(e, images, onUpdate);
-                  setIsOpen(true);
-                }}
-              />
-              <Button variant="ghost" size="sm" className="h-7 text-[9px] font-bold gap-1.5 border border-dashed rounded-lg hover:border-blue-400 hover:text-blue-500">
-                <Plus className="w-3 h-3" /> AJOUTER FIGURE
-              </Button>
-           </div>
-         )}
-      </div>
-
-      {isOpen && images.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {images.map((img, i) => (
-            <div key={i} className="group relative bg-white border border-black/5 rounded-2xl p-3 shadow-sm hover:shadow-md transition-all">
-              <div className="group relative rounded-xl border-2 border-dashed border-slate-200 overflow-hidden bg-slate-50 aspect-video flex flex-col justify-between">
-                <div className="absolute top-2 left-2 z-10">
-                   <code className="text-[8px] bg-white/90 backdrop-blur-sm text-blue-600 px-1.5 py-0.5 rounded shadow-sm font-bold border border-blue-100">[FIGURE {i + 1}]</code>
-                </div>
-                <img src={img.src} alt="img" className="w-full h-full object-cover absolute inset-0 opacity-40 group-hover:opacity-100 transition-opacity" />
-                <button 
-                   onClick={() => onUpdate(images.filter((_, idx) => idx !== i))}
-                   className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                 >
-                   <Trash2 className="w-3.5 h-3.5" />
-                 </button>
-              </div>
-              <div className="space-y-1">
-                 <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest">Figure {i + 1}</p>
-                 <Input 
-                   value={img.caption}
-                   onChange={(e) => {
-                     const updated = [...images];
-                     updated[i] = { ...updated[i], caption: e.target.value };
-                     onUpdate(updated);
-                   }}
-                   placeholder="Titre de la figure..."
-                   className="h-8 text-[10px] font-medium rounded-lg border-black/5"
-                 />
-              </div>
-            </div>
-          ))}
         </div>
       )}
     </div>
   );
 };
 
-const RenderSmartContent = ({ content, images = [], tables = [], sectionIndex }: { content: string, images?: any[], tables?: any[], sectionIndex: number }) => {
-  if (!content && !images.length && !tables.length) return null;
-
-  const usedFigures = new Set<number>();
-  const usedTables = new Set<number>();
-
-  const parts = content.split(/(\[FIGURE \d+\]|\[TABLEAU \d+\])/i);
-
-  const renderImage = (img: any, idx: number, key: string) => (
-    <div key={key} className="my-10 flex flex-col items-center w-full clear-both">
-       <img src={img.src} className="max-w-[85%] border border-slate-200" />
-       <p className="text-center text-[9px] mt-4 text-slate-400 font-serif">Figure {sectionIndex+1}.{idx+1} — {img.caption}</p>
-    </div>
-  );
-
-  const renderTable = (tbl: any, idx: number, key: string) => (
-    <div key={key} className="my-10 w-full flex flex-col items-center clear-both overflow-x-auto">
-       <table className="w-[90%] text-[10px] border-collapse bg-white shadow-sm border border-slate-200">
-         <thead>
-           <tr className="bg-slate-50">
-             {tbl.headers.map((h: string, i: number) => <th key={i} className="border border-slate-200 p-2 text-center text-slate-700 font-bold">{h}</th>)}
-           </tr>
-         </thead>
-         <tbody>
-           {tbl.rows.map((row: string[], r: number) => (
-             <tr key={r}>
-               {row.map((cell: string, c: number) => <td key={c} className="border border-slate-200 p-2 text-center text-slate-600">{cell}</td>)}
-             </tr>
-           ))}
-         </tbody>
-       </table>
-       <p className="text-center text-[9px] mt-4 text-slate-400 font-serif">Tableau {sectionIndex+1}.{idx+1} — {tbl.caption}</p>
-    </div>
-  );
-
-  const blockElements = parts.map((part, i) => {
-    const figMatch = part.match(/\[FIGURE (\d+)\]/i);
-    if (figMatch) {
-       const idx = parseInt(figMatch[1]) - 1;
-       usedFigures.add(idx);
-       if (images[idx]) return renderImage(images[idx], idx, `fig-${i}`);
-       return <span key={i} className="text-red-400 font-bold bg-red-50/50 px-1 rounded mx-1">{part} (Introuvable)</span>;
-    }
-
-    const tabMatch = part.match(/\[TABLEAU (\d+)\]/i);
-    if (tabMatch) {
-       const idx = parseInt(tabMatch[1]) - 1;
-       usedTables.add(idx);
-       if (tables[idx]) return renderTable(tables[idx], idx, `tab-${i}`);
-       return <span key={i} className="text-red-400 font-bold bg-red-50/50 px-1 rounded mx-1">{part} (Introuvable)</span>;
-    }
-
-    return <span key={i} className="whitespace-pre-wrap">{part}</span>;
-  });
-
-  const unusedImages = images.map((img, i) => !usedFigures.has(i) ? renderImage(img, i, `ufig-${i}`) : null);
-  const unusedTables = tables.map((tbl, i) => !usedTables.has(i) ? renderTable(tbl, i, `utab-${i}`) : null);
-
+const SmartBlockEditor = ({ content, images = [], tables = [], onUpdateContent, onUpdateImages, onUpdateTables, onDeleteImage, onDeleteTable, setLastCursor }: any) => {
+  const parts = (content || '').split(/(\[FIGURE \d+\]|\[TABLEAU \d+\])/i);
+  if (parts.length === 0) parts.push("");
+  
   return (
-    <div className="w-full text-slate-600 block">
-      {blockElements}
-      {unusedImages}
-      {unusedTables}
+    <div className="w-full bg-slate-50 border border-slate-200/60 rounded-xl p-3 shadow-inner min-h-[120px] flex flex-col overflow-hidden transition-all">
+      {parts.map((part: string, i: number) => {
+        const isFigure = part.toUpperCase().startsWith('[FIGURE ');
+        const isTable = part.toUpperCase().startsWith('[TABLEAU ');
+
+        if (isFigure) {
+          const idxMatch = part.match(/\d+/);
+          const fIdx = idxMatch ? parseInt(idxMatch[0]) - 1 : -1;
+          const img = images[fIdx];
+          
+          return (
+             <div key={i} contentEditable={false} className="group relative flex items-center justify-between bg-blue-50/80 border border-blue-100 p-2.5 rounded-xl mx-2 my-1 shadow-sm transition-all hover:bg-blue-50">
+                <div className="flex items-center gap-4">
+                   <div className="w-12 h-12 rounded-[5px] bg-white border border-blue-200 overflow-hidden flex-shrink-0 shadow-xs relative">
+                      {img ? <img src={img.src} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-200" />}
+                   </div>
+                   <div>
+                     <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest leading-tight">Figure {fIdx + 1}</p>
+                     <input 
+                       value={img?.caption || ""}
+                       onChange={(e) => {
+                          const newImgs = [...images];
+                          if (newImgs[fIdx]) newImgs[fIdx] = { ...newImgs[fIdx], caption: e.target.value };
+                          onUpdateImages?.(newImgs);
+                       }}
+                       placeholder="Titre de la figure..."
+                       className="text-[10px] font-bold text-blue-500 bg-transparent border-0 outline-none placeholder:text-blue-300 w-full min-w-[200px] p-0 focus:ring-0 leading-tight"
+                     />
+                   </div>
+                </div>
+                <button 
+                  onClick={() => onDeleteImage?.(fIdx)}
+                  className="w-7 h-7 flex items-center justify-center rounded-full text-red-500 hover:bg-red-100 transition-colors opacity-0 group-hover:opacity-100 absolute right-3"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+             </div>
+          );
+        }
+
+        if (isTable) {
+          const idxMatch = part.match(/\d+/);
+          const tIdx = idxMatch ? parseInt(idxMatch[0]) - 1 : -1;
+          const tbl = tables[tIdx];
+
+           return (
+             <TableBlock 
+               key={i} 
+               tbl={tbl} 
+               tIdx={tIdx} 
+               onUpdateTable={(newTbl: any) => {
+                 const newTbls = [...tables];
+                 newTbls[tIdx] = newTbl;
+                 onUpdateTables?.(newTbls);
+               }} 
+               onDeleteTable={onDeleteTable} 
+             />
+           );
+        }
+
+        return (
+          <AutoResizeTextarea 
+            key={i}
+            value={part}
+            onChange={(e: any) => { const p = [...parts]; p[i] = e.target.value; onUpdateContent(p.join("")); }}
+            onBlur={(e: any) => setLastCursor({ partIndex: i, start: e.target.selectionStart, end: e.target.selectionEnd })}
+            placeholder={parts.length === 1 ? "Write your content here..." : ""}
+            className={cn(
+              "w-full bg-transparent border-0 outline-none text-[13px] leading-[1.8] font-medium text-slate-600 resize-none overflow-hidden focus-visible:ring-0 px-3 py-1 selection:bg-primary/10",
+              part.length === 0 ? "min-h-[28px] my-0.5 rounded-md focus:bg-white/50" : "h-fit"
+            )}
+          />
+        );
+      })}
     </div>
   );
 };
 
 export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, apiClient, formData }: StepSixProps) {
+  const router = useRouter();
   const { t, language } = useTranslation();
   const [isSaving, setIsSaving] = useState<number | null>(null);
   const [savedIdx, setSavedIdx] = useState<number | null>(null);
@@ -418,6 +553,56 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
     ssIdx?: number;
     sssIdx?: number;
   }>({ type: 'chapter-intro', cIdx: 0 });
+
+  const [lastCursor, setLastCursor] = useState<{ partIndex: number, start: number, end: number } | null>(null);
+
+  const deleteImage = (fIdx: number) => {
+    const { content, images } = getActiveContent();
+    const newImgs = [...(images || [])];
+    newImgs.splice(fIdx, 1);
+    
+    const updatedContent = (content || '').replace(/\[FIGURE (\d+)\]/gi, (match, nr) => {
+       const n = parseInt(nr) - 1;
+       if (n > fIdx) return `[FIGURE ${n}]`;
+       if (n === fIdx) return ``;
+       return match;
+    });
+    
+    updateActiveContent({ content: updatedContent, images: newImgs });
+  };
+
+  const deleteTable = (tIdx: number) => {
+    const { content, tables } = getActiveContent();
+    const newTbls = [...(tables || [])];
+    newTbls.splice(tIdx, 1);
+    
+    const updatedContent = (content || '').replace(/\[TABLEAU (\d+)\]/gi, (match, nr) => {
+       const n = parseInt(nr) - 1;
+       if (n > tIdx) return `[TABLEAU ${n}]`;
+       if (n === tIdx) return ``;
+       return match;
+    });
+    
+    updateActiveContent({ content: updatedContent, tables: newTbls });
+  };
+
+  const insertTagAtCursor = (tag: string, additionalUpdates?: any) => {
+    const { content } = getActiveContent();
+    const parts = (content || '').split(/(\[FIGURE \d+\]|\[TABLEAU \d+\])/i);
+    
+    if (lastCursor === null || lastCursor.partIndex >= parts.length) {
+       updateActiveContent({ content: (content || '') + "\n\n" + tag.trim() + "\n\n", ...additionalUpdates });
+       return;
+    }
+
+    const { partIndex, start, end } = lastCursor;
+    const targetText = parts[partIndex];
+    const newTargetText = targetText.substring(0, start) + "\n\n" + tag.trim() + "\n\n" + targetText.substring(end);
+    
+    parts[partIndex] = newTargetText;
+    updateActiveContent({ content: parts.join(''), ...additionalUpdates });
+    setLastCursor(null);
+  };
 
   const getPrefix = (level: 1 | 2 | 3, index: number, pIndex?: number, ppIndex?: number) => {
     const style = INDEXING_PRESETS[indexingStyle];
@@ -494,8 +679,19 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
     setChaptersConfig(updated);
   };
 
-  const addChapter = () => {
-    setChaptersConfig([...chaptersConfig, { title: '', introduction: '', sections: [], conclusion: '' }]);
+   const addChapter = () => {
+    const defaultConclusion = language === 'fr' ? 'Conclusion' : 'Conclusion';
+    setChaptersConfig([
+      ...chaptersConfig, 
+      { 
+        title: '', 
+        introduction: '', 
+        sections: [
+          { title: defaultConclusion, content: '', subsections: [] }
+        ], 
+        conclusion: '' 
+      }
+    ]);
     setActiveItem({ type: 'chapter-intro', cIdx: chaptersConfig.length });
   };
 
@@ -522,6 +718,25 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
     }
   };
 
+  const [previewScale, setPreviewScale] = useState(1);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new ResizeObserver((entries) => {
+      if (!entries[0]) return;
+      const { width } = entries[0].contentRect;
+      const availableWidth = width - 96; // Account for p-12 padding
+      if (availableWidth < A4_WIDTH) {
+        setPreviewScale(availableWidth / A4_WIDTH);
+      } else {
+        setPreviewScale(1);
+      }
+    });
+
+    if (previewContainerRef.current) observer.observe(previewContainerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     const handler = () => {
       if (activeItem.cIdx !== undefined) {
@@ -531,6 +746,18 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
     window.addEventListener('manual-save-trigger', handler);
     return () => window.removeEventListener('manual-save-trigger', handler);
   }, [activeItem.cIdx, chaptersConfig]);
+
+  useEffect(() => {
+    let targetId = `preview-chapter-${activeItem.cIdx}`;
+    if (activeItem.type === 'section') targetId = `preview-editor-${activeItem.cIdx}-${activeItem.sIdx}`;
+    if (activeItem.type === 'subsection') targetId = `preview-editor-${activeItem.cIdx}-${activeItem.sIdx}-${activeItem.ssIdx}`;
+    if (activeItem.type === 'sub-subsection') targetId = `preview-editor-${activeItem.cIdx}-${activeItem.sIdx}-${activeItem.ssIdx}-${activeItem.sssIdx}`;
+
+    const el = document.getElementById(targetId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [activeItem.type, activeItem.cIdx, activeItem.sIdx, activeItem.ssIdx, activeItem.sssIdx]);
 
   const { title, content, images, tables } = getActiveContent();
 
@@ -591,16 +818,33 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
         <div className="flex-1 flex overflow-hidden">
           {/* Level Icons Toolbar */}
           <div className="w-14 border-r border-[#250136]/5 flex flex-col items-center py-6 gap-4 bg-white/20 relative">
-             <button onClick={() => setShowStyleMenu(!showStyleMenu)} className={cn("w-8 h-8 rounded-full flex items-center justify-center transition-all mb-4 outline-none", showStyleMenu ? "bg-primary text-white shadow-md" : "text-slate-400 hover:bg-slate-100 hover:text-slate-600")} title="Style Settings">
+             <button 
+               onClick={() => router.push(`/app/wizard/${rapportId}/editor`)}
+               className="w-10 h-10 rounded-2xl bg-primary text-white flex items-center justify-center transition-all mb-4 hover:scale-110 shadow-lg shadow-primary/20 group" 
+               title={t('common.openEditor')}
+             >
+               <Palette className="w-5 h-5" />
+             </button>
+
+             <button onClick={() => setShowStyleMenu(!showStyleMenu)} className={cn("w-8 h-8 rounded-full flex items-center justify-center transition-all mb-2 outline-none", showStyleMenu ? "bg-slate-200 text-slate-600" : "text-slate-400 hover:bg-slate-100 hover:text-slate-600")} title={t('settings.tabs.preferences')}>
                <Layers className="w-4 h-4" />
              </button>
              
              <div className="w-6 h-[1px] bg-[#250136]/5 mb-2" />
 
-             <button onClick={addChapter} className="w-8 h-8 rounded-xl bg-[#250136] text-white flex items-center justify-center font-black text-xs hover:scale-110 transition-transform shadow-lg shadow-[#250136]/20" title="Add Chapter">CH</button>
+             <button onClick={addChapter} className="w-8 h-8 rounded-xl bg-[#250136] text-white flex items-center justify-center font-black text-xs hover:scale-110 transition-transform shadow-lg shadow-[#250136]/20" title={t('step6.addChapter')}>CH</button>
              <button onClick={() => {
-               const newSections = [...(activeChapter?.sections || []), { title: '', content: '', subsections: [] }];
-               updateChapter(activeItem.cIdx, 'sections', newSections);
+               const currentSections = [...(activeChapter?.sections || [])];
+               const lastSection = currentSections[currentSections.length - 1];
+               const hasConclusion = lastSection?.title?.toLowerCase().includes('conclusion');
+               
+               if (hasConclusion) {
+                 // Insert before the last item (Conclusion)
+                 currentSections.splice(currentSections.length - 1, 0, { title: '', content: '', subsections: [] });
+               } else {
+                 currentSections.push({ title: '', content: '', subsections: [] });
+               }
+               updateChapter(activeItem.cIdx, 'sections', currentSections);
              }} className="w-8 h-8 rounded-full border-2 border-primary/20 text-primary flex items-center justify-center font-black text-[11px] hover:bg-primary hover:text-white transition-all" title="Add Section">Ⅰ</button>
              <button onClick={() => {
                if (activeItem.type === 'section') {
@@ -628,7 +872,8 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
                   rows: [['Cell', 'Cell', 'Cell'], ['Cell', 'Cell', 'Cell']],
                   caption: ''
                 };
-                updateActiveContent({ tables: [...(tables || []), newTbl] });
+                const newTables = [...(tables || []), newTbl];
+                insertTagAtCursor(`[TABLEAU ${newTables.length}]`, { tables: newTables });
              }} className="w-8 h-8 rounded-lg border-2 border-purple-100 text-purple-600 flex items-center justify-center hover:bg-purple-500 hover:text-white transition-all" title="Add Table">
                <TableIcon className="w-4 h-4" />
              </button>
@@ -639,7 +884,7 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
                  title="Add Image"
                  accept="image/*" 
                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
-                 onChange={(e) => handleImageUpload(e, images || [], (newImgs) => updateActiveContent({ images: newImgs }))}
+                 onChange={(e) => handleImageUpload(e, images || [], (newImgs) => insertTagAtCursor(`[FIGURE ${newImgs.length}]`, { images: newImgs }))}
                />
                <ImagePlus className="w-4 h-4" />
              </div>
@@ -671,7 +916,9 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
                           onClick={() => setActiveItem({ type: 'section', cIdx, sIdx })}
                           className={cn(
                             "flex items-center gap-2 px-2.5 py-1 rounded-lg cursor-pointer transition-all text-[10px] font-bold",
-                            activeItem.cIdx === cIdx && activeItem.type === 'section' && activeItem.sIdx === sIdx ? "text-primary bg-white shadow-sm" : "text-slate-500 hover:text-[#250136]"
+                            activeItem.cIdx === cIdx && activeItem.type === 'section' && activeItem.sIdx === sIdx 
+                              ? (sec.title?.toLowerCase().includes('conclusion') ? "text-slate-900 bg-white shadow-sm" : "text-primary bg-white shadow-sm")
+                              : (sec.title?.toLowerCase().includes('conclusion') ? "text-slate-900/60 hover:text-slate-900" : "text-slate-500 hover:text-[#250136]")
                           )}
                         >
                           <span className="opacity-40">{getPrefix(1, sIdx)}</span> <span className="truncate">{sec.title || "Section..."}</span>
@@ -730,20 +977,16 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
           </div>
 
           <div className="space-y-8">
-             <Textarea 
-               value={content}
-               onChange={e => e.target.value.length <= MAX_CHARS && updateActiveContent({ content: e.target.value })}
-               placeholder="Write your content here..."
-               className="w-full min-h-[120px] bg-slate-50 border border-slate-200/60 rounded-xl text-sm leading-[1.8] focus-visible:ring-1 focus-visible:ring-primary/20 p-5 resize-y font-medium text-slate-600 selection:bg-primary/10 shadow-inner break-words"
-             />
-
-             <ImageManager 
-               images={images} 
-               onUpdate={imgs => updateActiveContent({ images: imgs })}
-             />
-             <TableManager 
+             <SmartBlockEditor 
+               content={content}
+               images={images}
                tables={tables}
-               onUpdate={tbls => updateActiveContent({ tables: tbls })}
+               onUpdateContent={(val: string) => val.length <= MAX_CHARS && updateActiveContent({ content: val })}
+               onUpdateImages={(val: any) => updateActiveContent({ images: val })}
+               onUpdateTables={(val: any) => updateActiveContent({ tables: val })}
+               onDeleteImage={deleteImage}
+               onDeleteTable={deleteTable}
+               setLastCursor={setLastCursor}
              />
           </div>
         </div>
@@ -768,65 +1011,63 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
         defaultSize={35}
         minSize={25}
         maxSize={60}
-        className="bg-[#e2e4e9] overflow-y-auto custom-scrollbar p-8"
+        className="bg-[#e2e4e9] flex flex-col"
       >
-         <div className="flex items-center justify-between mb-4">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2">Visual Preview</span>
-         </div>
+        <div ref={previewContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar bg-slate-200/50 flex flex-col items-center">
+            <div 
+              className="flex flex-col items-center gap-10 origin-top transition-transform duration-300 py-12"
+              style={{ 
+                width: `${A4_WIDTH}px`,
+                transform: `scale(${previewScale})`
+              }}
+            >
+              {chaptersConfig.map((chapter, loopCIdx) => {
+                const chapterPages = paginateChapter(chapter, loopCIdx);
+                
+                return (
+                  <div 
+                    key={loopCIdx} 
+                    id={`preview-chapter-${loopCIdx}`}
+                    className="w-full flex flex-col items-center gap-10"
+                  >
+                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-[-20px]">
+                      <Hash className="w-3 h-3" /> Chapitre {loopCIdx + 1}
+                    </div>
 
-         <div className="bg-white w-full aspect-[1/1.414] mx-auto p-10 shadow-md border border-slate-300 font-serif text-slate-800 relative z-0 box-border overflow-hidden break-words" style={{ backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.05) 1px, transparent 1px)', backgroundSize: '16px 16px' }}>
-            
-            <h2 className="text-[13px] font-bold text-red-600 uppercase text-center mb-20 tracking-wider">
-              {activeChapter?.title ? `CHAPITRE ${activeItem.cIdx + 1}: ${activeChapter.title}` : `CHAPITRE ${activeItem.cIdx + 1}:`}
-            </h2>
-            
-            <div className="text-[10px] leading-[2.5] space-y-10 text-justify">
-               {activeChapter?.introduction && (
-                 <p className="text-slate-600 mb-12">{activeChapter.introduction}</p>
-               )}
-               
-               {activeChapter?.sections.map((s, si) => (
-                 <div key={si} className="space-y-6 mt-16">
-                    <h3 className="font-bold text-red-600 text-[11px] uppercase tracking-wide flex gap-2">
-                      <span>{getPrefix(1, si)}</span> 
-                      <span>{s.title}</span>
-                    </h3>
-                    
-                    <RenderSmartContent content={s.content} images={s.images} tables={s.tables} sectionIndex={si} />
+                    {chapterPages.map((pageSegs, pIdx) => (
+                      <div 
+                        key={pIdx}
+                        className={cn(
+                          "bg-white shadow-2xl shadow-black/10 border border-slate-300 relative transition-all duration-700 flex flex-col overflow-hidden w-full",
+                          activeItem.cIdx === loopCIdx ? "ring-2 ring-primary/40 ring-offset-8 ring-offset-slate-200/50" : ""
+                        )}
+                        style={{ 
+                          minHeight: `${A4_HEIGHT}px`,
+                          padding: `${A4_MARGIN}px`,
+                          backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.02) 1px, transparent 1px)', 
+                          backgroundSize: '24px 24px' 
+                        }}
+                      >
+                        <div className="flex-1 flex flex-col">
+                           {pageSegs.map((seg, sIdx) => (
+                             <div key={sIdx} id={seg.id}>
+                               {seg.type === 'raw' ? seg.content : <RenderSegment segment={seg} sectionIndex={loopCIdx} />}
+                             </div>
+                           ))}
+                        </div>
 
-                    {s.subsections?.map((ss, ssi) => (
-                      <div key={ssi} className="pl-6 space-y-6 mt-10">
-                        <h4 className="font-bold text-emerald-600 text-[10px] flex gap-2">
-                          <span>{getPrefix(2, ssi, si)}</span> {ss.title}
-                        </h4>
-                        
-                        <RenderSmartContent content={ss.content} images={ss.images} tables={ss.tables} sectionIndex={si} />
-
-                        {ss.subsections?.map((sss, sssi) => (
-                          <div key={sssi} className="pl-6 space-y-4 mt-8">
-                            <h5 className="font-bold text-black text-[10px] flex gap-2">
-                              <span>{getPrefix(3, sssi, ssi, si)}</span> {sss.title}
-                            </h5>
-                            <RenderSmartContent content={sss.content} images={sss.images} tables={sss.tables} sectionIndex={si} />
+                        {pIdx === chapterPages.length - 1 && (
+                          <div className="absolute inset-x-0 bottom-0 py-8 flex items-center justify-center opacity-30 pointer-events-none">
+                             <span className="text-[10px] font-black font-rapport text-slate-400 uppercase tracking-widest">Fin du Chapitre {loopCIdx + 1}</span>
                           </div>
-                        ))}
+                        )}
                       </div>
                     ))}
-                 </div>
-               ))}
-               
-               {activeChapter?.conclusion && (
-                 <div className="pt-12 mt-16 text-center">
-                    <p className="text-slate-600 italic">{activeChapter.conclusion}</p>
-                 </div>
-               )}
+                  </div>
+                );
+              })}
             </div>
-            
-            {/* Mock Page Number at bottom */}
-            <div className="absolute bottom-10 left-0 right-0 text-center text-[8px] font-bold text-slate-400 font-sans">
-              {activeItem.cIdx + 2}
-            </div>
-         </div>
+          </div>
       </ResizablePanel>
       </ResizablePanelGroup>
     </div>

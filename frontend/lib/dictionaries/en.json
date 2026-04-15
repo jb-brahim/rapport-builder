@@ -97,7 +97,11 @@
       "emailManaged": "Email is managed via identity provider.",
       "researchBio": "Research Bio",
       "researchBioPlaceholder": "Tell us about your research field...",
-      "updateProfile": "Update Profile"
+      "updateProfile": "Update Profile",
+      "updateSuccess": "Profile updated successfully!",
+      "photoTitle": "Profile Photo",
+      "photoDesc": "Click to change your photo",
+      "choosePhoto": "Choose Photo"
     },
     "academic": {
       "statusTitle": "Academic Status",
@@ -113,6 +117,12 @@
       "twoFactorDesc": "Secure your research with MFA",
       "aiPrivacy": "AI Activity Privacy",
       "aiPrivacyDesc": "Keep your report drafts strictly private",
+      "changePassword": "Change Password",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password",
+      "passwordSuccess": "Password updated successfully!",
+      "passwordError": "Incorrect current password",
       "dangerZone": "Danger Zone",
       "deleteTitle": "Permanently Delete Account",
       "deleteDesc": "This will erase all your reports, workspaces, and AI data. This action is irreversible.",
@@ -229,5 +239,55 @@
     "perspectivesPlaceholder": "What are the future improvements or next steps?",
     "bibliography": "Bibliography",
     "bibliographyPlaceholder": "List your references..."
+  },
+  "editor": {
+    "visualEditor": "Visual Editor",
+    "wizard": "Wizard",
+    "save": "Save",
+    "export": "Export",
+    "selectionInfo": "Selection Info",
+    "manageElement": "Manage Element",
+    "supprimer": "Delete",
+    "deleteElement": "Delete Element",
+    "appearance": "Appearance & Typography",
+    "fontFamily": "Font Family",
+    "fontSize": "Size",
+    "color": "Color",
+    "bold": "Bold",
+    "alignment": "Alignment",
+    "contentEditor": "Content Editor",
+    "placeholderContent": "Double-click here to add your custom text...",
+    "quickEdit": {
+      "title": "Quick Edit",
+      "desc": "Double-click directly on the text on the page to edit content."
+    },
+    "emptySelection": "Select an element to start editing",
+    "addNewPage": "Add New Page",
+    "tableOptions": "Style Options",
+    "tableStyles": "Table Styles",
+    "structureControls": "Structure",
+    "addRow": "+ Row",
+    "removeRow": "- Row",
+    "addCol": "+ Col",
+    "removeCol": "- Col",
+    "options": {
+      "headerRow": "Header Row",
+      "firstColumn": "First Column",
+      "totalRow": "Total Row",
+      "lastColumn": "Last Column",
+      "stripeRows": "Banded Rows",
+      "stripeColumns": "Banded Columns"
+    },
+    "sections": {
+      "reportProject": "PROJECT REPORT",
+      "dedication": "DEDICATION",
+      "acknowledgments": "ACKNOWLEDGEMENTS",
+      "abstract": "ABSTRACT",
+      "toc": "TABLE OF CONTENTS",
+      "tof": "TABLE OF FIGURES",
+      "tot": "TABLE OF TABLES",
+      "intro": "GENERAL INTRODUCTION",
+      "conclusion": "GENERAL CONCLUSION"
+    }
   }
 }

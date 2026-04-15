@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/app/context/auth-context';
 import { useTranslation } from '@/app/context/language-context';
+import { md5 } from '@/lib/utils';
 
 interface SidebarProps {
   isCollapsed?: boolean;
@@ -95,10 +96,33 @@ export function Sidebar({ isCollapsed = false }: SidebarProps) {
           </div>
         )}
 
+        {/* User Profile Info */}
+        <div className={`pt-4 border-t border-black/5 flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center overflow-hidden border border-white shrink-0 shadow-sm transition-all hover:border-primary/50">
+            {user?.profile?.photoUrl ? (
+              <img src={user.profile.photoUrl} alt={user.name} className="w-full h-full object-cover" />
+            ) : user?.email ? (
+              <img 
+                src={`https://www.gravatar.com/avatar/${md5(user.email.toLowerCase().trim())}?d=mp&s=100`} 
+                alt={user.name} 
+                className="w-full h-full object-cover" 
+              />
+            ) : (
+              <LayoutDashboard className="w-5 h-5 text-primary/40" />
+            )}
+          </div>
+          {!isCollapsed && (
+            <div className="flex-1 min-w-0 pr-2 animate-in fade-in slide-in-from-left-2 duration-500">
+              <p className="text-[11px] font-black text-[#250136] truncate leading-tight uppercase tracking-tight">{user?.profile?.name || user?.name || 'Researcher'}</p>
+              <p className="text-[9px] font-black text-primary/60 truncate uppercase tracking-widest leading-none mt-0.5">{user?.role || 'Student'}</p>
+            </div>
+          )}
+        </div>
+
         {/* Logout */}
         <button 
           onClick={logout}
-          className={`w-full flex items-center gap-3 px-4 py-4 text-[#250136]/40 hover:text-red-500 transition-colors border-t border-black/5 mt-2 ${isCollapsed ? 'justify-center border-none p-0' : ''}`}
+          className={`w-full flex items-center gap-3 px-4 py-4 text-[#250136]/40 hover:text-red-500 transition-colors ${isCollapsed ? 'justify-center' : ''}`}
         >
           <LogOut className="w-5 h-5 shrink-0" />
           {!isCollapsed && <span className="font-bold text-sm tracking-tight text-left animate-in fade-in duration-500">{t('sidebar.signOut')}</span>}
