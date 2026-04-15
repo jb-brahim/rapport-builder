@@ -398,6 +398,66 @@ const getChapterSegments = (chapter: any, chapIdx: number, counters: { fig: numb
 };
 
 // --- Main Page Component ---
+const generateAutomatedTableHTML = (elements: EditorElement[], introStartPage: number) => {
+  const tocEntries: any[] = [];
+  const tofEntries: any[] = [];
+  const totEntries: any[] = [];
+
+  const sortedElements = [...elements].sort((a, b) => {
+    const ay = (a.page - 1) * 1123 + a.y;
+    const by = (b.page - 1) * 1123 + b.y;
+    return ay - by;
+  });
+
+  sortedElements.forEach((el) => {
+    const pageStr = el.page < introStartPage 
+      ? toRoman(el.page - 1).toLowerCase() 
+      : (el.page - introStartPage + 1).toString();
+
+    // TOC Identification (Sections & Chapters)
+    const skipList = ['toc-l', 'tof-l', 'tot-l', 'ministry', 'univ-header', 'pfe-label', 'main-title', 'academic-year'];
+    if ((el.type === 'heading' || el.id.includes('-label')) && !skipList.includes(el.id)) {
+      const title = el.content.replace(/<[^>]*>/g, '').trim();
+      if (title && title.length > 2) {
+        tocEntries.push({ 
+          title, 
+          page: pageStr, 
+          isChapter: el.id.startsWith('chap-') && !el.id.includes('-s-') 
+        });
+      }
+    }
+
+    // TOF/TOT Identification (Captions)
+    if (el.caption) {
+      if (el.type === 'image' || el.caption.toLowerCase().includes('figure')) {
+        tofEntries.push({ title: el.caption, page: pageStr });
+      } else if (el.type === 'table' || el.caption.toLowerCase().includes('tableau')) {
+        totEntries.push({ title: el.caption, page: pageStr });
+      }
+    }
+  });
+
+  const formatList = (items: any[]) => {
+    if (items.length === 0) return `<div style="color: #94a3b8; font-style: italic; font-size: 14px; margin-top: 24px; text-align: center; width: 100%;">Aucune entrée détectée pour le moment.</div>`;
+    
+    return `<div style="margin-top: 32px; width: 100%; display: flex; flex-direction: column;">` + 
+      items.map(item => `
+        <div style="display: flex; align-items: baseline; margin-bottom: 14px; font-size: 11pt; color: #334155; font-family: 'Computer Modern Serif', serif; width: 100%;">
+          <span style="flex-shrink: 0; font-weight: ${item.isChapter ? '900' : '500'};">${item.title}</span>
+          <div style="flex-grow: 1; border-bottom: 1.5px dotted #cbd5e1; margin: 0 12px; position: relative; top: -4px;"></div>
+          <span style="flex-shrink: 0; font-family: monospace; font-size: 10pt; color: #64748B; font-weight: bold;">${item.page}</span>
+        </div>
+      `).join('') + 
+    `</div>`;
+  };
+
+  return {
+    tocContent: formatList(tocEntries),
+    tofContent: formatList(tofEntries),
+    totContent: formatList(totEntries)
+  };
+};
+
 export default function VisualEditor() {
   const params = useParams();
   const router = useRouter();
@@ -435,6 +495,11 @@ export default function VisualEditor() {
     setHistory(newHistory);
     setHistoryIndex(newHistory.length - 1);
   };
+
+  const autoContent = useMemo(() => 
+    generateAutomatedTableHTML(elements, introStartPage),
+    [elements, introStartPage]
+  );
 
   const undo = () => {
     if (historyIndex > 0) {
@@ -1262,7 +1327,12 @@ export default function VisualEditor() {
                           textAlign: el.textAlign,
                           whiteSpace: 'pre-wrap'
                         }}
-                        dangerouslySetInnerHTML={{ __html: el.content }}
+                        dangerouslySetInnerHTML={{ 
+                          __html: el.id === 'toc-l' ? el.content + autoContent.tocContent :
+                                 el.id === 'tof-l' ? el.content + autoContent.tofContent :
+                                 el.id === 'tot-l' ? el.content + autoContent.totContent :
+                                 el.content 
+                        }}
                       />
                     )}
 
