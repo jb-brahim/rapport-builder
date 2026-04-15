@@ -10,6 +10,7 @@ import { cn } from '../../../../../lib/utils';
 import WizardHeader from '../../../../../components/wizard/wizard-header';
 import WizardContainer from '../../../../../components/wizard/wizard-container';
 import ProgressTracker from '../../../../../components/wizard/progress-tracker';
+import WizardSuccess from '../../../../../components/wizard/wizard-success';
 
 export default function WizardPage() {
   const { user, isLoading } = useAuth();
@@ -23,6 +24,9 @@ export default function WizardPage() {
   const [chaptersConfig, setChaptersConfig] = useState<any[]>([]);
   
   const [isFetching, setIsFetching] = useState(true);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isExporting, setIsExporting] = useState<'pdf' | 'docx' | null>(null);
+
   const autoSaveRef = useRef<'idle' | 'saving' | 'saved'>('idle');
   const saveIndicatorRef = useRef<HTMLDivElement>(null);
 
@@ -147,10 +151,40 @@ export default function WizardPage() {
     setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
 
+  const handleExport = async (type: 'pdf' | 'docx') => {
+    setIsExporting(type);
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rapport-builder.onrender.com';
+      const response = await fetch(`${backendUrl}/api/export/${rapportId}/${type}`, {
+        method: 'GET',
+        headers: { 
+          'Accept': type === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) throw new Error('Export failed');
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `rapport_${rapportId}.${type}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(downloadUrl);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Export error:', error);
+    } finally {
+      setIsExporting(null);
+    }
+  };
+
   const handleSubmit = async () => {
     try {
       await saveExplicitStep(currentStep); // Save final step
-      router.push('/dashboard');
+      setIsSubmitted(true);
     } catch (error) {
       console.error('Submission failed:', error);
     }
@@ -187,7 +221,17 @@ export default function WizardPage() {
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-1000 relative z-10 pt-4">
       
-      {/* Unified SaaS Header: Tracker + Status on the same line */}
+      {isSubmitted ? (
+        <div className="glass-panel bg-white/70 py-16">
+          <WizardSuccess 
+            onExport={handleExport} 
+            isExporting={isExporting} 
+            rapportId={rapportId} 
+          />
+        </div>
+      ) : (
+        <>
+          {/* Unified SaaS Header: Tracker + Status on the same line */}
       <div className="flex flex-col md:flex-row items-center gap-4 w-full mb-4 relative z-20">
         <div className="flex-1 order-2 md:order-1 w-full">
           <ProgressTracker 
@@ -324,6 +368,8 @@ export default function WizardPage() {
         )}
 
       </div>
+        </>
+      )}
     </div>
   );
 }
