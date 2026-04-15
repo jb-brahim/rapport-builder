@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     // Forward to your backend API
     // Replace with your actual backend URL
-    const backendUrl = process.env.BACKEND_API_URL || 'https://rapport-builder.onrender.com';
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_API_URL || 'https://rapport-builder.onrender.com';
 
     const response = await fetch(`${backendUrl}/api/submit-rapport`, {
       method: 'POST',

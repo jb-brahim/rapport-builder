@@ -18,6 +18,8 @@ interface User {
   language: string;
 }
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
+
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
@@ -41,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (storedUser) {
         try {
           // Verify session with backend
-          const response = await fetch('/api/auth/profile', {
+          const response = await fetch(`${API_BASE}/auth/profile`, {
             credentials: 'include',
           });
 
@@ -78,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       // Call backend API via proxy
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -109,7 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signup = async (email: string, password: string, name: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, name }),
@@ -139,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', {
+      await fetch(`${API_BASE}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });
@@ -152,7 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateProfile = async (data: Partial<User['profile']>) => {
     try {
-      const response = await fetch('/api/auth/profile', {
+      const response = await fetch(`${API_BASE}/auth/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -184,7 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updatePassword = async (currentPassword: string, newPassword: string) => {
     try {
-      const response = await fetch('/api/auth/password', {
+      const response = await fetch(`${API_BASE}/auth/password`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentPassword, newPassword }),
