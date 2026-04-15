@@ -130,6 +130,9 @@
     }
   },
   "wizard": {
+    "saveManually": "Sauvegarder",
+    "saving": "Sauvegarde...",
+    "saved": "Enregistré !",
     "step1": "Page de Garde",
     "step2": "Dédicaces",
     "step3": "Remerciements",

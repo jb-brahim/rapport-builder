@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState, RefObject } from 'react';
-import { Check, Cloud } from 'lucide-react';
+import { Check, Cloud, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/app/context/language-context';
 
 interface WizardHeaderProps {
   indicatorRef?: RefObject<HTMLDivElement | null>;
@@ -12,6 +13,7 @@ interface WizardHeaderProps {
 
 export default function WizardHeader({ indicatorRef, onManualSave }: WizardHeaderProps) {
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const { t } = useTranslation();
 
   // Watch the data-status attribute via MutationObserver — only THIS component re-renders
   useEffect(() => {
@@ -35,11 +37,26 @@ export default function WizardHeader({ indicatorRef, onManualSave }: WizardHeade
             onClick={onManualSave}
             disabled={status === 'saving'}
             className={cn(
-              "h-9 px-6 rounded-full text-[10px] font-black transition-all",
+              "h-9 px-6 rounded-full text-[10px] font-black transition-all text-white flex items-center gap-2",
               status === 'saved' ? "bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/20" : "bg-[#250136] hover:bg-primary shadow-lg shadow-[#250136]/20"
             )}
           >
-            {status === 'saving' ? "SAVING..." : status === 'saved' ? "SAVED!" : "SAVE MANUALLY"}
+            {status === 'saving' ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                {t('wizard.saving')}
+              </>
+            ) : status === 'saved' ? (
+              <>
+                <Check className="w-3.5 h-3.5" />
+                {t('wizard.saved')}
+              </>
+            ) : (
+              <>
+                <Cloud className="w-3.5 h-3.5" />
+                {t('wizard.saveManually')}
+              </>
+            )}
           </Button>
         )}
         <div

@@ -2,7 +2,7 @@ import puppeteer from 'puppeteer';
 import HTMLToDOCX from 'html-to-docx';
 import Rapport from '../models/Rapport.js';
 
-// Helper for Roman numerals in page numbers
+// Helper for Roman numerals
 const toRoman = (num) => {
   if (num <= 0) return '';
   const roman = [
@@ -21,8 +21,69 @@ const toRoman = (num) => {
   return result;
 };
 
+// Helper to generate automated tables (TOC, TOF, TOT)
+const generateAutoTables = (elements, introStartPage) => {
+  const toc = [];
+  const tof = [];
+  const tot = [];
+
+  // Sort elements by page and Y position
+  const sorted = [...elements].sort((a, b) => (a.page - b.page) || (a.y - b.y));
+
+  for (const el of sorted) {
+    const pageStr = el.page < introStartPage ? toRoman(el.page - 1).toLowerCase() : (el.page - introStartPage + 1);
+
+    // TOC Identification
+    const isHeading = el.type === 'heading' || el.id?.includes('-label') || el.id?.includes('-l');
+    if (isHeading) {
+      // Skip the TOC/TOF/TOT labels themselves and things like Cover/Title
+      const skipList = ['toc-l', 'tof-l', 'tot-l', 'ministry', 'univ-header', 'pfe-label', 'main-title', 'academic-year'];
+      if (!skipList.includes(el.id)) {
+        let title = (el.content || '').replace(/<[^>]*>/g, '').trim();
+        // Handle specific labels that might have weird formatting
+        if (el.id?.startsWith('chap-') && el.id?.endsWith('-label')) {
+          // It's a chapter or section label
+        }
+        
+        toc.push({ title, page: pageStr, id: el.id });
+      }
+    }
+
+    // TOF/TOT Identification
+    if (el.caption) {
+      if (el.type === 'image' || el.caption.toLowerCase().includes('figure')) {
+        tof.push({ title: el.caption, page: pageStr });
+      } else if (el.type === 'table' || el.caption.toLowerCase().includes('tableau')) {
+        tot.push({ title: el.caption, page: pageStr });
+      }
+    }
+  }
+
+  const formatList = (items) => {
+    if (items.length === 0) return `<div style="color: #94a3b8; font-style: italic; font-size: 12px; margin-top: 20px;">Aucune entrée trouvée.</div>`;
+    
+    return `<div style="margin-top: 30px; width: 100%;">` + 
+      items.map(item => `
+        <div style="display: flex; align-items: baseline; margin-bottom: 8px; font-size: 11pt; color: #334155;">
+          <span style="flex-shrink: 0; font-weight: ${item.id?.includes('chap-') && !item.id?.includes('-s-') ? 'bold' : 'normal'};">${item.title}</span>
+          <div style="flex-grow: 1; border-bottom: 1px dotted #cbd5e1; margin: 0 8px; position: relative; top: -4px;"></div>
+          <span style="flex-shrink: 0; font-family: monospace; font-size: 10pt; color: #64748B;">${item.page}</span>
+        </div>
+      `).join('') + 
+    `</div>`;
+  };
+
+  return {
+    tocHtml: formatList(toc),
+    tofHtml: formatList(tof),
+    totHtml: formatList(tot)
+  };
+};
+
 // Generate exact replica HTML for Puppeteer
 const createPdfHtml = (elements, numPages, introStartPage) => {
+  const { tocHtml, tofHtml, totHtml } = generateAutoTables(elements, introStartPage);
+
   let html = `
     <!DOCTYPE html>
     <html lang="fr">
@@ -64,6 +125,11 @@ const createPdfHtml = (elements, numPages, introStartPage) => {
     const pageElements = elements.filter(e => e.page === p);
     for (const el of pageElements) {
       let contentHtml = el.content;
+      
+      // Inject Automated Tables
+      if (el.id === 'toc-l') contentHtml += tocHtml;
+      if (el.id === 'tof-l') contentHtml += tofHtml;
+      if (el.id === 'tot-l') contentHtml += totHtml;
       
       const elWidth = el.width === 'auto' ? '640px' : (typeof el.width === 'number' ? el.width + 'px' : el.width);
       let elHeight = el.height === 'auto' ? 'auto' : (typeof el.height === 'number' ? el.height + 'px' : el.height);

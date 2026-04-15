@@ -130,6 +130,9 @@
     }
   },
   "wizard": {
+    "saveManually": "Save Manually",
+    "saving": "Saving...",
+    "saved": "Saved!",
     "step1": "Cover Page",
     "step2": "Dédicace",
     "step3": "Acknowledgements",
