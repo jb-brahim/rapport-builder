@@ -6,6 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function md5(string: string) {
+  if (!string || typeof string !== 'string') return '';
   function md5cycle(x: any, k: any) {
     var a = x[0], b = x[1], c = x[2], d = x[3];
 

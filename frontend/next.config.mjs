@@ -10,7 +10,11 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'https://rapport-builder.onrender.com/api/:path*',
+        destination: 'http://localhost:5000/api/:path*',
+      },
+      {
+        source: '/uploads/:path*',
+        destination: 'http://localhost:5000/uploads/:path*',
       },
     ]
   },

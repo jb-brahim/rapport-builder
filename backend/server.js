@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
+import path from 'path';
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import templateRoutes from './routes/templateRoutes.js';
@@ -51,6 +52,10 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/export', exportRoutes);
 app.use('/api/wizard', wizardRoutes);
+
+// Static folders
+const __dirname = path.resolve();
+app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 
 // Basic route
 app.get('/', (req, res) => {
