@@ -7,6 +7,7 @@ import fs from 'fs';
 let storage;
 
 if (process.env.CLOUDINARY_CLOUD_NAME) {
+  console.log('☁️  Cloudinary configuration detected. Initializing remote storage...');
   cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
@@ -22,6 +23,7 @@ if (process.env.CLOUDINARY_CLOUD_NAME) {
     }
   });
 } else {
+  console.warn('⚠️  CLOUDINARY_CLOUD_NAME missing. Falling back to LOCAL storage (non-persistent on Render).');
   // Local storage fallback
   const uploadDir = 'uploads/';
   if (!fs.existsSync(uploadDir)) {
