@@ -161,14 +161,18 @@ const createPdfHtml = (elements, numPages, introStartPage) => {
           };
           const theme = themes[settings.themeColor] || themes.slate;
 
-          let tblHtml = `<table style="width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; font-family: ${el.fontFamily.replace(/"/g, "'")}; font-size: ${el.fontSize}px;"><tbody>`;
+          const fontFamily = (el.fontFamily || "'Times New Roman', serif").replace(/"/g, "'");
+          const fontSize = el.fontSize || 12;
+          const textAlign = el.textAlign || 'left';
+
+          let tblHtml = `<table style="width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; font-family: ${fontFamily}; font-size: ${fontSize}px;"><tbody>`;
           
           data.forEach((row, ridx) => {
             const bg = ridx === 0 ? theme.header : '#ffffff';
             const fg = ridx === 0 ? '#ffffff' : '#000000';
             tblHtml += `<tr style="background-color: ${bg}; border-bottom: 2px solid #e2e8f0;">`;
             row.forEach((cell) => {
-              tblHtml += `<td style="padding: 20px; color: ${fg}; border-right: 2px solid #e2e8f0; text-align: ${ridx === 0 ? 'center' : el.textAlign}; ${ridx === 0 ? 'font-weight: 900; text-transform: uppercase;' : ''}">${cell}</td>`;
+              tblHtml += `<td style="padding: 20px; color: ${fg}; border-right: 2px solid #e2e8f0; text-align: ${ridx === 0 ? 'center' : textAlign}; ${ridx === 0 ? 'font-weight: 900; text-transform: uppercase;' : ''}">${cell}</td>`;
             });
             tblHtml += `</tr>`;
           });
@@ -284,8 +288,8 @@ const exportToPdf = async (req, res) => {
     // Use visualLayout! Fallback to 1 page if undefined
     const layout = rapport.visualLayout || [];
     
-    // Dynamically calculate the total number of pages from the highest element "page" value
-    const numPages = layout.length > 0 ? Math.max(...layout.map(e => e.page || 1)) : 1;
+    // Safe page calculation to prevent stack errors on large reports
+    const numPages = layout.length > 0 ? layout.reduce((max, e) => Math.max(max, e.page || 1), 1) : 1;
 
     // Estimate introStartPage based on visualLayout
     const introEl = layout.find(e => e.id === 'intro-l');
