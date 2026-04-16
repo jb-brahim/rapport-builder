@@ -16,7 +16,7 @@ const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPE
 export const generateText = async (prompt, systemInstruction = '') => {
   // Try Gemini first (Best free option)
   if (genAI) {
-    const models = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-pro"];
+    const models = ["gemini-2.0-flash", "gemini-flash-latest", "gemini-2.0-flash-lite"];
     
     for (const modelName of models) {
       try {
