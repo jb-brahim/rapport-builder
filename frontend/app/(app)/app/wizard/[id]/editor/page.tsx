@@ -940,6 +940,30 @@ export default function VisualEditor() {
     }
   };
 
+  const handleAiStructure = async () => {
+    setIsAiLoading(true);
+    try {
+      const response = await apiClient('/ai/suggest-structure', {
+        method: 'POST',
+        data: {
+          projectTitle: elements.find(e => e.id === 'main-title')?.content || 'Mon Projet PFE',
+          language: language
+        }
+      });
+
+      if (response.structure) {
+        // Here we could automatically add the chapters or show a modal.
+        // For now, let's just log it or alert.
+        // Better: Let's add a popup or just notify the user.
+        alert("Structure suggérée par l'IA :\n" + response.structure.map((s: any) => `- ${s.title}`).join('\n'));
+      }
+    } catch (error) {
+      console.error('AI Structure failed:', error);
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
   const handleAiRefine = async () => {
     if (!selectedId || !selectedElement || selectedElement.type !== 'text') return;
     
@@ -1031,6 +1055,20 @@ export default function VisualEditor() {
           </div>
 
           <div className="flex items-center gap-2">
+             <button
+               onClick={handleAiStructure}
+               disabled={isAiLoading}
+               className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-all font-bold text-xs border border-indigo-100 shadow-sm"
+               title="Suggérer une Structure"
+             >
+               {isAiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+               <span className="hidden md:inline">Assistant IA</span>
+             </button>
+             
+             <div className="h-8 w-px bg-slate-200 mx-1" />
+          </div>
+
+          <div className="flex items-center gap-2">
             <button
               onClick={() => handleExport('pdf')}
               disabled={saveStatus === 'loading-pdf'}
@@ -1097,6 +1135,7 @@ export default function VisualEditor() {
           </div>
         </div>
       </header>
+
 
       <div className="flex-1 flex overflow-hidden">
 
