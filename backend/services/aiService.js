@@ -16,25 +16,30 @@ const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPE
 export const generateText = async (prompt, systemInstruction = '') => {
   // Try Gemini first (Best free option)
   if (genAI) {
-    try {
-      const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.5-flash",
-        systemInstruction: systemInstruction 
-      });
+    const models = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-pro"];
+    
+    for (const modelName of models) {
+      try {
+        console.log(`Attempting generation with ${modelName}...`);
+        const model = genAI.getGenerativeModel({ 
+          model: modelName,
+          systemInstruction: systemInstruction 
+        });
 
-      
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      return response.text();
-    } catch (error) {
-      console.error('Gemini AI Error:', error);
-      // Fallback to OpenAI if Gemini fails and OpenAI is available
-      if (openai) {
-        return await generateOpenAI(prompt, systemInstruction);
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        return response.text();
+      } catch (error) {
+        console.error(`${modelName} Error:`, error.message);
+        if (error.message.includes('503') || error.message.includes('429') || error.message.includes('high demand')) {
+          console.warn(`${modelName} is busy, trying next model...`);
+          continue;
+        }
+        throw error;
       }
-      throw error;
     }
   }
+
 
   // Fallback to OpenAI
   if (openai) {
