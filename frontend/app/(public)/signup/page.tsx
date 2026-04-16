@@ -49,7 +49,7 @@ export default function SignupPage() {
         <div className="glass-panel p-8 sm:p-12 shadow-[0_20px_50px_rgba(245,158,81,0.05),0_10px_30px_rgba(58,3,83,0.05)] border border-primary/20 rounded-[3rem] transition-all duration-500 hover:shadow-primary/10">
           <div className="text-center mb-10">
             <div className="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center mx-auto mb-6 shadow-xl hover:scale-105 transition-transform duration-500">
-              <img src="/logo.png" alt="GradOs Logo" className="w-full h-full object-cover" />
+              <img src="/logo.svg" alt="GradOs Logo" className="w-full h-full object-cover" />
             </div>
             <h1 className="text-4xl font-bold mb-3 text-foreground tracking-tight">Create Account</h1>
             <p className="text-base text-muted-foreground/70 font-medium tracking-wide text-center">Join thousand of students creating professional reports</p>

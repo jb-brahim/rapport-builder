@@ -59,7 +59,7 @@ export default function DashboardPage() {
           <div className="relative w-24 h-24 flex items-center justify-center">
             <div className="absolute inset-0 rounded-full border-[3px] border-primary/20 border-t-primary animate-spin"></div>
             <div className="w-16 h-16 rounded-full overflow-hidden shadow-inner">
-               <img src="/logo.png" alt="GradOs" className="w-full h-full object-cover animate-pulse" />
+               <img src="/logo.svg" alt="GradOs" className="w-full h-full object-cover animate-pulse" />
             </div>
           </div>
           <div className="text-center space-y-2">

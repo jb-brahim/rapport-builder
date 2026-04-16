@@ -45,8 +45,8 @@ export function Sidebar({ isCollapsed = false }: SidebarProps) {
     }`}>
       {/* Branding - Higher Placement */}
       <div className={`p-6 pb-2 flex items-center gap-3 transition-all duration-500 ${isCollapsed ? 'justify-center' : ''}`}>
-        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/10 transition-transform hover:scale-105 active:scale-95 cursor-pointer shrink-0">
-          <img src="/logo.png" alt="Logo" className="w-6 h-6 invert brightness-0" />
+        <div className="w-10 h-10 rounded-2xl overflow-hidden flex items-center justify-center shadow-lg shadow-primary/10 transition-transform hover:scale-105 active:scale-95 cursor-pointer shrink-0">
+          <img src="/logo.svg" alt="Logo" className="w-full h-full object-cover" />
         </div>
         {!isCollapsed && <span className="text-xl font-black text-[#250136] tracking-tight uppercase animate-in fade-in slide-in-from-left-2 duration-500">GradOs</span>}
       </div>

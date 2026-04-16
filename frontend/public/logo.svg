@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Calque_1" xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 50 50">
+  <!-- Generator: Adobe Illustrator 29.8.2, SVG Export Plug-In . SVG Version: 2.1.1 Build 3)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: url(#Dégradé_sans_nom_25);
+      }
+
+      .st1, .st2 {
+        fill: #fff;
+      }
+
+      .st2 {
+        stroke: #723a89;
+        stroke-miterlimit: 10;
+        stroke-width: .17px;
+      }
+
+      .st3 {
+        fill: url(#Dégradé_sans_nom_251);
+      }
+
+      .st4 {
+        fill: url(#Dégradé_sans_nom_252);
+      }
+
+      .st5 {
+        fill: url(#Dégradé_sans_nom_253);
+      }
+    </style>
+    <linearGradient id="Dégradé_sans_nom_25" data-name="Dégradé sans nom 25" x1="13.62" y1="5.3" x2="36.38" y2="44.7" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f49c54"/>
+      <stop offset="1" stop-color="#502668"/>
+    </linearGradient>
+    <linearGradient id="Dégradé_sans_nom_251" data-name="Dégradé sans nom 25" x1="17.08" y1="19.39" x2="27.52" y2="19.39" xlink:href="#Dégradé_sans_nom_25"/>
+    <linearGradient id="Dégradé_sans_nom_252" data-name="Dégradé sans nom 25" x1="17.08" y1="25" x2="31.67" y2="25" xlink:href="#Dégradé_sans_nom_25"/>
+    <linearGradient id="Dégradé_sans_nom_253" data-name="Dégradé sans nom 25" x1="16.93" y1="30.89" x2="31.82" y2="30.89" xlink:href="#Dégradé_sans_nom_25"/>
+  </defs>
+  <ellipse class="st0" cx="25" cy="25" rx="22.67" ry="22.77"/>
+  <path class="st1" d="M31.64,12.18c-.35-.07-.72-.1-1.09-.1h-11.09c-3.29,0-5.96,2.68-5.96,5.99v13.86c0,3.31,2.67,5.99,5.96,5.99h11.09c3.29,0,5.96-2.68,5.96-5.99v-13.86c0-.09,0-.19,0-.28l-4.86-5.6Z"/>
+  <rect class="st3" x="17.08" y="17.84" width="10.44" height="3.1" rx="1.47" ry="1.47"/>
+  <rect class="st4" x="17.08" y="23.45" width="14.59" height="3.1" rx="1.47" ry="1.47"/>
+  <rect class="st5" x="16.93" y="29.34" width="14.89" height="3.1" rx="1.47" ry="1.47"/>
+  <path class="st2" d="M31.86,12.1c-.05,0-.11-.02-.16-.02l-.33,2.72c-.13,1.07.6,2.05,1.63,2.18l3.51.46-4.65-5.34Z"/>
+</svg>

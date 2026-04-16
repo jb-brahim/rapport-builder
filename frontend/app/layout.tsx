@@ -12,8 +12,8 @@ export const metadata: Metadata = {
   description: 'GradOs helps you build your university thesis or final year report (PFE) step by step with AI assistance, auto-saving, and real-time preview.',
   generator: 'v0.app',
   icons: {
-    icon: '/logo.png',
-    apple: '/logo.png',
+    icon: '/logo.svg',
+    apple: '/logo.svg',
   },
 }
 
