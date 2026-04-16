@@ -6,12 +6,12 @@ const router = express.Router();
 
 router.route('/')
   .get(protect, getRapports)
-  .post(protect, restrictTo('student'), createRapport);
+  .post(protect, restrictTo('student', 'admin', 'faculty'), createRapport);
 
 router.route('/:id')
   .get(protect, getRapportById)
-  .delete(protect, restrictTo('student'), deleteRapport);
+  .delete(protect, restrictTo('student', 'admin'), deleteRapport);
 
-router.route('/:id/autosave').patch(protect, restrictTo('student'), autoSaveRapport);
+router.route('/:id/autosave').patch(protect, restrictTo('student', 'admin'), autoSaveRapport);
 
 export default router;
