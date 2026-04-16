@@ -272,6 +272,8 @@
       "desc": "Double-cliquez directement sur le texte sur la page pour modifier le contenu."
     },
     "emptySelection": "Sélectionnez un élément pour commencer l'édition",
+    "aiBoost": "Boost avec IA",
+    "aiThinking": "Réflexion IA...",
     "addNewPage": "Ajouter une Page",
     "tableOptions": "Options de style",
     "tableStyles": "Styles de tableau",

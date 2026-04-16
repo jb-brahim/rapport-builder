@@ -272,6 +272,8 @@
       "desc": "Double-click directly on the text on the page to edit content."
     },
     "emptySelection": "Select an element to start editing",
+    "aiBoost": "Boost with AI",
+    "aiThinking": "AI Thinking...",
     "addNewPage": "Add New Page",
     "tableOptions": "Style Options",
     "tableStyles": "Table Styles",

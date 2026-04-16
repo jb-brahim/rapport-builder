@@ -29,7 +29,10 @@ import {
   ListChecks,
   LayoutGrid,
   ClipboardList,
-  AlertCircle
+  AlertCircle,
+  Sparkles,
+  Wand2,
+  Loader2
 } from 'lucide-react';
 import {
   Table,
@@ -480,6 +483,7 @@ export default function VisualEditor() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error' | 'loading-pdf' | 'loading-docx'>('idle');
   const [introStartPage, setIntroStartPage] = useState(1);
+  const [isAiLoading, setIsAiLoading] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const [history, setHistory] = useState<EditorElement[][]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -933,6 +937,34 @@ export default function VisualEditor() {
     } catch (error) {
       console.error(`${type} Export Error:`, error);
       setSaveStatus('error');
+    }
+  };
+
+  const handleAiRefine = async () => {
+    if (!selectedId || !selectedElement || selectedElement.type !== 'text') return;
+    
+    setIsAiLoading(true);
+    try {
+      const plainText = selectedElement.content.replace(/<[^>]*>/g, '').trim();
+      const response = await apiClient('/ai/expand-text', {
+        method: 'POST',
+        data: {
+          shortText: plainText,
+          language: language,
+          context: 'Section focusing on academic PFE report'
+        }
+      });
+
+      if (response.text) {
+        const styleMatch = selectedElement.content.match(/style="([^"]*)"/);
+        const style = styleMatch ? styleMatch[1] : '';
+        const wrapped = `<div style="${style}">${response.text}</div>`;
+        updateElement(selectedId, { content: wrapped });
+      }
+    } catch (error) {
+      console.error('AI Refine failed:', error);
+    } finally {
+      setIsAiLoading(false);
     }
   };
 
@@ -1476,6 +1508,27 @@ export default function VisualEditor() {
                            className={`p-2.5 rounded-xl font-black text-xs min-w-[36px] transition-all border ${selectedElement.fontWeight === 'bold' ? 'bg-primary text-white border-primary shadow-lg' : 'bg-white text-slate-400 border-slate-200 hover:border-primary/30'}`}
                          >B</button>
                       </div>
+
+                      {/* Row 2.5: AI Boost */}
+                      {selectedElement.type === 'text' && (
+                        <button
+                          onClick={handleAiRefine}
+                          disabled={isAiLoading}
+                          className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-lg shadow-indigo-200 hover:shadow-indigo-300 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:grayscale"
+                        >
+                          {isAiLoading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>{t('editor.aiThinking') || 'AI Thinking...'}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-4 h-4" />
+                              <span>{t('editor.aiBoost') || 'Boost with AI'}</span>
+                            </>
+                          )}
+                        </button>
+                      )}
 
                       {/* Row 3: Alignment */}
                       <div className="flex items-center p-1 bg-slate-50 rounded-xl border border-slate-200">
