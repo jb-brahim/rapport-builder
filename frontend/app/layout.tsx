@@ -8,8 +8,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'GradOs - AI-Powered Thesis & PFE Platform',
-  description: 'GradOs helps you build your university thesis or final year report (PFE) step by step with AI assistance, auto-saving, and real-time preview.',
+  title: 'Rappori - AI-Powered Thesis & PFE Platform',
+  description: 'Rappori helps you build your university thesis or final year report (PFE) step by step with AI assistance, auto-saving, and real-time preview.',
   generator: 'v0.app',
   icons: {
     icon: '/logo.svg',

@@ -21,10 +21,10 @@ export function Navbar() {
       <nav className="w-[95%] max-w-[1600px] bg-white/70 backdrop-blur-xl border border-black/5 shadow-[0_8px_32px_rgba(37,1,54,0.05)] px-6 py-2.5 flex items-center justify-between pointer-events-auto rounded-full">
         <Link href="/" className="flex items-center gap-3 group">
           <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center shadow-sm">
-            <img src="/logo.svg" alt="GradOs Logo" className="w-full h-full object-cover" />
+            <img src="/logo.svg" alt="Rappori Logo" className="w-full h-full object-cover" />
           </div>
           <span className="font-bold text-xl text-[#250136] tracking-tighter">
-            GradOs
+            Rappori
           </span>
         </Link>
 

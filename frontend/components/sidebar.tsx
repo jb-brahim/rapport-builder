@@ -48,7 +48,7 @@ export function Sidebar({ isCollapsed = false }: SidebarProps) {
         <div className="w-10 h-10 rounded-2xl overflow-hidden flex items-center justify-center shadow-lg shadow-primary/10 transition-transform hover:scale-105 active:scale-95 cursor-pointer shrink-0">
           <img src="/logo.svg" alt="Logo" className="w-full h-full object-cover" />
         </div>
-        {!isCollapsed && <span className="text-xl font-black text-[#250136] tracking-tight uppercase animate-in fade-in slide-in-from-left-2 duration-500">GradOs</span>}
+        {!isCollapsed && <span className="text-xl font-black text-[#250136] tracking-tight uppercase animate-in fade-in slide-in-from-left-2 duration-500">Rappori</span>}
       </div>
 
       {/* Main Navigation */}

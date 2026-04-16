@@ -59,11 +59,11 @@ export default function DashboardPage() {
           <div className="relative w-24 h-24 flex items-center justify-center">
             <div className="absolute inset-0 rounded-full border-[3px] border-primary/20 border-t-primary animate-spin"></div>
             <div className="w-16 h-16 rounded-full overflow-hidden shadow-inner">
-               <img src="/logo.svg" alt="GradOs" className="w-full h-full object-cover animate-pulse" />
+               <img src="/logo.svg" alt="Rappori" className="w-full h-full object-cover animate-pulse" />
             </div>
           </div>
           <div className="text-center space-y-2">
-            <h3 className="text-xl font-bold text-foreground">GradOs</h3>
+            <h3 className="text-xl font-bold text-foreground">Rappori</h3>
             <p className="text-foreground/50 font-medium tracking-widest uppercase text-[10px]">{t('common.syncing')}</p>
           </div>
         </div>
