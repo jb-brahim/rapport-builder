@@ -21,10 +21,17 @@
     "signIn": "Se Connecter",
     "getStarted": "Commencer"
   },
-  "sidebar": {
+    "sidebar": {
     "dashboard": "Tableau de Bord",
     "myReports": "Mes Rapports",
     "settings": "Paramètres",
+    "admin": {
+      "group": "Administration",
+      "overview": "Aperçu",
+      "users": "Utilisateurs",
+      "reports": "Tous les Rapports",
+      "announcements": "Annonces"
+    },
     "signOut": "Se Déconnecter",
     "premiumTitle": "Support Premium",
     "premiumDesc": "Aide prioritaire 24/7 pour votre mémoire de fin d'études.",

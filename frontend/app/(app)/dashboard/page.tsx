@@ -1,13 +1,22 @@
 'use client';
 
-import { useAuth } from '../../context/auth-context';
+import { useAuth } from '@/app/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Button } from '../../../components/ui/button';
-import { apiClient } from '../../../lib/api';
-import { useTranslation } from '../../context/language-context';
-import { Plus, Clock, FileText, CheckCircle2, Filter } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { apiClient } from '@/lib/api';
+import { useTranslation } from '@/app/context/language-context';
+import { Plus, Clock, FileText, CheckCircle2, Filter, Megaphone, X } from 'lucide-react';
+
+
+interface Announcement {
+  _id: string;
+  title: string;
+  content: string;
+  type: 'info' | 'warning' | 'success' | 'danger';
+}
+
 
 interface Rapport {
   _id: string;
@@ -28,15 +37,20 @@ export default function DashboardPage() {
   const router = useRouter();
   const { t } = useTranslation();
   const [rapports, setRapports] = useState<Rapport[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [dismissedAnnouncements, setDismissedAnnouncements] = useState<string[]>([]);
+
 
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/login');
     } else if (user) {
       fetchRapports();
+      fetchAnnouncements();
     }
+
   }, [user, authLoading, router]);
 
   const fetchRapports = async () => {
@@ -49,6 +63,16 @@ export default function DashboardPage() {
       setIsLoading(false);
     }
   };
+
+  const fetchAnnouncements = async () => {
+    try {
+      const data = await apiClient('/announcements/active');
+      setAnnouncements(data);
+    } catch (e) {
+      console.error('Failed to fetch announcements:', e);
+    }
+  };
+
 
   // Project creation moved natively to /app/wizard/new
 
@@ -78,6 +102,42 @@ export default function DashboardPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-1000">
       
+      {/* Announcements Section */}
+      {announcements.filter(a => !dismissedAnnouncements.includes(a._id)).length > 0 && (
+        <div className="space-y-3 animate-in fade-in slide-in-from-top-4 duration-700">
+          {announcements
+            .filter(a => !dismissedAnnouncements.includes(a._id))
+            .map((ann) => (
+              <div 
+                key={ann._id} 
+                className={`group relative glass-panel p-4 border-l-4 shadow-lg flex items-start gap-4 transition-all hover:translate-x-1 ${
+                  ann.type === 'danger' ? 'border-red-500 bg-red-50/50' : 
+                  ann.type === 'warning' ? 'border-amber-500 bg-amber-50/50' :
+                  ann.type === 'success' ? 'border-emerald-500 bg-emerald-50/50' : 'border-blue-500 bg-blue-50/50'
+                }`}
+              >
+                <div className={`mt-1 h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
+                  ann.type === 'danger' ? 'text-red-600 bg-red-100' : 
+                  ann.type === 'warning' ? 'text-amber-600 bg-amber-100' :
+                  ann.type === 'success' ? 'text-emerald-600 bg-emerald-100' : 'text-blue-600 bg-blue-100'
+                }`}>
+                  <Megaphone className="w-4 h-4" />
+                </div>
+                <div className="flex-1 pr-10">
+                  <h4 className="text-sm font-black text-[#250136] tracking-tight">{ann.title}</h4>
+                  <p className="text-xs font-bold text-[#250136]/60 leading-relaxed mt-0.5">{ann.content}</p>
+                </div>
+                <button 
+                  onClick={() => setDismissedAnnouncements([...dismissedAnnouncements, ann._id])}
+                  className="absolute right-4 top-4 p-1.5 rounded-full hover:bg-black/5 text-[#250136]/30 hover:text-[#250136] transition-all opacity-0 group-hover:opacity-100"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+        </div>
+      )}
+
       {/* Header Area with Action */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-2">

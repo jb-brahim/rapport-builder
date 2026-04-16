@@ -21,10 +21,17 @@
     "signIn": "Sign In",
     "getStarted": "Get Started"
   },
-  "sidebar": {
+    "sidebar": {
     "dashboard": "Dashboard",
     "myReports": "My Reports",
     "settings": "Settings",
+    "admin": {
+      "group": "Administration",
+      "overview": "Overview",
+      "users": "User Management",
+      "reports": "All Reports",
+      "announcements": "Announcements"
+    },
     "signOut": "Sign Out",
     "premiumTitle": "Premium Support",
     "premiumDesc": "24/7 priority help for your graduation thesis.",

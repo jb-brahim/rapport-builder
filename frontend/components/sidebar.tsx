@@ -8,6 +8,10 @@ import {
   Settings, 
   HelpCircle, 
   LogOut, 
+  ShieldCheck,
+  Users,
+  FileBarChart,
+  Megaphone,
   ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '@/app/context/auth-context';
@@ -23,6 +27,8 @@ export function Sidebar({ isCollapsed = false }: SidebarProps) {
   const { logout, user } = useAuth();
   const { t, language } = useTranslation();
 
+  const isAdmin = user?.role === 'admin';
+
   const navGroups = [
     {
       groupLabel: language === 'fr' ? 'Espace de Travail' : 'Workspace',
@@ -31,6 +37,17 @@ export function Sidebar({ isCollapsed = false }: SidebarProps) {
         { nameKey: 'sidebar.myReports', icon: FileText, href: '/reports' },
       ]
     },
+    ...(isAdmin ? [
+      {
+        groupLabel: t('sidebar.admin.group'),
+        items: [
+          { nameKey: 'sidebar.admin.overview', icon: ShieldCheck, href: '/admin' },
+          { nameKey: 'sidebar.admin.users', icon: Users, href: '/admin/users' },
+          { nameKey: 'sidebar.admin.reports', icon: FileBarChart, href: '/admin/reports' },
+          { nameKey: 'sidebar.admin.announcements', icon: Megaphone, href: '/admin/announcements' },
+        ]
+      }
+    ] : []),
     {
       groupLabel: language === 'fr' ? 'Système' : 'System',
       items: [
@@ -38,6 +55,7 @@ export function Sidebar({ isCollapsed = false }: SidebarProps) {
       ]
     }
   ];
+
 
   return (
     <div className={`fixed inset-y-0 left-0 bg-white/40 backdrop-blur-3xl border-r border-white/60 flex flex-col z-[60] transition-all duration-500 ease-in-out ${

@@ -13,6 +13,9 @@ import reviewRoutes from './routes/reviewRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import exportRoutes from './routes/exportRoutes.js';
 import wizardRoutes from './routes/wizardRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import announcementRoutes from './routes/announcementRoutes.js';
+
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
 dotenv.config();
@@ -52,6 +55,9 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/export', exportRoutes);
 app.use('/api/wizard', wizardRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/announcements', announcementRoutes);
+
 
 // Static folders
 const __dirname = path.resolve();
