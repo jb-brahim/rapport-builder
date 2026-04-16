@@ -15,6 +15,7 @@ import exportRoutes from './routes/exportRoutes.js';
 import wizardRoutes from './routes/wizardRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import announcementRoutes from './routes/announcementRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
 
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
@@ -57,6 +58,7 @@ app.use('/api/export', exportRoutes);
 app.use('/api/wizard', wizardRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/announcements', announcementRoutes);
+app.use('/api/ai', aiRoutes);
 
 
 // Static folders
