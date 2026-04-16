@@ -66,9 +66,11 @@ export default function GlobalReportsPage() {
   const filteredReports = reports.filter(r => {
     const title = r.wizardAnswers?.projectTitle || r.wizardAnswers?.documentName || 'Untitled';
     const userName = r.userId?.profile?.name || r.userId?.name || 'Unknown';
-    return title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-           userName.toLowerCase().includes(searchTerm.toLowerCase());
+    const search = searchTerm || '';
+    return title.toLowerCase().includes(search.toLowerCase()) || 
+           userName.toLowerCase().includes(search.toLowerCase());
   });
+
 
   if (authLoading || isLoading) {
     return (

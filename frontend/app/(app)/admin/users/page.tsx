@@ -70,10 +70,13 @@ export default function UserManagementPage() {
     }
   };
 
-  const filteredUsers = users.filter(u => 
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    u.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter(u => {
+    const name = u.profile?.name || u.name || '';
+    const email = u.email || '';
+    return name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+           email.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
 
   if (authLoading || isLoading) {
     return (
