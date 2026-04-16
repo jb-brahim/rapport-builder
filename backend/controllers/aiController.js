@@ -1,9 +1,6 @@
-import OpenAI from 'openai';
+import { generateText } from '../services/aiService.js';
 import Rapport from '../models/Rapport.js';
 import { generateFullRapport } from '../services/rapportGenerator.js';
-
-// Default config will pick up process.env.OPENAI_API_KEY automatically
-const openai = new OpenAI(); 
 
 // @desc    Generate company presentation based on wizard answers
 // @route   POST /api/ai/generate-company
@@ -12,18 +9,11 @@ const generateCompanyText = async (req, res) => {
   try {
     const { answers, language } = req.body;
     
-    if (!process.env.OPENAI_API_KEY) {
-      return res.json({ text: `[MOCK AI] Company presentation generated for ${answers.companyName} based on your answers.` });
-    }
+    const systemInstruction = `You are a professional academic writer for Tunisian PFE reports (Projet de Fin d'Études). Write in ${language || 'FR'}.`;
+    const prompt = `Write a professional 3-paragraph company presentation for a company named "${answers.companyName}" in the "${answers.sector}" sector. The student role is "${answers.role}". Ensure the tone is formal and suitable for an internship report.`;
 
-    const prompt = `Write a professional 3-paragraph company presentation in ${language} for a company named ${answers.companyName} in the ${answers.sector} sector. The student role is ${answers.role}.`;
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }]
-    });
-
-    res.json({ text: completion.choices[0].message.content });
+    const text = await generateText(prompt, systemInstruction);
+    res.json({ text });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -36,18 +26,11 @@ const suggestStructure = async (req, res) => {
   try {
     const { answers, language } = req.body;
     
-    if (!process.env.OPENAI_API_KEY) {
-      return res.json({ text: `[MOCK AI] Suggested structure for project: ${answers.projectTitle}` });
-    }
+    const systemInstruction = `You are an expert in academic project planning. Provide your response in ${language || 'FR'}.`;
+    const prompt = `Based on a project titled "${answers.projectTitle}" (objective: ${answers.objective}, technologies: ${answers.technologies}), suggest a detailed chapter structure for a final university report. Include sections for context, analysis, design, and implementation.`;
 
-    const prompt = `Based on a project titled "${answers.projectTitle}" (objective: ${answers.objective}, tech: ${answers.technologies}), suggest a detailed chapter structure for a final university report in ${language}.`;
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }]
-    });
-
-    res.json({ text: completion.choices[0].message.content });
+    const text = await generateText(prompt, systemInstruction);
+    res.json({ text });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -60,22 +43,16 @@ const expandText = async (req, res) => {
   try {
     const { shortText, context, language } = req.body;
     
-    if (!process.env.OPENAI_API_KEY) {
-      return res.json({ text: `[MOCK AI EXPANSION] Expanded professional version of: "${shortText}"` });
-    }
+    const systemInstruction = `You are an academic writing assistant. Improve the provided text into a formal paragraph in ${language || 'FR'}.`;
+    const prompt = `Rewrite and expand the following short note into a fully professional, well-structured academic paragraph suitable for a final internship report (PFE). Context: ${context || 'General internship experience'}. Short note: "${shortText}"`;
 
-    const prompt = `Rewrite and expand the following short note into a fully professional, well-structured academic paragraph in ${language || 'FR'} suitable for a final internship report (PFE). Context: ${context || 'General internship experience'}. Short note: "${shortText}"`;
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }]
-    });
-
-    res.json({ text: completion.choices[0].message.content });
+    const text = await generateText(prompt, systemInstruction);
+    res.json({ text });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // @desc    Generate the full 100-page JSON rapport from wizard answers
 // @route   POST /api/ai/generate-full/:rapportId
