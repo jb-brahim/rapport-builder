@@ -665,6 +665,20 @@ const RAPPORT_3_CONFIG = {
 };
 
 // Generate all sections for one rapport:
+export async function generateFullRapport(config) {
+  try {
+    const [partA, partB, partC] = await Promise.all([
+      generateRapportSection(config, "A"),
+      generateRapportSection(config, "B"),
+      generateRapportSection(config, "C"),
+    ]);
+    return { ...partA, ...partB, ...partC };
+  } catch (err) {
+    console.error(`✗ Failed to generate full rapport:`, err.message);
+    throw err;
+  }
+}
+
 async function generateRapportSection(config, callType) {
   if (!process.env.ANTHROPIC_API_KEY) {
     console.warn("No Anthropic API key provided. Skipping generation for Call " + callType);
@@ -715,5 +729,5 @@ async function generateAllRapports() {
   console.log("\nAll rapports generation pipeline finished.");
 }
 
-// Execute the generation script if called directly
-generateAllRapports();
+// REMOVED side-effect execution for server compatibility
+// generateAllRapports();
