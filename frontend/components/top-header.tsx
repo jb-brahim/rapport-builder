@@ -1,13 +1,53 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/app/context/auth-context';
 import { useTranslation } from '@/app/context/language-context';
-import { Search, Bell, Settings, User } from 'lucide-react';
+import { Search, Bell, Settings, User, Megaphone, X, Clock } from 'lucide-react';
 import { md5 } from '@/lib/utils';
+import { apiClient } from '@/lib/api';
+
+
+interface Announcement {
+  _id: string;
+  title: string;
+  content: string;
+  type: 'info' | 'warning' | 'success' | 'danger';
+  createdAt: string;
+}
 
 export function TopHeader() {
   const { user } = useAuth();
   const { t, language, setLanguage } = useTranslation();
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const fetchAnnouncements = async () => {
+    try {
+      const data = await apiClient('/announcements/active');
+      setAnnouncements(data);
+    } catch (e) {
+      console.error('Failed to fetch notifications:', e);
+    }
+  };
+
+  const handleToggleNotifications = () => {
+    if (!showNotifications) {
+      fetchAnnouncements();
+    }
+    setShowNotifications(!showNotifications);
+  };
 
   const userPhoto = user?.profile?.photoUrl || (user?.email ? `https://www.gravatar.com/avatar/${md5(user.email.toLowerCase().trim())}?d=mp&s=100` : null);
 
@@ -43,11 +83,55 @@ export function TopHeader() {
           </div>
         </div>
 
-        <div className="flex gap-2 text-[#250136]/40">
-          <button className="w-10 h-10 rounded-2xl hover:bg-white/60 hover:text-primary transition-all flex items-center justify-center relative border border-transparent hover:border-white/60">
+        <div className="flex gap-2 text-[#250136]/40 relative" ref={dropdownRef}>
+          <button 
+            onClick={handleToggleNotifications}
+            className={`w-10 h-10 rounded-2xl transition-all flex items-center justify-center relative border ${
+              showNotifications ? 'bg-primary/5 text-primary border-primary/20' : 'hover:bg-white/60 hover:text-primary border-transparent hover:border-white/60'
+            }`}
+          >
             <Bell className="w-5 h-5" />
-            <div className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full border-2 border-white shadow-sm" />
+            {announcements.length > 0 && (
+              <div className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full border-2 border-white shadow-sm" />
+            )}
           </button>
+
+          {/* Notification Dropdown */}
+          {showNotifications && (
+            <div className="absolute right-0 top-full mt-3 w-80 bg-white/95 backdrop-blur-xl border border-white/60 rounded-[2rem] shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
+               <div className="flex items-center justify-between mb-4 px-2">
+                 <h4 className="text-xs font-black text-[#250136] uppercase tracking-[0.2em]">Announcements</h4>
+                 <button onClick={() => setShowNotifications(false)} className="text-[#250136]/30 hover:text-[#250136]">
+                   <X className="w-4 h-4" />
+                 </button>
+               </div>
+               
+               <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+                 {announcements.length > 0 ? announcements.map((ann) => (
+                   <div key={ann._id} className="p-3 rounded-2xl bg-white border border-black/5 hover:border-primary/20 transition-all group">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className={`w-2 h-2 rounded-full ${
+                          ann.type === 'danger' ? 'bg-red-500' : 
+                          ann.type === 'warning' ? 'bg-amber-500' :
+                          ann.type === 'success' ? 'bg-emerald-500' : 'bg-primary'
+                        }`} />
+                        <span className="text-[10px] font-black text-[#250136] truncate">{ann.title}</span>
+                      </div>
+                      <p className="text-[10px] font-bold text-[#250136]/50 line-clamp-2 leading-relaxed">{ann.content}</p>
+                      <div className="flex items-center gap-1 mt-2 text-[9px] font-black text-[#250136]/20 uppercase tracking-widest">
+                        <Clock className="w-3 h-3" />
+                        {new Date(ann.createdAt).toLocaleDateString()}
+                      </div>
+                   </div>
+                 )) : (
+                   <div className="py-10 text-center">
+                     <Megaphone className="w-8 h-8 text-[#250136]/10 mx-auto mb-2" />
+                     <p className="text-[10px] font-black text-[#250136]/30 uppercase tracking-widest">No active messages</p>
+                   </div>
+                 )}
+               </div>
+            </div>
+          )}
           
           <div className="flex bg-black/5 p-1 rounded-2xl self-center ml-2 border border-white/60 shadow-inner">
             <button

@@ -66,12 +66,13 @@ export default function AnnouncementsPage() {
     try {
       const created = await apiClient('/admin/announcements', {
         method: 'POST',
-        body: JSON.stringify({
+        data: {
           title: newTitle,
           content: newContent,
           type: newType
-        })
+        }
       });
+
       setAnnouncements([created, ...announcements]);
       setIsCreating(false);
       setNewTitle('');
