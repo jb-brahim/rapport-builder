@@ -1,6 +1,9 @@
 import crypto from 'crypto';
 import User from '../models/User.js';
 import generateToken from '../utils/generateToken.js';
+import { OAuth2Client } from 'google-auth-library';
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
@@ -182,4 +185,58 @@ const getSupervisors = async (req, res) => {
   }
 };
 
-export { registerUser, loginUser, logoutUser, getUserProfile, updateUserProfile, updateUserPassword, getSupervisors };
+// @desc    Auth user with Google
+// @route   POST /api/auth/google
+// @access  Public
+const googleLogin = async (req, res) => {
+  const { idToken } = req.body;
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { sub: googleId, email, name, picture } = payload;
+
+    let user = await User.findOne({ $or: [{ googleId }, { email }] });
+
+    if (user) {
+      // Update googleId if not present (link existing account)
+      if (!user.googleId) user.googleId = googleId;
+      // Update photo if missing
+      if (!user.profile.photoUrl) user.profile.photoUrl = picture;
+      await user.save();
+    } else {
+      // Create new user
+      user = await User.create({
+        email,
+        googleId,
+        role: 'student',
+        profile: {
+          name,
+          photoUrl: picture || `https://www.gravatar.com/avatar/${crypto.createHash('md5').update(email.toLowerCase().trim()).digest('hex')}?d=identicon&s=200`
+        }
+      });
+    }
+
+    generateToken(res, user._id);
+
+    res.json({
+      _id: user._id,
+      email: user.email,
+      role: user.role,
+      profile: user.profile,
+      language: user.language,
+      writingStreak: user.writingStreak || 0,
+      longestStreak: user.longestStreak || 0,
+      lastActiveAt: user.lastActiveAt
+    });
+  } catch (error) {
+    console.error('Google Auth Error:', error);
+    res.status(401).json({ message: 'Google authentication failed' });
+  }
+};
+
+export { registerUser, loginUser, logoutUser, getUserProfile, updateUserProfile, updateUserPassword, getSupervisors, googleLogin };

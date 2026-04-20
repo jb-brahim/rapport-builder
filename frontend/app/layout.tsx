@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from './context/auth-context'
 import { LanguageProvider } from './context/language-context'
+import { GoogleOAuthProvider } from '@react-oauth/google'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
@@ -36,11 +37,13 @@ export default function RootLayout({
           <div className="absolute top-[25%] right-[5%] w-[50%] h-[50%] bg-[#F8D299]/10 rounded-full blur-[120px]" />
         </div>
 
-        <LanguageProvider>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
-        </LanguageProvider>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
+          <LanguageProvider>
+            <AuthProvider>
+              {children}
+            </AuthProvider>
+          </LanguageProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   )

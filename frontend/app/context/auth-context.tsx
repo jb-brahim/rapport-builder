@@ -28,6 +28,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string) => Promise<void>;
+  googleLogin: (credential: string) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<User['profile']>) => Promise<void>;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
@@ -138,11 +139,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         name: data.profile?.name || data.name || name,
         role: data.role,
         profile: data.profile,
-        language: data.language
+        language: data.language,
+        writingStreak: 0,
+        longestStreak: 0
       };
       
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const googleLogin = async (credential: string) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: credential }),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Google login failed');
+      }
+
+      const data = await response.json();
+      const userData: User = { 
+        id: data._id, 
+        email: data.email, 
+        name: data.profile?.name || data.name || data.email.split('@')[0],
+        role: data.role,
+        profile: data.profile,
+        language: data.language,
+        writingStreak: data.writingStreak || 0,
+        longestStreak: data.longestStreak || 0,
+        lastActiveAt: data.lastActiveAt
+      };
+      
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+    } catch (e) {
+      console.error('Google Auth Context Error:', e);
+      throw e;
     } finally {
       setIsLoading(false);
     }
@@ -182,7 +222,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         name: updatedData.profile?.name || updatedData.name,
         role: updatedData.role,
         profile: updatedData.profile,
-        language: updatedData.language
+        language: updatedData.language,
+        writingStreak: updatedData.writingStreak || 0,
+        longestStreak: updatedData.longestStreak || 0
       };
 
       localStorage.setItem('user', JSON.stringify(userData));
@@ -213,7 +255,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, updateProfile, updatePassword }}>
+    <AuthContext.Provider value={{ user, isLoading, login, signup, googleLogin, logout, updateProfile, updatePassword }}>
       {children}
     </AuthContext.Provider>
   );

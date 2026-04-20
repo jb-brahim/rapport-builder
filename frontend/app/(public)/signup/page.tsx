@@ -6,6 +6,7 @@ import { useAuth } from '@/app/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function SignupPage() {
   const [name, setName] = useState('');
@@ -14,7 +15,7 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const { signup } = useAuth();
+  const { signup, googleLogin } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -118,6 +119,36 @@ export default function SignupPage() {
               {isLoading ? 'Creating account...' : 'Create Account'}
             </Button>
           </form>
+
+          <div className="relative my-8">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-muted/30"></span>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground/50 tracking-widest font-bold">Or continue with</span>
+            </div>
+          </div>
+
+          <div className="flex justify-center social-login-wrapper">
+            <GoogleLogin
+              onSuccess={credentialResponse => {
+                if (credentialResponse.credential) {
+                  setIsLoading(true);
+                  googleLogin(credentialResponse.credential)
+                    .then(() => router.push('/dashboard'))
+                    .catch(() => setError('Google sign-up failed. Please try again.'))
+                    .finally(() => setIsLoading(false));
+                }
+              }}
+              onError={() => {
+                setError('Google authentication failed');
+              }}
+              theme="outline"
+              size="large"
+              width="100%"
+              shape="pill"
+            />
+          </div>
 
           <div className="mt-6 text-center">
             <p className="text-muted-foreground text-sm">
