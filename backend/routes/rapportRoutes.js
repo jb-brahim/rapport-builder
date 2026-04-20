@@ -1,5 +1,5 @@
 import express from 'express';
-import { createRapport, getRapports, getRapportById, autoSaveRapport, deleteRapport } from '../controllers/rapportController.js';
+import { createRapport, getRapports, getRapportById, autoSaveRapport, deleteRapport, updateHeartbeat } from '../controllers/rapportController.js';
 import { protect, restrictTo } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
