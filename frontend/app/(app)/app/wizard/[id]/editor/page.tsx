@@ -472,13 +472,33 @@ const generateAutomatedTableHTML = (elements: EditorElement[], introStartPage: n
     if (items.length === 0) return `<div style="color: #94a3b8; font-style: italic; font-size: 14px; margin-top: 24px; text-align: center; width: 100%;">Aucune entrée détectée pour le moment.</div>`;
     
     return `<table style="width: 100%; border-collapse: collapse; margin-top: 16px;">` + 
-      items.map(item => `
+      items.map(item => {
+        // Intelligent Padding based on the title pattern (Matches Backend Logic)
+        let paddingLeft = "0px";
+        let fontWeight = item.isChapter ? "900" : "500";
+        
+        if (item.title.match(/^[IVX]+\.\s/)) paddingLeft = "25px";
+        else if (item.title.match(/^\d+\.\s/)) paddingLeft = "50px";
+        else if (item.title.match(/^[a-z]\)\s/)) paddingLeft = "75px";
+
+        // Front matter (Dédicace, etc.) should be bold and left-aligned with no padding
+        const frontMatter = ["DÉDICACE", "REMERCIEMENTS", "RÉSUMÉ", "ABSTRACT", "INTRODUCTION GÉNÉRALE", "CONCLUSION GÉNÉRALE"];
+        if (frontMatter.includes(item.title.toUpperCase())) {
+          paddingLeft = "0px";
+          fontWeight = "900";
+        }
+
+        return `
         <tr style="line-height: 1.1;">
-          <td style="padding: 4px 0; font-size: 11pt; color: #334155; font-family: 'Computer Modern Serif', serif; font-weight: ${item.isChapter ? '900' : '500'}; white-space: nowrap;">${item.title}</td>
+          <td style="padding: 4px 0 4px ${paddingLeft}; text-align: left !important; font-size: 11pt; color: #334155; font-family: 'Computer Modern Serif', serif; font-weight: ${fontWeight}; white-space: nowrap;">
+            ${item.title}
+          </td>
           <td style="width: 100%; padding: 0 8px; border-bottom: 1.5px dotted #cbd5e1; position: relative; top: -6px;"></td>
-          <td style="padding: 4px 0; text-align: right; font-family: monospace; font-size: 10pt; color: #64748B; font-weight: bold; white-space: nowrap;">${item.page}</td>
-        </tr>
-      `).join('') + 
+          <td style="padding: 4px 0; text-align: right; font-family: monospace; font-size: 10pt; color: #64748B; font-weight: bold; white-space: nowrap;">
+            ${item.page}
+          </td>
+        </tr>`;
+      }).join('') + 
     `</table>`;
   };
 
