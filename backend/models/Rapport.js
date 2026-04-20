@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const rapportSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  supervisorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   templateId: { type: mongoose.Schema.Types.ObjectId, ref: 'Template' },
   currentStep: { type: Number, min: 1, max: 12, default: 1 },
   stepCompletion: { 
@@ -14,7 +15,11 @@ const rapportSchema = new mongoose.Schema({
   numPages: { type: Number, default: 3 },
   sectionLocks: { type: Map, of: Boolean, default: new Map() },
   status: { type: String, enum: ['draft', 'in_review', 'final'], default: 'draft' },
-  lastSavedAt: { type: Date, default: Date.now }
+  lastSavedAt: { type: Date, default: Date.now },
+  activeViewers: [{
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    lastActive: { type: Date, default: Date.now }
+  }]
 }, { timestamps: true });
 
 // Middleware to update lastSavedAt on any change

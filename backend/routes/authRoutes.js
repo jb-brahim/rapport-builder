@@ -12,5 +12,6 @@ router.route('/profile')
   .put(protect, updateUserProfile);
 
 router.put('/password', protect, updateUserPassword);
+router.get('/supervisors', protect, getSupervisors);
 
 export default router;

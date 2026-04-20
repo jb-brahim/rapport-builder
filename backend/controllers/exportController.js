@@ -70,13 +70,36 @@ const generateAutoTables = (elements, introStartPage) => {
     if (items.length === 0) return `<div style="color: #94a3b8; font-style: italic; font-size: 12px; margin-top: 20px;">Aucune entrée trouvée.</div>`;
     
     return `<table style="width: 100%; border-collapse: collapse; margin-top: 10px;">` + 
-      items.map(item => `
+      items.map(item => {
+        const title = item.title;
+        let paddingLeft = 0;
+        
+        // Detect nesting level using regex patterns
+        // Level 1: Roman numerals (I. II. III. ...)
+        if (title.match(/^[IVX]+\.\s/)) {
+          paddingLeft = 25;
+        } 
+        // Level 2: Arabic numerals (1. 2. 3. ...)
+        else if (title.match(/^\d+\.\s/)) {
+          paddingLeft = 50;
+        }
+        // Level 3: Alpha markers (a) b) c) ...)
+        else if (title.match(/^[a-z]\)\s/)) {
+          paddingLeft = 75;
+        }
+
+        const isMainHeading = item.id?.includes('chap-') && !item.id?.includes('-s-');
+        // Ensure standard front/back matter items are also treated as main headings (bold)
+        const isImportant = isMainHeading || ['INTRODUCTION', 'CONCLUSION', 'SOMMAIRE', 'RÉSUMÉ', 'DÉDICACE', 'REMERCIEMENTS'].includes(title.toUpperCase());
+
+        return `
         <tr style="line-height: 1.1;">
-          <td style="padding: 4px 0; font-size: 11pt; color: #334155; font-family: 'Latin Modern Roman', serif; font-weight: ${item.id?.includes('chap-') && !item.id?.includes('-s-') ? '900' : '500'}; white-space: nowrap;">${item.title}</td>
+          <td style="padding: 4px 0 4px ${paddingLeft}px; font-size: 11pt; color: #334155; font-family: 'Latin Modern Roman', serif; font-weight: ${isImportant ? '900' : '500'}; text-align: left !important; white-space: nowrap;">${title}</td>
           <td style="width: 100%; padding: 0 8px; border-bottom: 1.5px dotted #cbd5e1; position: relative; top: -6px;"></td>
           <td style="padding: 4px 0; text-align: right; font-family: monospace; font-size: 10pt; color: #64748B; font-weight: bold; white-space: nowrap;">${item.page}</td>
         </tr>
-      `).join('') + 
+        `;
+      }).join('') + 
     `</table>`;
   };
 

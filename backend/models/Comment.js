@@ -2,10 +2,12 @@ import mongoose from 'mongoose';
 
 const commentSchema = new mongoose.Schema({
   rapportId: { type: mongoose.Schema.Types.ObjectId, ref: 'Rapport', required: true },
-  sectionId: { type: String, required: true }, // Not an ObjectId, just string ID of the section in JSON
-  authorName: { type: String, required: true }, // No account required for reviewers
+  sectionId: { type: String, required: true }, 
+  authorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  authorName: { type: String, required: true },
   text: { type: String, required: true },
   thread: [{
+    authorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     authorName: String,
     text: String,
     createdAt: { type: Date, default: Date.now }

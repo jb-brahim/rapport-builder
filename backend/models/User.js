@@ -14,7 +14,10 @@ const userSchema = new mongoose.Schema({
     year: { type: String }
   },
   language: { type: String, enum: ['FR', 'EN', 'AR'], default: 'FR' },
-  contributorBadge: { type: Boolean, default: false }
+  contributorBadge: { type: Boolean, default: false },
+  writingStreak: { type: Number, default: 0 },
+  longestStreak: { type: Number, default: 0 },
+  lastActiveAt: { type: Date }
 }, { timestamps: true });
 
 userSchema.pre('save', async function(next) {

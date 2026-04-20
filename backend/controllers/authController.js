@@ -63,7 +63,10 @@ const loginUser = async (req, res) => {
         email: user.email,
         role: user.role,
         profile: user.profile,
-        language: user.language
+        language: user.language,
+        writingStreak: user.writingStreak || 0,
+        longestStreak: user.longestStreak || 0,
+        lastActiveAt: user.lastActiveAt
       });
     } else {
       res.status(401).json({ message: 'Invalid email or password' });
@@ -97,7 +100,10 @@ const getUserProfile = async (req, res) => {
       email: user.email,
       role: user.role,
       profile: user.profile,
-      language: user.language
+      language: user.language,
+      writingStreak: user.writingStreak || 0,
+      longestStreak: user.longestStreak || 0,
+      lastActiveAt: user.lastActiveAt
     });
   } else {
     res.status(404).json({ message: 'User not found' });
@@ -164,4 +170,16 @@ const updateUserPassword = async (req, res) => {
   }
 };
 
-export { registerUser, loginUser, logoutUser, getUserProfile, updateUserProfile, updateUserPassword };
+// @desc    Get all users with supervisor/faculty role
+// @route   GET /api/auth/supervisors
+// @access  Private
+const getSupervisors = async (req, res) => {
+  try {
+    const supervisors = await User.find({ role: { $in: ['faculty', 'supervisor', 'admin'] } }).select('profile.name email role');
+    res.json(supervisors);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export { registerUser, loginUser, logoutUser, getUserProfile, updateUserProfile, updateUserPassword, getSupervisors };

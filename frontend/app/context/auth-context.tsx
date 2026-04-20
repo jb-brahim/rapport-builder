@@ -16,6 +16,9 @@ interface User {
     year?: string;
   };
   language: string;
+  writingStreak: number;
+  longestStreak: number;
+  lastActiveAt?: string;
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
@@ -55,7 +58,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               name: data.profile?.name || data.name || data.email.split('@')[0],
               role: data.role,
               profile: data.profile,
-              language: data.language
+              language: data.language,
+              writingStreak: data.writingStreak || 0,
+              longestStreak: data.longestStreak || 0,
+              lastActiveAt: data.lastActiveAt
             };
             setUser(userData);
             localStorage.setItem('user', JSON.stringify(userData));
@@ -98,7 +104,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         name: data.profile?.name || data.name || email.split('@')[0],
         role: data.role,
         profile: data.profile,
-        language: data.language
+        language: data.language,
+        writingStreak: data.writingStreak || 0,
+        longestStreak: data.longestStreak || 0,
+        lastActiveAt: data.lastActiveAt
       };
       
       localStorage.setItem('user', JSON.stringify(userData));

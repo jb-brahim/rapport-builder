@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { apiClient } from '@/lib/api';
 import { useTranslation } from '@/app/context/language-context';
-import { Plus, Clock, FileText, CheckCircle2, Filter, Megaphone, X } from 'lucide-react';
+import { Plus, Clock, FileText, CheckCircle2, Filter, Megaphone, X, Flame, Activity, Award } from 'lucide-react';
 
 
 interface Announcement {
@@ -142,11 +142,11 @@ export default function DashboardPage() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-2">
           <h1 className="text-4xl font-black text-[#250136] tracking-tight">
-            {t('dashboard.welcomeBack', { name: user?.name || 'Researcher' })}
+            {user?.role === 'supervisor' ? `Bonjour, Dr. ${user?.name || 'Academic'}` : t('dashboard.welcomeBack', { name: user?.name || 'Researcher' })}
           </h1>
           <div className="flex items-center gap-2 text-[#250136]/50 font-bold">
             <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)] animate-pulse" />
-            <span>{t('dashboard.hubStatus', { count: rapports.length })}</span>
+            <span>{user?.role === 'supervisor' ? `Vous encadrez ${rapports.length} projets actifs` : t('dashboard.hubStatus', { count: rapports.length })}</span>
           </div>
         </div>
 
@@ -160,28 +160,105 @@ export default function DashboardPage() {
       </div>
 
       {/* High-Density Insights Bar */}
-      <div className="glass-panel p-4 md:p-6 border-white/60 bg-white/50 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6 divide-y md:divide-y-0 md:divide-x divide-black/5 items-center relative overflow-hidden">
-        {[
-          { labelKey: 'dashboard.activeProjects', value: total, icon: FileText, color: 'text-primary', statusKey: 'dashboard.thisWeek', bg: 'bg-primary/10' },
-          { labelKey: 'dashboard.inProgress', value: inProgress, icon: Clock, color: 'text-amber-500', statusKey: 'dashboard.updatingLive', bg: 'bg-amber-500/10' },
-          { labelKey: 'dashboard.completed', value: completed, icon: CheckCircle2, color: 'text-emerald-500', statusKey: 'dashboard.finalized', bg: 'bg-emerald-500/10' }
-        ].map((stat, i) => (
-          <div key={i} className="px-4 py-4 md:py-0 flex items-center justify-between group">
-            <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-xl border border-white/40 ${stat.bg} flex justify-center items-center group-hover:scale-105 transition-transform shadow-sm`}>
-                <stat.icon className={`w-5 h-5 ${stat.color}`} />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="md:col-span-3 glass-panel p-4 md:p-6 border-white/60 bg-white/50 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6 divide-y md:divide-y-0 md:divide-x divide-black/5 items-center relative overflow-hidden">
+          {[
+            { labelKey: user?.role === 'supervisor' ? 'Étudiants Actifs' : 'dashboard.activeProjects', value: total, icon: FileText, color: 'text-primary', statusKey: 'dashboard.thisWeek', bg: 'bg-primary/10' },
+            { labelKey: user?.role === 'supervisor' ? 'En Révision' : 'dashboard.inProgress', value: inProgress, icon: Clock, color: 'text-amber-500', statusKey: 'dashboard.updatingLive', bg: 'bg-amber-500/10' },
+            { labelKey: user?.role === 'supervisor' ? 'Validés' : 'dashboard.completed', value: completed, icon: CheckCircle2, color: 'text-emerald-500', statusKey: 'dashboard.finalized', bg: 'bg-emerald-500/10' }
+          ].map((stat, i) => (
+            <div key={i} className="px-4 py-4 md:py-0 flex items-center justify-between group">
+              <div className="flex items-center gap-4">
+                <div className={`w-12 h-12 rounded-xl border border-white/40 ${stat.bg} flex justify-center items-center group-hover:scale-105 transition-transform shadow-sm`}>
+                  <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                </div>
+                <div>
+                  <p className="text-2xl font-black text-[#250136] tracking-tighter leading-none">{stat.value}</p>
+                  <p className="text-[10px] font-black text-[#250136]/50 uppercase tracking-widest mt-1">{stat.labelKey.startsWith('dashboard.') ? t(stat.labelKey) : stat.labelKey}</p>
+                </div>
+              </div>
+              <div className={`hidden lg:flex items-center gap-2 text-[9px] font-black ${stat.color} px-2.5 py-1 rounded-lg bg-white shadow-sm border border-black/5`}>
+                <div className={`w-1 h-1 rounded-full ${stat.color.replace('text-', 'bg-')} animate-pulse`} />
+                {t(stat.statusKey)}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Writing Streak Widget */}
+        <div className="glass-panel p-6 bg-gradient-to-br from-[#250136] to-[#3a0a4f] border-none shadow-xl flex flex-col justify-between relative overflow-hidden group">
+           <div className="absolute -right-4 -top-4 opacity-10 group-hover:scale-110 transition-transform duration-700">
+             <Flame className="w-32 h-32 text-orange-400 rotate-12" />
+           </div>
+           
+           <div className="flex items-center gap-3 relative z-10">
+              <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
+                <Flame className="w-5 h-5 text-orange-400" />
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">Writing Streak</span>
+           </div>
+
+           <div className="mt-8 relative z-10">
+              <div className="flex items-baseline gap-2">
+                <span className="text-5xl font-black text-white tracking-tighter">{user?.writingStreak || 0}</span>
+                <span className="text-xs font-black text-white/50 uppercase tracking-widest">Days</span>
+              </div>
+              <p className="text-[10px] font-bold text-white/40 mt-1 uppercase tracking-wider">Keep the momentum going!</p>
+           </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Document Health / Readiness Card */}
+        <div className="lg:col-span-1 glass-panel p-6 border-white/60 bg-white shadow-sm flex flex-col gap-6 group">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 border border-indigo-100">
+                <Activity className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-2xl font-black text-[#250136] tracking-tighter leading-none">{stat.value}</p>
-                <p className="text-[10px] font-black text-[#250136]/50 uppercase tracking-widest mt-1">{t(stat.labelKey)}</p>
+                <h4 className="text-xs font-black text-[#250136] uppercase tracking-widest">Document Health</h4>
+                <p className="text-[10px] text-[#250136]/50 font-bold uppercase tracking-widest mt-0.5">Overall Progress</p>
               </div>
             </div>
-            <div className={`hidden lg:flex items-center gap-2 text-[9px] font-black ${stat.color} px-2.5 py-1 rounded-lg bg-white shadow-sm border border-black/5`}>
-              <div className={`w-1 h-1 rounded-full ${stat.color.replace('text-', 'bg-')} animate-pulse`} />
-              {t(stat.statusKey)}
-            </div>
+            <Award className="w-5 h-5 text-amber-500 opacity-20 group-hover:opacity-100 transition-opacity" />
           </div>
-        ))}
+
+          <div className="space-y-4">
+             {(() => {
+                const totalPages = rapports.reduce((acc, r) => acc + (r.currentStep || 0), 0);
+                const targetPages = rapports.length * 9;
+                const health = targetPages > 0 ? Math.round((totalPages / targetPages) * 100) : 0;
+                
+                return (
+                  <>
+                    <div className="flex items-end justify-between">
+                      <span className="text-4xl font-black text-[#250136] tracking-tighter">{health}%</span>
+                      <span className="text-[10px] font-black text-emerald-500 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 uppercase tracking-widest">System OK</span>
+                    </div>
+                    <div className="w-full h-2.5 bg-black/5 rounded-full overflow-hidden border border-black/5 shadow-inner">
+                      <div 
+                        className="h-full bg-gradient-to-r from-indigo-500 to-primary transition-all duration-1000 shadow-[0_0_12px_rgba(79,70,229,0.3)]"
+                        style={{ width: `${health}%` }}
+                      />
+                    </div>
+                  </>
+                );
+             })()}
+          </div>
+        </div>
+
+        {/* Existing Status Indicator (Moved or adjusted) */}
+        <div className="lg:col-span-2 glass-panel p-6 border-white/60 bg-white/30 backdrop-blur-xl flex items-center justify-between overflow-hidden relative">
+           <div className="absolute right-0 top-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+           <div className="space-y-2 relative z-10">
+              <h4 className="text-sm font-black text-[#250136] uppercase tracking-widest">Next Milestone</h4>
+              <p className="text-xl font-black text-[#250136] leading-tight">Complete your Literature Review <br /><span className="text-primary font-bold text-xs uppercase tracking-[0.2em]">+250 XP</span></p>
+           </div>
+           <button className="h-12 px-6 rounded-xl bg-white text-[#250136] border border-black/5 font-black text-[10px] uppercase tracking-widest transition-all hover:shadow-lg active:scale-95 relative z-10">
+              View Roadmap
+           </button>
+        </div>
       </div>
 
       <div className="space-y-6">

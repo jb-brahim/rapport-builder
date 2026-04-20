@@ -43,8 +43,13 @@ const expandText = async (req, res) => {
   try {
     const { shortText, context, language } = req.body;
     
-    const systemInstruction = `You are an academic writing assistant. Improve the provided text into a formal paragraph in ${language || 'FR'}.`;
-    const prompt = `Rewrite and expand the following short note into a fully professional, well-structured academic paragraph suitable for a final internship report (PFE). Context: ${context || 'General internship experience'}. Short note: "${shortText}"`;
+    const systemInstruction = `You are a strict academic writing assistant. Your task is to ONLY provide the improved text. DO NOT include any introductions, pleasantries, analysis, or explanations. Respond ONLY with the final rewritten paragraph in ${language || 'FR'}.`;
+    const prompt = `Rewrite and expand the following short note into a fully professional, well-structured academic paragraph suitable for a final internship report (PFE). 
+    
+    Context: ${context || 'General internship experience'}
+    Short note to improve: "${shortText}"
+    
+    CRITICAL: Provide ONLY the final paragraph. No markdown headers, no "Here is your text", no list of improvements. Just the clean text.`;
 
     const text = await generateText(prompt, systemInstruction);
     res.json({ text });

@@ -13,5 +13,6 @@ router.route('/:id')
   .delete(protect, restrictTo('student', 'admin'), deleteRapport);
 
 router.route('/:id/autosave').patch(protect, restrictTo('student', 'admin'), autoSaveRapport);
+router.route('/:id/heartbeat').post(protect, updateHeartbeat);
 
 export default router;
