@@ -43,65 +43,66 @@ export default function NewWizardPage() {
   };
 
   return (
-    <div className="flex h-full min-h-[calc(100vh-180px)] items-center justify-center animate-in fade-in duration-700">
-      <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-10 items-stretch">
+    <div className="flex h-full min-h-[calc(100vh-180px)] items-center justify-center animate-in fade-in duration-1000">
+      <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
         
-        {/* Left Side: Information & Context */}
-        <div className="lg:col-span-4 flex flex-col justify-between py-6">
-          <div className="space-y-8">
+        <div className="lg:col-span-5 flex flex-col justify-between py-12">
+          <div className="space-y-10">
             <Button 
               variant="ghost" 
               onClick={() => router.push('/dashboard')}
-              className="font-bold text-[#250136]/40 hover:text-[#250136] hover:bg-white/50 flex items-center gap-2 rounded-xl transition-all w-fit px-4 h-9 text-xs"
+              className="font-black text-[#250136]/30 hover:text-[#250136] hover:bg-white/50 flex items-center gap-2 rounded-xl transition-all w-fit px-4 h-10 text-[10px] uppercase tracking-widest"
             >
               <ChevronLeft className="w-4 h-4" />
-              {t('dashboard.modal.cancel') || 'Retour Dashboard'}
+              {t('common.cancel')}
             </Button>
 
-            <div className="space-y-4">
-               <div className="w-16 h-16 rounded-[2rem] bg-gradient-to-br from-primary to-orange-400 shadow-xl shadow-primary/20 flex items-center justify-center mb-6">
-                 <FileText className="w-8 h-8 text-white" />
+            <div className="space-y-6">
+               <div className="w-20 h-20 rounded-[2.5rem] bg-gradient-to-br from-primary to-orange-400 shadow-2xl shadow-primary/30 flex items-center justify-center mb-8">
+                 <FileText className="w-10 h-10 text-white" />
                </div>
-               <h3 className="text-4xl font-extrabold text-[#250136] leading-tight tracking-tight">
-                 Nouvel <br/> Espace.
+               <h3 className="text-5xl font-black text-[#250136] leading-[1.1] tracking-tight">
+                 {t('wizard.new.title').split(' ').map((word, i) => (
+                   <span key={i}>{word}{i === 0 && <br/>} </span>
+                 ))}
                </h3>
-               <p className="text-sm font-medium text-[#250136]/50 max-w-[200px] leading-relaxed">
-                 Configurez les bases de votre document pour débloquer l'assistant intelligent.
+               <p className="text-base font-bold text-[#250136]/50 max-w-[280px] leading-relaxed">
+                 {t('wizard.new.subtitle')}
                </p>
             </div>
           </div>
 
-          <div className="space-y-6 pt-10 border-t border-[#250136]/5">
-             <div className="flex items-start gap-4">
-                <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-primary font-black text-xs shrink-0 border border-[#250136]/5">1</div>
+          <div className="space-y-8 pt-12 border-t border-[#250136]/10">
+             <div className="flex items-center gap-5">
+                <div className="w-10 h-10 rounded-xl bg-white shadow-lg flex items-center justify-center text-primary font-black text-sm shrink-0 border border-[#250136]/5">1</div>
                 <div>
-                   <p className="text-xs font-bold text-[#250136] uppercase tracking-wider mb-0.5">Configuration</p>
-                   <p className="text-[10px] font-medium text-[#250136]/40">Langue and structure initiale</p>
+                   <p className="text-xs font-black text-[#250136] uppercase tracking-widest mb-0.5">{t('wizard.new.configTitle')}</p>
+                   <p className="text-[11px] font-bold text-[#250136]/40 lowercase">{t('wizard.new.configDesc')}</p>
                 </div>
              </div>
-             <div className="flex items-start gap-4 opacity-40">
-                <div className="w-8 h-8 rounded-lg bg-white/50 flex items-center justify-center text-[#250136] font-black text-xs shrink-0 border border-transparent">2</div>
+             <div className="flex items-center gap-5 opacity-30">
+                <div className="w-10 h-10 rounded-xl bg-white/50 flex items-center justify-center text-[#250136] font-black text-sm shrink-0 border border-transparent">2</div>
                 <div>
-                   <p className="text-xs font-bold text-[#250136] uppercase tracking-wider mb-0.5">Personnalisation</p>
-                   <p className="text-[10px] font-medium text-[#250136]/40">Choix du template & styles</p>
+                   <p className="text-xs font-black text-[#250136] uppercase tracking-widest mb-0.5">{t('wizard.new.persTitle')}</p>
+                   <p className="text-[11px] font-bold text-[#250136]/40 lowercase">{t('wizard.new.persDesc')}</p>
                 </div>
              </div>
           </div>
         </div>
 
         {/* Right Side: Execution */}
-        <div className="lg:col-span-8">
+        <div className="lg:col-span-7">
           <div className="glass-panel bg-white/90 relative z-10 p-8 sm:p-10 rounded-[2.5rem] shadow-[0_30px_70px_-20px_rgba(37,1,54,0.12)] border border-white">
             <div className="space-y-8">
               {/* Document Name Input */}
-              <div className="space-y-3">
-                <label className="text-[10px] font-bold text-[#250136]/30 uppercase tracking-[0.2em] pl-1">Identité du Projet</label>
+              <div className="space-y-4">
+                <label className="text-[11px] font-black text-[#250136]/30 uppercase tracking-[0.3em] pl-1">{t('dashboard.modal.projectName')}</label>
                 <div className="relative">
                   <input 
                     type="text" 
                     autoFocus
-                    placeholder={t('dashboard.modal.projectNamePlaceholder') || 'ex: Mémoire de Fin d\'Études'}
-                    className="w-full bg-slate-50 border border-slate-200/50 rounded-2xl px-6 py-4 outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 text-[#250136] font-bold text-lg placeholder:text-slate-300 transition-all shadow-sm"
+                    placeholder={t('dashboard.modal.projectNamePlaceholder')}
+                    className="w-full bg-slate-50/50 border border-slate-200/60 rounded-3xl px-8 py-6 outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 text-[#250136] font-black text-xl placeholder:text-slate-300 transition-all shadow-sm"
                     value={creationData.documentName}
                     onChange={(e) => setCreationData(prev => ({ ...prev, documentName: e.target.value }))}
                   />
@@ -172,25 +173,27 @@ export default function NewWizardPage() {
               </div>
 
               {/* Final Action */}
-              <div className="pt-6">
+              <div className="pt-8">
                 <Button 
-                  className="w-full rounded-2xl h-16 bg-[#250136] hover:bg-primary text-white shadow-2xl shadow-primary/20 text-lg font-bold transition-all disabled:opacity-50 disabled:hover:scale-100 hover:scale-[1.01]"
+                  className="w-full rounded-[2.5rem] h-20 bg-[#250136] hover:bg-primary text-white shadow-2xl shadow-primary/30 text-xl font-black transition-all disabled:opacity-50 disabled:hover:scale-100 hover:scale-[1.01] flex items-center justify-center gap-4 group"
                   disabled={!creationData.documentName.trim() || isCreating}
                   onClick={submitNewReport}
                 >
                   {isCreating ? (
                     <span className="flex items-center gap-3">
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      {t('dashboard.modal.preparing') || 'Initialisation...'}
+                      <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      {t('dashboard.modal.preparing')}
                     </span>
                   ) : (
-                    <span className="flex items-center gap-3">
-                      Lancer l' Assistant <Plus className="w-6 h-6 border-l pl-3 border-white/20 ml-2" />
-                    </span>
+                    <>
+                      {t('wizard.new.launcher')}
+                      <div className="h-8 w-[1px] bg-white/20 mx-2" />
+                      <Plus className="w-7 h-7 group-hover:rotate-90 transition-transform duration-500" />
+                    </>
                   )}
                 </Button>
-                <p className="text-center text-[10px] font-medium text-[#250136]/30 mt-6 tracking-wide uppercase">
-                  Vous pourrez modifier ces informations plus tard dans les paramètres
+                <p className="text-center text-[11px] font-black text-[#250136]/20 mt-8 tracking-[0.2em] uppercase">
+                  {t('wizard.new.footerNote')}
                 </p>
               </div>
             </div>

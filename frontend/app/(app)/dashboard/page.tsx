@@ -326,44 +326,6 @@ export default function DashboardPage() {
            })()}
         </div>
 
-        {/* Next Milestone Bento (4x1 or 2x1 as needed, using overflow) */}
-        <div className="md:col-span-4 glass-panel p-8 bg-gradient-to-r from-[#f8f9ff] to-white border-white/60 shadow-xl flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden group">
-           <div className="absolute right-0 top-0 w-64 h-64 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:bg-primary/10 transition-colors" />
-           
-           <div className="flex items-center gap-6 relative z-10">
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0">
-                 <Target className="w-8 h-8 text-primary" />
-              </div>
-              <div className="space-y-1">
-                 <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Prochaine Étape Majeure</h4>
-                 <p className="text-2xl font-black text-[#250136] tracking-tight leading-none italic">"Finaliser la Revue de Littérature"</p>
-                 <div className="flex items-center gap-4 mt-2">
-                    <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#250136]/50">
-                       <Zap className="w-3 h-3 text-amber-500" />
-                       +250 XP Achievement
-                    </span>
-                    <span className="w-1 h-1 rounded-full bg-black/10" />
-                    <span className="text-[11px] font-bold text-[#250136]/50 uppercase">7 Jours Restants</span>
-                 </div>
-              </div>
-           </div>
-
-           <div className="flex items-center gap-4 relative z-10 w-full md:w-auto">
-              <Button 
-                onClick={() => recentRapports[0] && router.push(`/app/wizard/${recentRapports[0]._id}`)}
-                variant="outline" 
-                className="flex-1 md:flex-none h-12 px-8 rounded-2xl border-black/5 bg-white font-black text-[10px] uppercase tracking-widest hover:bg-black/5 transition-all outline-none"
-              >
-                 Voir la Roadmap
-              </Button>
-              <Button 
-                onClick={() => router.push('/app/wizard/new')}
-                className="flex-1 md:flex-none h-12 px-8 rounded-2xl bg-[#250136] text-white font-black text-[10px] uppercase tracking-widest hover:bg-primary shadow-xl shadow-primary/20 transition-all border-none"
-              >
-                 Lancer l'Assistant
-              </Button>
-           </div>
-        </div>
       </div>
 
       <div className="pt-12 space-y-8">

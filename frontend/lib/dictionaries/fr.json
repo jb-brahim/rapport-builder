@@ -151,7 +151,17 @@
     "step5Label": "Étape 5 — Introduction Générale",
     "step4Label": "Étape 4 — Table des Matières",
     "step3Label": "Étape 3 — Remerciements",
-    "step2Label": "Étape 2 — Dédicaces"
+    "step2Label": "Étape 2 — Dédicace",
+    "new": {
+      "title": "Nouvel Espace.",
+      "subtitle": "Configurez les bases de votre document pour débloquer l'assistant intelligent.",
+      "configTitle": "Configuration",
+      "configDesc": "Langue et structure initiale",
+      "persTitle": "Personnalisation",
+      "persDesc": "Choix du template & styles",
+      "footerNote": "Vous pourrez modifier ces informations plus tard dans les paramètres",
+      "launcher": "Lancer l'Assistant"
+    }
   },
   "step1": {
     "title": "Informations de la Page de Garde",
