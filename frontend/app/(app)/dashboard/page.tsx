@@ -155,11 +155,11 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 grid-rows-auto gap-6">
         
         {/* Welcome & Action Bento (2x1) */}
-        <div className="md:col-span-2 glass-panel p-8 bg-gradient-to-br from-[#250136] via-[#3a0a4f] to-[#250136] border-none shadow-2xl relative overflow-hidden group flex flex-col justify-between min-h-[240px] hover:scale-[1.01] transition-all duration-500 cursor-default">
-           <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/20 transition-all duration-1000 animate-pulse" />
+        <div className="md:col-span-2 p-8 bg-gradient-to-br from-[#250136] via-[#3a0a4f] to-[#250136] border border-white/10 shadow-2xl rounded-3xl relative overflow-hidden group flex flex-col justify-between min-h-[240px] hover:scale-[1.01] transition-all duration-500 cursor-default backdrop-blur-xl">
+           <div className="absolute top-0 right-0 w-80 h-80 bg-primary/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/30 transition-all duration-1000 animate-pulse" />
            
            <div className="relative z-10 space-y-5">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-[9px] font-black uppercase tracking-widest text-primary-foreground/90">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-[9px] font-black uppercase tracking-widest text-[#FFF8F2]">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
                 <Zap className="w-3 h-3 text-primary" />
                 {t('dashboard.hubStatus', { count: rapports.length })}
@@ -172,54 +172,54 @@ export default function DashboardPage() {
            <div className="relative z-10 flex items-center justify-between gap-6 mt-6">
               <Button 
                 onClick={() => router.push('/app/wizard/new')} 
-                className="rounded-2xl h-14 px-10 bg-primary text-white hover:bg-white hover:text-[#250136] transition-all text-xs font-black shadow-2xl shadow-primary/30 uppercase tracking-widest flex items-center gap-3 border-none group/btn active:scale-95"
+                className="rounded-2xl h-14 px-10 bg-primary text-white hover:bg-[#FFF8F2] hover:text-[#250136] transition-all text-xs font-black shadow-2xl shadow-primary/40 uppercase tracking-widest flex items-center gap-3 border-none group/btn active:scale-95"
               >
                 <Plus className="w-5 h-5 group-hover/btn:rotate-90 transition-transform duration-700" />
                 {t('dashboard.initWorkspace')}
               </Button>
-              <div className="hidden lg:flex items-center gap-2 text-white/30 text-[9px] font-black uppercase tracking-[0.2em] group-hover:text-white/60 transition-colors">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400/60" />
+              <div className="hidden lg:flex items-center gap-2 text-white/50 text-[9px] font-black uppercase tracking-[0.2em] group-hover:text-white transition-colors">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 Security Layer Active
               </div>
            </div>
         </div>
 
-        {/* Stats Bento (1x1) */}
-        <div className="glass-panel p-8 bg-white/90 border-white/80 shadow-2xl flex flex-col justify-between hover:scale-[1.02] transition-all duration-500 group/stats overflow-hidden">
-           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover/stats:opacity-100 transition-opacity" />
+        {/* Stats Bento (1x1) - Keep light but ensure dark text */}
+        <div className="glass-panel p-8 bg-white/95 border-white shadow-2xl flex flex-col justify-between hover:scale-[1.02] transition-all duration-500 group/stats overflow-hidden">
+           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover/stats:opacity-100 transition-opacity" />
            <div className="flex items-center justify-between mb-6 relative z-10">
-              <span className="text-[10px] font-black text-[#250136]/30 uppercase tracking-[0.2em]">Live Insights</span>
-              <Activity className="w-4 h-4 text-primary/30 group-hover/stats:text-primary transition-colors duration-500" />
+              <span className="text-[10px] font-black text-[#250136] uppercase tracking-[0.2em] opacity-60">Live Insights</span>
+              <Activity className="w-4 h-4 text-primary group-hover/stats:scale-110 transition-transform" />
            </div>
            
            <div className="space-y-5 relative z-10">
               {[
-                { label: t('dashboard.activeProjects'), value: total, color: 'text-primary', bg: 'bg-primary/5' },
-                { label: t('dashboard.inProgress'), value: inProgress, color: 'text-amber-500', bg: 'bg-amber-500/5' },
-                { label: t('dashboard.completed'), value: completed, color: 'text-emerald-500', bg: 'bg-emerald-500/5' }
+                { label: t('dashboard.activeProjects'), value: total, color: 'text-[#250136]', dot: 'bg-primary' },
+                { label: t('dashboard.inProgress'), value: inProgress, color: 'text-[#250136]', dot: 'bg-amber-500' },
+                { label: t('dashboard.completed'), value: completed, color: 'text-[#250136]', dot: 'bg-emerald-500' }
               ].map((s, i) => (
-                <div key={i} className="flex items-center justify-between group/item p-2 rounded-xl hover:bg-white transition-all">
+                <div key={i} className="flex items-center justify-between group/item p-2 rounded-xl hover:bg-black/5 transition-all">
                   <div className="flex items-center gap-3">
-                    <div className={`w-1 h-4 rounded-full ${s.color.replace('text-', 'bg-')} opacity-30`} />
-                    <span className="text-[11px] font-black text-[#250136]/60 group-hover/item:text-[#250136] transition-colors">{s.label}</span>
+                    <div className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                    <span className="text-[11px] font-black text-[#250136] transition-colors">{s.label}</span>
                   </div>
                   <span className={`text-2xl font-black ${s.color} transition-all duration-500 tabular-nums`}>{s.value}</span>
                 </div>
               ))}
            </div>
            
-           <div className="mt-6 pt-6 border-t border-black/5 flex items-center justify-between relative z-10">
-              <span className="text-[9px] font-black text-[#250136]/20 uppercase tracking-[0.3em]">{t('dashboard.activity')}</span>
+           <div className="mt-6 pt-6 border-t border-[#250136]/10 flex items-center justify-between relative z-10">
+              <span className="text-[9px] font-black text-[#250136]/40 uppercase tracking-[0.3em]">{t('dashboard.activity')}</span>
               <div className="flex -space-x-1.5">
-                {[1,2,3].map(i => <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-gradient-to-br from-primary/20 to-primary/5 shadow-sm" />)}
+                {[1,2,3].map(i => <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-gradient-to-br from-primary/40 to-primary/20 shadow-sm" />)}
               </div>
            </div>
         </div>
 
-        {/* Streak Bento (1x1) */}
-        <div className="glass-panel p-8 bg-gradient-to-br from-[#ff5f00] via-[#ff2d00] to-[#d9004c] border-none shadow-2xl flex flex-col justify-between relative overflow-hidden group hover:scale-[1.02] transition-all duration-500">
-           <div className="absolute inset-x-0 bottom-0 h-1/2 bg-white/10 blur-3xl translate-y-1/2" />
-           <Flame className="absolute -right-6 -bottom-6 w-40 h-40 text-black/10 rotate-12 group-hover:scale-125 group-hover:rotate-0 transition-all duration-1000" />
+        {/* Streak Bento (1x1) - Darker and clearer */}
+        <div className="p-8 bg-gradient-to-br from-orange-600 via-rose-600 to-rose-700 border border-white/20 shadow-2xl rounded-3xl flex flex-col justify-between relative overflow-hidden group hover:scale-[1.02] transition-all duration-500 backdrop-blur-xl">
+           <div className="absolute inset-x-0 bottom-0 h-1/2 bg-white/5 blur-3xl translate-y-1/2" />
+           <Flame className="absolute -right-6 -bottom-6 w-40 h-40 text-white/10 rotate-12 group-hover:scale-125 group-hover:rotate-0 transition-all duration-1000" />
            <div className="relative z-10">
               <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center border border-white/30 mb-8 group-hover:scale-110 transition-transform shadow-lg">
                 <Flame className="w-8 h-8 text-white drop-shadow-lg" />
@@ -228,9 +228,9 @@ export default function DashboardPage() {
                  <p className="text-6xl font-black text-white tracking-tighter mb-1 drop-shadow-2xl">{user?.writingStreak || 0}</p>
                  <Sparkles className="w-4 h-4 text-orange-200 animate-pulse" />
               </div>
-              <p className="text-[11px] font-black text-white/80 uppercase tracking-[0.3em]">Day Streak</p>
+              <p className="text-[11px] font-black text-white uppercase tracking-[0.3em]">Day Streak</p>
            </div>
-           <Button variant="ghost" className="relative z-10 w-full h-12 bg-white/10 hover:bg-white/20 text-white border-white/20 text-[10px] font-black uppercase tracking-widest mt-6 backdrop-blur-md transition-all active:scale-95">
+           <Button variant="ghost" className="relative z-10 w-full h-12 bg-white/10 hover:bg-white text-white hover:text-rose-600 border-white/20 text-[10px] font-black uppercase tracking-widest mt-6 backdrop-blur-md transition-all active:scale-95">
               Explorer les Badges
            </Button>
         </div>
@@ -271,12 +271,12 @@ export default function DashboardPage() {
            </div>
         </div>
 
-        {/* AI Tip Bento (1x1) */}
-        <div className="glass-panel p-8 bg-gradient-to-br from-indigo-600 to-violet-700 border-none shadow-2xl flex flex-col justify-between relative overflow-hidden group hover:scale-[1.02] transition-all duration-500">
+        {/* AI Tip Bento (1x1) - Dark and clear */}
+        <div className="p-8 bg-gradient-to-br from-violet-600 via-indigo-700 to-indigo-800 border border-white/20 shadow-2xl rounded-3xl flex flex-col justify-between relative overflow-hidden group hover:scale-[1.02] transition-all duration-500 backdrop-blur-xl">
            <div className="absolute -left-12 -top-12 w-48 h-48 bg-white/10 rounded-full blur-[60px] group-hover:bg-white/20 transition-all duration-1000" />
            <div className="relative z-10">
-              <div className="flex items-center gap-3 text-white/60 mb-8">
-                <div className="p-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/20">
+              <div className="flex items-center gap-3 text-white/50 mb-8 group-hover:text-white/80 transition-colors">
+                <div className="p-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/10">
                   <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
                 </div>
                 <span className="text-[11px] font-black uppercase tracking-[0.2em]">Academic Tip</span>
@@ -286,20 +286,20 @@ export default function DashboardPage() {
            
            <div className="relative z-10 mt-8 flex items-center justify-between">
               <div className="flex flex-col">
-                 <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">Intelligence</span>
+                 <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em]">Intelligence</span>
                  <span className="text-[8px] font-bold text-amber-300/60 uppercase tracking-widest">Rappori Engine v2.0</span>
               </div>
-              <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center backdrop-blur-md border border-white/10 group-hover:bg-white/20 transition-all">
+              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/10 group-hover:bg-white/20 transition-all">
                  <Zap className="w-4 h-4 text-amber-300" />
               </div>
            </div>
         </div>
 
-        {/* Health Bento (1x1) */}
-        <div className="glass-panel p-8 bg-white border-white/60 shadow-xl flex flex-col justify-between">
+        {/* Health Bento (1x1) - Clear and high contrast */}
+        <div className="glass-panel p-8 bg-white/95 border-white shadow-2xl flex flex-col justify-between hover:scale-[1.02] transition-all duration-500">
            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-black text-[#250136]/40 uppercase tracking-widest">Santé Globale</span>
-              <Award className="w-4 h-4 text-emerald-500" />
+              <span className="text-[10px] font-black text-[#250136]/60 uppercase tracking-[0.2em]">Santé Globale</span>
+              <Award className="w-4 h-4 text-emerald-600" />
            </div>
 
            {(() => {
@@ -312,11 +312,11 @@ export default function DashboardPage() {
                     <div className="relative w-24 h-24 mx-auto my-4 flex items-center justify-center">
                        <svg className="w-full h-full -rotate-90">
                           <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-black/5" />
-                          <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-emerald-500" strokeDasharray={2 * Math.PI * 40} strokeDashoffset={2 * Math.PI * 40 * (1 - health / 100)} strokeLinecap="round" />
+                          <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-emerald-600 shadow-[0_0_10px_rgba(16,185,129,0.3)]" strokeDasharray={2 * Math.PI * 40} strokeDashoffset={2 * Math.PI * 40 * (1 - health / 100)} strokeLinecap="round" />
                        </svg>
                        <span className="absolute text-2xl font-black text-[#250136] tracking-tighter">{health}%</span>
                     </div>
-                    <p className="text-[10px] font-black text-center text-emerald-500 uppercase tracking-[0.2em] bg-emerald-50 py-1.5 rounded-lg border border-emerald-100">Optimal Performance</p>
+                    <p className="text-[10px] font-black text-center text-emerald-700 uppercase tracking-[0.2em] bg-emerald-50 py-2 rounded-lg border border-emerald-200">Optimal Performance</p>
                   </>
                 );
            })()}
