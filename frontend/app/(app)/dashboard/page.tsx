@@ -230,7 +230,11 @@ export default function DashboardPage() {
               </div>
               <p className="text-[11px] font-black text-white uppercase tracking-[0.3em]">Day Streak</p>
            </div>
-           <Button variant="ghost" className="relative z-10 w-full h-12 bg-white/10 hover:bg-white text-white hover:text-rose-600 border-white/20 text-[10px] font-black uppercase tracking-widest mt-6 backdrop-blur-md transition-all active:scale-95">
+           <Button 
+             onClick={() => router.push('/app/settings')}
+             variant="ghost" 
+             className="relative z-10 w-full h-12 bg-white/10 hover:bg-white text-white hover:text-rose-600 border-white/20 text-[10px] font-black uppercase tracking-widest mt-6 backdrop-blur-md transition-all active:scale-95"
+           >
               Explorer les Badges
            </Button>
         </div>
@@ -345,10 +349,17 @@ export default function DashboardPage() {
            </div>
 
            <div className="flex items-center gap-4 relative z-10 w-full md:w-auto">
-              <Button variant="outline" className="flex-1 md:flex-none h-12 px-8 rounded-2xl border-black/5 bg-white font-black text-[10px] uppercase tracking-widest hover:bg-black/5 transition-all">
+              <Button 
+                onClick={() => recentRapports[0] && router.push(`/app/wizard/${recentRapports[0]._id}`)}
+                variant="outline" 
+                className="flex-1 md:flex-none h-12 px-8 rounded-2xl border-black/5 bg-white font-black text-[10px] uppercase tracking-widest hover:bg-black/5 transition-all outline-none"
+              >
                  Voir la Roadmap
               </Button>
-              <Button className="flex-1 md:flex-none h-12 px-8 rounded-2xl bg-[#250136] text-white font-black text-[10px] uppercase tracking-widest hover:bg-primary shadow-xl shadow-primary/20 transition-all">
+              <Button 
+                onClick={() => router.push('/app/wizard/new')}
+                className="flex-1 md:flex-none h-12 px-8 rounded-2xl bg-[#250136] text-white font-black text-[10px] uppercase tracking-widest hover:bg-primary shadow-xl shadow-primary/20 transition-all border-none"
+              >
                  Lancer l'Assistant
               </Button>
            </div>
