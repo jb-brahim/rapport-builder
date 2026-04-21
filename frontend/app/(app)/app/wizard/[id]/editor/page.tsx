@@ -344,11 +344,11 @@ const parseSmartSegments = (
 const getChapterSegments = (chapter: any, chapIdx: number, counters: { fig: number; tbl: number }): any[] => {
   const segments: any[] = [];
   const styles = {
-    chapter: 'font-size: 16pt; font-weight: 900; color: #DC2626; display: block; margin-bottom: 20px; text-align: center; text-transform: uppercase;',
-    l1: 'font-size: 14pt; font-weight: 900; color: #DC2626; display: block; margin-bottom: 8px; margin-top: 15px;',
-    l2: 'font-size: 12pt; font-weight: 900; color: #16A34A; display: block; margin-bottom: 5px; margin-top: 10px; margin-left: 20px;',
-    l3: 'font-size: 12pt; font-weight: 900; color: #000000; display: block; margin-bottom: 5px; margin-top: 10px; margin-left: 40px;',
-    text: 'font-size: 12pt; font-weight: normal; color: #000000; display: block; margin-bottom: 8px; line-height: 1.6;'
+    chapter: 'font-size: 16pt; font-weight: 900; color: #DC2626; display: block; margin-bottom: 32px; text-align: center; text-transform: uppercase;',
+    l1: 'font-size: 14pt; font-weight: 900; color: #DC2626; display: block; margin-bottom: 12px; margin-top: 32px;',
+    l2: 'font-size: 12pt; font-weight: 900; color: #16A34A; display: block; margin-bottom: 12px; margin-top: 20px; margin-left: 20px;',
+    l3: 'font-size: 12pt; font-weight: 900; color: #000000; display: block; margin-bottom: 12px; margin-top: 20px; margin-left: 40px;',
+    text: 'font-size: 11pt; font-weight: normal; color: #000000; display: block; margin-bottom: 15px; line-height: 1.7;'
   };
 
   segments.push({
@@ -1558,7 +1558,7 @@ export default function VisualEditor() {
                           fontWeight: el.fontWeight,
                           textAlign: el.textAlign,
                           whiteSpace: 'pre-wrap',
-                          lineHeight: 1.6
+                          lineHeight: 1.7
                         }}
                         dangerouslySetInnerHTML={{ 
                           __html: el.id === 'toc-l' ? el.content + autoContent.tocContent :
@@ -1596,7 +1596,7 @@ export default function VisualEditor() {
                           fontFamily: el.fontFamily,
                           fontWeight: el.fontWeight,
                           textAlign: el.textAlign,
-                          lineHeight: 1.6
+                          lineHeight: 1.7
                         }}
                       />
                     )}
