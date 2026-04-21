@@ -406,7 +406,169 @@ const getChapterSegments = (chapter: any, chapIdx: number, counters: { fig: numb
   return segments;
 };
 
-// --- Mermaid Component ---
+// ===== WIZARD-IDENTICAL CHAPTER RENDERER =====
+const CHAP_A4_HEIGHT = 1123;
+const CHAP_A4_MARGIN = 80;
+const CHAP_PX_PER_LINE = 26;
+const CHAP_CHARS_PER_LINE = 75;
+
+const estimateChapterSegmentHeight = (content: any, type: string): number => {
+  if (type === 'image') return 410;
+  if (type === 'heading') return 50;
+  if (type === 'table') return 300;
+  if (type === 'raw') return 100;
+  if (typeof content !== 'string') return 50;
+  const textOnly = content.replace(/<[^>]*>/g, '');
+  const lines = Math.max(1, Math.ceil(textOnly.length / CHAP_CHARS_PER_LINE));
+  return lines * CHAP_PX_PER_LINE + 7;
+};
+
+const paginateChapterForEditor = (chapter: any, chapIdx: number): any[][] => {
+  const MAX_Y = CHAP_A4_HEIGHT - (CHAP_A4_MARGIN * 1.4);
+  const pages: any[][] = [[]];
+  let curY = 0;
+
+  const pushToPage = (seg: any) => {
+    const h = estimateChapterSegmentHeight(seg.content || '', seg.type);
+    if (curY + h > MAX_Y && pages[pages.length - 1].length > 0) {
+      pages.push([]);
+      curY = 0;
+    }
+    pages[pages.length - 1].push(seg);
+    curY += h;
+  };
+
+  const parseAndPush = (content: string, images: any[] = [], tables: any[] = [], sectionPrefix: string) => {
+    if (!content) return;
+    const parts = content.split(/(\[FIGURE \d+\]|\[TABLEAU \d+\])/i);
+    parts.forEach((part) => {
+      const figMatch = part.match(/\[FIGURE (\d+)\]/i);
+      if (figMatch) {
+        const idx = parseInt(figMatch[1]) - 1;
+        if (images[idx]) pushToPage({ type: 'image', content: images[idx].src, caption: `Figure ${sectionPrefix}.${idx+1} — ${images[idx].caption || 'Sans titre'}` });
+        return;
+      }
+      const tabMatch = part.match(/\[TABLEAU (\d+)\]/i);
+      if (tabMatch) {
+        const idx = parseInt(tabMatch[1]) - 1;
+        if (tables[idx]) pushToPage({ type: 'table', content: JSON.stringify([tables[idx].headers, ...tables[idx].rows]), caption: `Tableau ${sectionPrefix}.${idx+1} — ${tables[idx].caption || 'Sans titre'}` });
+        return;
+      }
+      if (part.trim()) {
+        const h = estimateChapterSegmentHeight(part, 'text');
+        if (curY + h > MAX_Y && part.length > 200) {
+          const availableH = MAX_Y - curY;
+          const linesPossible = Math.floor((availableH - 7) / CHAP_PX_PER_LINE);
+          if (linesPossible > 3) {
+            const charLimit = linesPossible * CHAP_CHARS_PER_LINE;
+            let splitIdx = charLimit;
+            const lastSpace = part.lastIndexOf(' ', charLimit);
+            if (lastSpace > charLimit * 0.8) splitIdx = lastSpace;
+            const part1 = part.substring(0, splitIdx);
+            const part2 = part.substring(splitIdx).trim();
+            pushToPage({ type: 'text', content: part1 });
+            if (part2) parseAndPush(part2, images, tables, sectionPrefix);
+            return;
+          }
+        }
+        pushToPage({ type: 'text', content: part });
+      }
+    });
+  };
+
+  // Chapter Header (raw JSX — identical to wizard)
+  pushToPage({
+    type: 'raw',
+    id: `ch-${chapIdx}-header`,
+    content: (
+      <div className="flex flex-col items-center mb-8">
+        <h2 className="text-[16pt] font-black text-[#DC2626] uppercase text-center tracking-tight leading-tight">
+          {chapter.title ? `CHAPITRE ${chapIdx + 1}: ${chapter.title}` : `CHAPITRE ${chapIdx + 1}`}
+        </h2>
+        <div className="w-16 h-1 bg-[#DC2626] mt-4 rounded-full opacity-10" />
+      </div>
+    )
+  });
+
+  parseAndPush(chapter.introduction, chapter.images || [], chapter.tables || [], `${chapIdx + 1}.0`);
+
+  if (chapter.sections) {
+    chapter.sections.forEach((s: any, si: number) => {
+      const roms: string[] = ['I','II','III','IV','V','VI','VII','VIII','IX','X'];
+      pushToPage({ type: 'heading', level: 1, content: `${roms[si] || (si+1)}. ${s.title}`, id: `ed-ch-${chapIdx}-${si}` });
+      parseAndPush(s.content, s.images || [], s.tables || [], `${si + 1}`);
+      s.subsections?.forEach((ss: any, ssi: number) => {
+        pushToPage({ type: 'heading', level: 2, content: `${ssi + 1}. ${ss.title}`, id: `ed-ch-${chapIdx}-${si}-${ssi}` });
+        parseAndPush(ss.content, ss.images || [], ss.tables || [], `${si + 1}.${ssi + 1}`);
+        ss.subsections?.forEach((sss: any, sssi: number) => {
+          pushToPage({ type: 'heading', level: 2, content: `${String.fromCharCode(97 + sssi)}) ${sss.title}`, id: `ed-ch-${chapIdx}-${si}-${ssi}-${sssi}` });
+          parseAndPush(sss.content, sss.images || [], sss.tables || [], `${si + 1}.${ssi + 1}.${sssi + 1}`);
+        });
+      });
+    });
+  }
+
+  if (chapter.conclusion) {
+    pushToPage({ type: 'raw', content: <div className="mt-16 pt-12 border-t border-slate-100 flex flex-col items-center"><div className="w-10 h-0.5 bg-slate-200 mb-8" /></div> });
+    parseAndPush(chapter.conclusion, chapter.images || [], chapter.tables || [], `${chapIdx + 1}.C`);
+  }
+
+  return pages;
+};
+
+// Render segment exactly like the wizard's RenderSegment component
+const EditorChapterSegment = ({ segment, idx }: { segment: any, idx: number }) => {
+  const { type, content, level, caption } = segment;
+
+  if (type === 'raw') return <div key={idx}>{content}</div>;
+
+  if (type === 'image') {
+    return (
+      <div className="my-10 flex flex-col items-center w-full clear-both">
+        <div className="relative border-[0.5px] border-slate-300 shadow-sm overflow-hidden bg-slate-50">
+          <img src={content} className="max-w-full" style={{ maxHeight: '400px' }} />
+        </div>
+        {caption && <p className="text-center text-[10px] mt-4 text-slate-500 font-serif italic">{caption}</p>}
+      </div>
+    );
+  }
+
+  if (type === 'table') {
+    let tbl: any = { headers: [], rows: [], caption: '' };
+    try { const [h, ...r] = JSON.parse(content); tbl = { headers: h, rows: r, caption: caption || '' }; } catch(e) {}
+    return (
+      <div className="my-10 w-full flex flex-col items-center clear-both">
+        <div className="w-[95%] border-[0.5px] border-slate-300 shadow-sm bg-white overflow-hidden">
+          <table className="w-full text-[10px] border-collapse">
+            <thead><tr className="bg-slate-50 border-b border-slate-200">{tbl.headers.map((h: string, i: number) => <th key={i} className="border-r border-slate-200 p-2 text-center text-slate-800 font-bold last:border-0">{h}</th>)}</tr></thead>
+            <tbody>{tbl.rows.map((row: string[], r: number) => <tr key={r} className="border-b border-slate-100 last:border-0">{row.map((cell: string, c: number) => <td key={c} className="border-r border-slate-100 p-2 text-center text-slate-600 last:border-0">{cell}</td>)}</tr>)}</tbody>
+          </table>
+        </div>
+        {tbl.caption && <p className="text-center text-[10px] mt-4 text-slate-500 font-serif italic">{tbl.caption}</p>}
+      </div>
+    );
+  }
+
+  if (type === 'heading') {
+    const isConclusion = content?.toLowerCase().includes('conclusion');
+    return (
+      <h3 className={cn(
+        'font-rapport font-black uppercase mb-3 flex gap-3',
+        isConclusion ? 'text-slate-900' : (level === 1 ? 'text-[#DC2626]' : 'text-emerald-600'),
+        level === 1 ? 'text-[13pt] mt-8' : 'text-[12pt] mt-5'
+      )}>
+        {content}
+      </h3>
+    );
+  }
+
+  return (
+    <div className="whitespace-pre-wrap leading-[1.7] font-rapport text-[11pt] text-slate-800 mb-4">
+      {content}
+    </div>
+  );
+};
+
 const MermaidRenderer = ({ chart }: { chart: string }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -527,6 +689,7 @@ export default function VisualEditor() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error' | 'loading-pdf' | 'loading-docx'>('idle');
   const [introStartPage, setIntroStartPage] = useState(1);
+  const [chapterFlowPages, setChapterFlowPages] = useState<Map<number, any[]>>(new Map());
   const [isAiLoading, setIsAiLoading] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const [history, setHistory] = useState<EditorElement[][]>([]);
@@ -565,24 +728,9 @@ export default function VisualEditor() {
     [elements, introStartPage]
   );
 
-  // Group chapter elements by page for flow-based rendering (bypasses absolute positioning)
-  const chapterPageContent = useMemo(() => {
-    const pageMap = new Map<number, EditorElement[]>();
-    elements.forEach(el => {
-      if (el.id.startsWith('chap-')) {
-        if (!pageMap.has(el.page)) pageMap.set(el.page, []);
-        pageMap.get(el.page)!.push(el);
-      }
-    });
-    // Sort each page's elements by their y position
-    pageMap.forEach((els) => els.sort((a, b) => a.y - b.y));
-    return pageMap;
-  }, [elements]);
-
-  const chapterElementIds = useMemo(() =>
-    new Set(elements.filter(el => el.id.startsWith('chap-')).map(el => el.id)),
-    [elements]
-  );
+  // chapterFlowPages is now set in fetchData — no useMemo needed.
+  // chapter elements are no longer in the Rnd overlay, so chapterElementIds is empty.
+  const chapterElementIds = useMemo(() => new Set<string>(), []);
 
   const undo = () => {
     if (historyIndex > 0) {
@@ -852,11 +1000,18 @@ export default function VisualEditor() {
       const introEl = mergedElements.find(e => e.id === 'intro-l');
       if (introEl) setIntroStartPage(introEl.page);
 
-      // --- PAGES X+: CHAPTERS ---
+      // --- PAGES X+: CHAPTERS (using wizard's identical flow pagination) ---
+      const newChapterFlowPages = new Map<number, any[]>();
       if (data.chaptersConfig) {
         data.chaptersConfig.forEach((ch: any, i: number) => {
-          const chSegments = getChapterSegments(ch, i, globalCounters);
-          mergedElements.push(...addElements(chSegments, true)); // Each chapter on its own start page
+          // Force each chapter onto a fresh page
+          if (curY > MARGIN_TOP) { curP++; curY = MARGIN_TOP; }
+          const chPages = paginateChapterForEditor(ch, i);
+          chPages.forEach((pageSegs, pIdx) => {
+            newChapterFlowPages.set(curP + pIdx, pageSegs);
+          });
+          curP += chPages.length;
+          curY = MARGIN_TOP;
         });
       }
 
@@ -890,7 +1045,9 @@ export default function VisualEditor() {
       setElements(mergedElements);
       setHistory([JSON.parse(JSON.stringify(mergedElements))]);
       setHistoryIndex(0);
-      setNumPages(Math.max(curP, ...mergedElements.map(e => e.page)));
+      setChapterFlowPages(newChapterFlowPages);
+      const maxChapterPage = newChapterFlowPages.size > 0 ? Math.max(...newChapterFlowPages.keys()) : 0;
+      setNumPages(Math.max(curP, ...mergedElements.map(e => e.page), maxChapterPage));
       setSupervisorId(data.supervisorId || null);
       setLoading(false);
     } catch (error) {
@@ -1429,8 +1586,8 @@ export default function VisualEditor() {
                     </div>
                   )}
 
-                  {/* Chapter Flow Content - rendered as natural HTML flow, NOT absolute */}
-                  {chapterPageContent.has(pageNum) && (
+                  {/* Chapter Flow Content — rendered with wizard-identical logic */}
+                  {chapterFlowPages.has(pageNum) && (
                     <div
                       style={{
                         position: 'absolute',
@@ -1442,11 +1599,8 @@ export default function VisualEditor() {
                         fontFamily: '"Computer Modern Serif", serif',
                       }}
                     >
-                      {chapterPageContent.get(pageNum)!.map(el => (
-                        <div
-                          key={el.id}
-                          dangerouslySetInnerHTML={{ __html: el.content }}
-                        />
+                      {chapterFlowPages.get(pageNum)!.map((seg, idx) => (
+                        <EditorChapterSegment key={idx} segment={seg} idx={idx} />
                       ))}
                     </div>
                   )}
