@@ -999,11 +999,17 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
                    ? (language === 'fr' ? 'CONCLUSION DU CHAPITRE' : 'CHAPTER CONCLUSION')
                    : activeItem.type.replace('-', ' ')}
              </span>
-             <input 
+             <textarea 
                value={title}
-               onChange={e => updateActiveContent({ title: e.target.value })}
+               onChange={e => {
+                 updateActiveContent({ title: e.target.value });
+                 e.target.style.height = 'auto';
+                 e.target.style.height = e.target.scrollHeight + 'px';
+               }}
                placeholder="Write heading..."
-               className="w-full text-5xl font-black text-[#250136] outline-none placeholder:text-slate-400 selection:bg-primary/10 transition-all"
+               rows={1}
+               className="w-full text-5xl font-black text-[#250136] outline-none placeholder:text-slate-400 selection:bg-primary/10 transition-all resize-none overflow-hidden leading-tight"
+               style={{ minHeight: '1.2em' }}
              />
           </div>
 
