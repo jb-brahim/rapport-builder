@@ -73,6 +73,19 @@ export default function DashboardPage() {
     }
   };
 
+  const recentRapports = useMemo(() => {
+    return [...rapports].sort((a, b) => new Date(b.lastSavedAt).getTime() - new Date(a.lastSavedAt).getTime()).slice(0, 3);
+  }, [rapports]);
+
+  const academicTips = [
+    "Utilisez des verbes d'action pour renforcer vos objectifs de recherche.",
+    "La structure en sablier est idéale pour une introduction percutante.",
+    "N'oubliez pas de citer vos sources au fur et à mesure pour éviter le plagiat.",
+    "Une bonne conclusion ouvre toujours sur des perspectives d'avenir."
+  ];
+
+  const currentTip = useMemo(() => academicTips[Math.floor(Math.random() * academicTips.length)], []);
+
 
   // Project creation moved natively to /app/wizard/new
 
@@ -98,19 +111,6 @@ export default function DashboardPage() {
   const total = rapports.length;
   const inProgress = rapports.filter(r => r.status === 'draft').length;
   const completed = rapports.filter(r => r.status === 'final').length;
-
-  const recentRapports = useMemo(() => {
-    return [...rapports].sort((a, b) => new Date(b.lastSavedAt).getTime() - new Date(a.lastSavedAt).getTime()).slice(0, 3);
-  }, [rapports]);
-
-  const academicTips = [
-    "Utilisez des verbes d'action pour renforcer vos objectifs de recherche.",
-    "La structure en sablier est idéale pour une introduction percutante.",
-    "N'oubliez pas de citer vos sources au fur et à mesure pour éviter le plagiat.",
-    "Une bonne conclusion ouvre toujours sur des perspectives d'avenir."
-  ];
-
-  const currentTip = useMemo(() => academicTips[Math.floor(Math.random() * academicTips.length)], []);
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 pb-20">
