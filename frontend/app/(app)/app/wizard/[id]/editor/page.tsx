@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { useAuth } from '@/app/context/auth-context';
 import { useTranslation } from '@/app/context/language-context';
-import mermaid from 'mermaid';
 import {
   ChevronLeft,
   Type,
@@ -26,7 +25,6 @@ import {
   Table as TableIcon,
   CheckCircle,
   Zap,
-  BarChart3,
   ListChecks,
   LayoutGrid,
   ClipboardList,
@@ -569,22 +567,6 @@ const EditorChapterSegment = ({ segment, idx }: { segment: any, idx: number }) =
   );
 };
 
-const MermaidRenderer = ({ chart }: { chart: string }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (containerRef.current) {
-      mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
-      mermaid.contentLoaded();
-    }
-  }, [chart]);
-
-  return (
-    <div className="mermaid bg-white p-4 rounded-xl shadow-inner flex items-center justify-center overflow-hidden" ref={containerRef}>
-      {chart}
-    </div>
-  );
-};
 
 // --- Main Page Component ---
 const generateAutomatedTableHTML = (elements: EditorElement[], introStartPage: number) => {
@@ -696,8 +678,6 @@ export default function VisualEditor() {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const isInternalChange = useRef(false);
   const [isZenMode, setIsZenMode] = useState(false);
-  const [isDiagramModalOpen, setIsDiagramModalOpen] = useState(false);
-  const [diagramCode, setDiagramCode] = useState('graph TD\nA[Start] --> B(Process)\nB --> C{Decision}\nC -->|Yes| D[Result 1]\nC -->|No| E[Result 2]');
   const [supervisors, setSupervisors] = useState<any[]>([]);
   const [supervisorId, setSupervisorId] = useState<string | null>(null);
   const [comments, setComments] = useState<any[]>([]);
@@ -1442,11 +1422,6 @@ export default function VisualEditor() {
           <aside className="w-20 bg-white border-r border-slate-200 flex flex-col items-center py-6 gap-6 shrink-0 z-40 shadow-sm animate-in slide-in-from-left-4 duration-500">
           <ToolButton icon={<Layout className="w-5 h-5" />} label={t('dashboard.modal.subtitle')} active />
           
-          <ToolButton 
-            icon={<BarChart3 className="w-5 h-5" />} 
-            label="Diag." 
-            onClick={() => setIsDiagramModalOpen(true)} 
-          />
 
           <ToolButton 
             icon={<Bookmark className="w-5 h-5" />} 
@@ -1661,11 +1636,7 @@ export default function VisualEditor() {
                       }
                     }}
                   >
-                    {el.chartType === 'mermaid' ? (
-                        <div className="w-full h-full flex flex-col gap-2">
-                           <MermaidRenderer chart={el.content} />
-                        </div>
-                    ) : el.type === 'image' ? (
+                    {el.type === 'image' ? (
                       <div className="flex flex-col items-center w-full h-full relative group/img z-10" style={{ minHeight: '100px' }}>
                         {el.content ? (
                           <img src={el.content} className="w-full h-full object-contain pointer-events-none border border-emerald-500/10 rounded-lg" />
@@ -2249,69 +2220,6 @@ export default function VisualEditor() {
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #B3B7C4; }
       `}</style>
 
-      {/* Mermaid Diagram Modal */}
-      {isDiagramModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
-           <div className="absolute inset-0 bg-[#250136]/60 backdrop-blur-md" onClick={() => setIsDiagramModalOpen(false)} />
-           <div className="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden relative z-10 border border-white/20 animate-in zoom-in-95 duration-500">
-              <div className="p-8 border-b border-slate-100 flex items-center justify-between">
-                 <div className="flex items-center gap-3">
-                   <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-                     <BarChart3 className="w-5 h-5" />
-                   </div>
-                   <div>
-                     <h3 className="text-xl font-black text-[#250136] tracking-tight">Create Diagram</h3>
-                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Powered by Mermaid.js</p>
-                   </div>
-                 </div>
-                 <button onClick={() => setIsDiagramModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                    <X className="w-5 h-5 text-slate-400" />
-                 </button>
-              </div>
-              
-              <div className="p-8 space-y-4">
-                 <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mermaid Syntax</label>
-                    <textarea 
-                      value={diagramCode}
-                      onChange={(e) => setDiagramCode(e.target.value)}
-                      className="w-full h-64 bg-slate-50 border border-slate-200 rounded-2xl p-6 font-mono text-sm text-slate-700 outline-none focus:border-indigo-400 transition-all shadow-inner"
-                      placeholder="graph TD..."
-                    />
-                 </div>
-                 
-                 <div className="flex gap-4 pt-2">
-                    <button 
-                      onClick={() => setIsDiagramModalOpen(false)}
-                      className="flex-1 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-400 border border-slate-200 hover:bg-slate-50 transition-all"
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      onClick={() => {
-                        const newId = `diag-${Date.now()}`;
-                        const newElements: EditorElement[] = [...elements, {
-                          id: newId,
-                          page: activePage,
-                          type: 'text',
-                          chartType: 'mermaid',
-                          content: diagramCode,
-                          x: 100, y: 150, width: 600, height: 400,
-                          fontSize: 14, color: '#000000', fontFamily: 'Inter', fontWeight: 'normal', textAlign: 'center'
-                        }];
-                        setElements(newElements);
-                        saveToHistory(newElements);
-                        setIsDiagramModalOpen(false);
-                      }}
-                      className="flex-[2] py-4 rounded-2xl bg-[#250136] text-white text-xs font-black uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-600 transition-all active:scale-[0.98]"
-                    >
-                      Insert Diagram
-                    </button>
-                 </div>
-              </div>
-           </div>
-        </div>
-      )}
 
       {/* Citation Manager Modal */}
       {isCitationModalOpen && (
