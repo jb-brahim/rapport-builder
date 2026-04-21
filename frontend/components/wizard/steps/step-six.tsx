@@ -122,16 +122,16 @@ const ESTIMATE_PX_PER_LINE = 26;
 const ESTIMATE_CHARS_PER_LINE = 75;
 
 const estimateContentHeight = (content: any, type: string) => {
-  if (type === 'image') return 420; 
-  if (type === 'heading') return 60;
+  if (type === 'image') return 410; 
+  if (type === 'heading') return 50;
   if (type === 'table') return 300; 
-  if (type === 'raw') return 120; // For chapter headers
+  if (type === 'raw') return 100; // For chapter headers
   
   if (typeof content !== 'string') return 50;
   
   const textOnly = content.replace(/<[^>]*>/g, '');
   const lines = Math.max(1, Math.ceil(textOnly.length / ESTIMATE_CHARS_PER_LINE));
-  return lines * ESTIMATE_PX_PER_LINE + 15; 
+  return lines * ESTIMATE_PX_PER_LINE + 7; 
 };
 
 
@@ -213,7 +213,7 @@ const RenderSegment = ({ segment, sectionIndex }: { segment: any, sectionIndex: 
 };
 
 const paginateChapter = (chapter: Chapter, chapIdx: number) => {
-  const MAX_Y = A4_HEIGHT - (A4_MARGIN * 2);
+  const MAX_Y = A4_HEIGHT - (A4_MARGIN * 1.4); // Allow content to go lower (approx 980-1000px)
   const pages: any[][] = [[]];
   let curY = 0;
 
