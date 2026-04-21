@@ -596,7 +596,7 @@ export default function VisualEditor() {
       let curP = 1;
       let curY = 100;
 
-      const MARGIN_TOP = 80;
+      const MARGIN_TOP = 60;
       const MARGIN_BOTTOM = 1060; 
       const MARGIN_LEFT = 80;
       const CONTENT_WIDTH = 640;
@@ -642,7 +642,7 @@ export default function VisualEditor() {
               fontWeight: seg.type === 'heading' ? '900' : 'normal',
               textAlign: seg.type === 'heading' ? 'center' : 'justify'
             });
-            curY += height + 40;
+            curY += height + 5;
             return;
           }
 
