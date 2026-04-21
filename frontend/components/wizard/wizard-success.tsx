@@ -16,8 +16,8 @@ import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 
 interface WizardSuccessProps {
-  onExport: (type: 'pdf' | 'docx') => void;
-  isExporting: 'pdf' | 'docx' | null;
+  onExport: (type: 'pdf') => void;
+  isExporting: 'pdf' | null;
   rapportId: string;
 }
 
@@ -49,12 +49,12 @@ export default function WizardSuccess({ onExport, isExporting, rapportId }: Wiza
       </div>
 
       {/* Export Options Card */}
-      <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="w-full flex justify-center">
         <button
           onClick={() => onExport('pdf')}
           disabled={!!isExporting}
           className={cn(
-            "group relative flex flex-col items-center gap-4 p-6 rounded-3xl border-2 transition-all duration-300 text-left overflow-hidden",
+            "group relative flex flex-col items-center gap-4 p-8 rounded-3xl border-2 transition-all duration-300 text-left overflow-hidden min-w-[280px]",
             isExporting === 'pdf' ? "border-primary bg-primary/5 cursor-wait" : "bg-white border-transparent hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/10"
           )}
         >
@@ -62,28 +62,8 @@ export default function WizardSuccess({ onExport, isExporting, rapportId }: Wiza
             {isExporting === 'pdf' ? <div className="w-6 h-6 border-2 border-red-500 border-t-transparent rounded-full animate-spin" /> : <FileText className="w-6 h-6" />}
           </div>
           <div className="flex flex-col items-center">
-            <span className="font-black text-[#250136] tracking-tight">{t('common.downloadPdf')}</span>
-            <span className="text-[10px] font-bold text-[#250136]/40 uppercase tracking-widest mt-1">Professional PDF</span>
-          </div>
-          <div className="absolute bottom-0 right-0 p-4 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all">
-            <Download className="w-4 h-4 text-primary" />
-          </div>
-        </button>
-
-        <button
-          onClick={() => onExport('docx')}
-          disabled={!!isExporting}
-          className={cn(
-            "group relative flex flex-col items-center gap-4 p-6 rounded-3xl border-2 transition-all duration-300 text-left overflow-hidden",
-            isExporting === 'docx' ? "border-primary bg-primary/5 cursor-wait" : "bg-white border-transparent hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/10"
-          )}
-        >
-          <div className="p-4 rounded-2xl bg-blue-50 text-blue-500 group-hover:scale-110 transition-transform">
-            {isExporting === 'docx' ? <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /> : <Layout className="w-6 h-6" />}
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="font-black text-[#250136] tracking-tight">{t('editor.export')} (Word)</span>
-            <span className="text-[10px] font-bold text-[#250136]/40 uppercase tracking-widest mt-1">Editable DOCX</span>
+            <span className="font-black text-[#250136] tracking-tight text-xl">{t('common.downloadPdf')}</span>
+            <span className="text-[10px] font-bold text-[#250136]/40 uppercase tracking-widest mt-1">Professional PDF Report</span>
           </div>
           <div className="absolute bottom-0 right-0 p-4 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all">
             <Download className="w-4 h-4 text-primary" />

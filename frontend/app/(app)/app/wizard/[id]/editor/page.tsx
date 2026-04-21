@@ -687,7 +687,7 @@ export default function VisualEditor() {
   const [zoom, setZoom] = useState(0.55);
   const [activePage, setActivePage] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error' | 'loading-pdf' | 'loading-docx'>('idle');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error' | 'loading-pdf'>('idle');
   const [introStartPage, setIntroStartPage] = useState(1);
   const [chapterFlowPages, setChapterFlowPages] = useState<Map<number, any[]>>(new Map());
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -1178,10 +1178,9 @@ export default function VisualEditor() {
     }
   };
 
-  const handleExport = async (type: 'pdf' | 'docx') => {
+  const handleExport = async (type: 'pdf') => {
     try {
-      if (type === 'pdf') setSaveStatus('loading-pdf');
-      else setSaveStatus('loading-docx');
+      setSaveStatus('loading-pdf');
 
       // 1. Force a save before exporting to ensure backend has the latest generated pages
       const currentNumPages = Math.max(1, ...elements.map(e => e.page || 1));
@@ -1194,7 +1193,7 @@ export default function VisualEditor() {
       const url = '/api';
       const response = await fetch(`${url}/export/${rapportId}/${type}`, {
         method: 'GET',
-        headers: { 'Accept': type === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
+        headers: { 'Accept': 'application/pdf' },
         credentials: 'include' // crucial for auth cookies
       });
 
@@ -1392,20 +1391,6 @@ export default function VisualEditor() {
                 <ClipboardList className="w-4 h-4 text-red-500" />
               )}
               PDF
-            </button>
-
-            <button
-              onClick={() => handleExport('docx')}
-              disabled={saveStatus === 'loading-docx'}
-              className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 text-slate-700 hover:bg-slate-50 transition-all font-bold text-sm"
-              title="Export as Word Document"
-            >
-              {saveStatus === 'loading-docx' ? (
-                <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <LayoutGrid className="w-4 h-4 text-blue-600" />
-              )}
-              {t('editor.export')} (Word)
             </button>
 
             <button

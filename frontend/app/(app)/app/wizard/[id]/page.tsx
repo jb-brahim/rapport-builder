@@ -25,7 +25,7 @@ export default function WizardPage() {
   
   const [isFetching, setIsFetching] = useState(true);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isExporting, setIsExporting] = useState<'pdf' | 'docx' | null>(null);
+  const [isExporting, setIsExporting] = useState<'pdf' | null>(null);
 
   const autoSaveRef = useRef<'idle' | 'saving' | 'saved'>('idle');
   const saveIndicatorRef = useRef<HTMLDivElement>(null);
@@ -151,14 +151,14 @@ export default function WizardPage() {
     setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
 
-  const handleExport = async (type: 'pdf' | 'docx') => {
+  const handleExport = async (type: 'pdf') => {
     setIsExporting(type);
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rapport-builder.onrender.com';
       const response = await fetch(`${backendUrl}/api/export/${rapportId}/${type}`, {
         method: 'GET',
         headers: { 
-          'Accept': type === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+          'Accept': 'application/pdf' 
         },
         credentials: 'include'
       });
@@ -169,7 +169,7 @@ export default function WizardPage() {
       const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = downloadUrl;
-      a.download = `rapport_${rapportId}.${type}`;
+      a.download = `rapport_${rapportId}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(downloadUrl);
