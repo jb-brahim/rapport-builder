@@ -250,7 +250,7 @@ const estimateHeight = (content: string, type: 'text' | 'heading' | 'image' | 't
   paragraphs.forEach(p => {
     totalLines += Math.max(1, Math.ceil(p.length / charsPerLine));
   });
-  return totalLines * pixelsPerLine + 60;
+  return totalLines * pixelsPerLine + 7; // Match wizard's tight estimation exactly
 };
 
 // Simplified Roman Numerals for headings
@@ -617,7 +617,7 @@ export default function VisualEditor() {
       let curY = 100;
 
       const MARGIN_TOP = 60;
-      const MARGIN_BOTTOM = 1060; 
+      const MARGIN_BOTTOM = 1011; // Matches wizard's MAX_Y = A4_HEIGHT - (A4_MARGIN * 1.4)
       const MARGIN_LEFT = 80;
       const CONTENT_WIDTH = 640;
       const PX_PER_LINE = 26;
