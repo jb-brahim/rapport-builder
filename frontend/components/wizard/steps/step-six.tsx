@@ -527,7 +527,7 @@ const SmartBlockEditor = ({ content, images = [], tables = [], onUpdateContent, 
             onBlur={(e: any) => setLastCursor({ partIndex: i, start: e.target.selectionStart, end: e.target.selectionEnd })}
             placeholder={parts.length === 1 ? "Write your content here..." : ""}
             className={cn(
-              "w-full bg-transparent border-0 outline-none text-[13px] leading-[1.8] font-medium text-slate-600 resize-none overflow-hidden focus-visible:ring-0 px-3 py-1 selection:bg-primary/10",
+              "w-full bg-transparent border-0 outline-none text-[13px] leading-[1.8] font-medium text-slate-600 placeholder:text-slate-300 resize-none overflow-hidden focus-visible:ring-0 px-3 py-1 selection:bg-primary/10",
               part.length === 0 ? "min-h-[28px] my-0.5 rounded-md focus:bg-white/50" : "h-fit"
             )}
           />
@@ -978,7 +978,7 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
                value={title}
                onChange={e => updateActiveContent({ title: e.target.value })}
                placeholder="Write heading..."
-               className="w-full text-5xl font-black text-[#250136] outline-none placeholder:text-slate-100 selection:bg-primary/10 transition-all"
+               className="w-full text-5xl font-black text-[#250136] outline-none placeholder:text-slate-400 selection:bg-primary/10 transition-all"
              />
           </div>
 
