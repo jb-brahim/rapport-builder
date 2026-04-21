@@ -241,12 +241,6 @@ const estimateHeight = (content: string, type: 'text' | 'heading' | 'image' | 't
     }
   }
 
-  // Parse inline CSS margins from HTML content to account for section headings  
-  const marginTopMatch = content.match(/margin-top:\s*([\d.]+)px/);
-  const marginBottomMatch = content.match(/margin-bottom:\s*([\d.]+)px/);
-  const marginTop = marginTopMatch ? parseFloat(marginTopMatch[1]) : 0;
-  const marginBottom = marginBottomMatch ? parseFloat(marginBottomMatch[1]) : 8;
-
   const charsPerLine = 85;
   const pixelsPerLine = 26;
   const textOnly = content.replace(/<[^>]*>/g, '');
@@ -255,7 +249,7 @@ const estimateHeight = (content: string, type: 'text' | 'heading' | 'image' | 't
   paragraphs.forEach(p => {
     totalLines += Math.max(1, Math.ceil(p.length / charsPerLine));
   });
-  return totalLines * pixelsPerLine + marginTop + marginBottom + 4; // 4px base buffer
+  return totalLines * pixelsPerLine + 7;
 };
 
 // Simplified Roman Numerals for headings
@@ -349,11 +343,11 @@ const parseSmartSegments = (
 const getChapterSegments = (chapter: any, chapIdx: number, counters: { fig: number; tbl: number }): any[] => {
   const segments: any[] = [];
   const styles = {
-    chapter: 'font-size: 16pt; font-weight: 900; color: #DC2626; display: block; margin-bottom: 32px; text-align: center; text-transform: uppercase;',
-    l1: 'font-size: 14pt; font-weight: 900; color: #DC2626; display: block; margin-bottom: 12px; margin-top: 32px;',
-    l2: 'font-size: 12pt; font-weight: 900; color: #16A34A; display: block; margin-bottom: 12px; margin-top: 20px; margin-left: 20px;',
-    l3: 'font-size: 12pt; font-weight: 900; color: #000000; display: block; margin-bottom: 12px; margin-top: 20px; margin-left: 40px;',
-    text: 'font-size: 11pt; font-weight: normal; color: #000000; display: block; margin-bottom: 15px; line-height: 1.7;'
+    chapter: 'font-size: 16pt; font-weight: 900; color: #DC2626; display: block; margin-bottom: 16px; text-align: center; text-transform: uppercase;',
+    l1: 'font-size: 14pt; font-weight: 900; color: #DC2626; display: block; margin-bottom: 10px;',
+    l2: 'font-size: 12pt; font-weight: 900; color: #16A34A; display: block; margin-bottom: 8px; margin-left: 20px;',
+    l3: 'font-size: 12pt; font-weight: 900; color: #000000; display: block; margin-bottom: 6px; margin-left: 40px;',
+    text: 'font-size: 11pt; font-weight: normal; color: #000000; display: block; margin-bottom: 6px; line-height: 1.7;'
   };
 
   segments.push({
