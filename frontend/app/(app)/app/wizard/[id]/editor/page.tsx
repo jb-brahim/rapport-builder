@@ -241,7 +241,12 @@ const estimateHeight = (content: string, type: 'text' | 'heading' | 'image' | 't
     }
   }
 
-  // Estimate height for text based on char count
+  // Parse inline CSS margins from HTML content to account for section headings  
+  const marginTopMatch = content.match(/margin-top:\s*([\d.]+)px/);
+  const marginBottomMatch = content.match(/margin-bottom:\s*([\d.]+)px/);
+  const marginTop = marginTopMatch ? parseFloat(marginTopMatch[1]) : 0;
+  const marginBottom = marginBottomMatch ? parseFloat(marginBottomMatch[1]) : 8;
+
   const charsPerLine = 85;
   const pixelsPerLine = 26;
   const textOnly = content.replace(/<[^>]*>/g, '');
@@ -250,7 +255,7 @@ const estimateHeight = (content: string, type: 'text' | 'heading' | 'image' | 't
   paragraphs.forEach(p => {
     totalLines += Math.max(1, Math.ceil(p.length / charsPerLine));
   });
-  return totalLines * pixelsPerLine + 7; // Match wizard's tight estimation exactly
+  return totalLines * pixelsPerLine + marginTop + marginBottom + 4; // 4px base buffer
 };
 
 // Simplified Roman Numerals for headings
