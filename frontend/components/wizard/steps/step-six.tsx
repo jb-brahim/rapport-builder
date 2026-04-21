@@ -627,7 +627,7 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
     
     switch (activeItem.type) {
       case 'chapter-intro':
-        return { title: activeChapter.title || 'Introduction', content: activeChapter.introduction || '' };
+        return { title: activeChapter.title || '', content: activeChapter.introduction || '' };
       case 'chapter-conclusion':
         return { title: 'Conclusion', content: activeChapter.conclusion || '' };
       case 'section':
@@ -967,7 +967,13 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
       <ResizablePanel defaultSize={45} minSize={20} className="bg-white shadow-[inset_0_0_80px_rgba(0,0,0,0.01)] flex flex-col">
         <div className="p-10 w-full flex-1 overflow-y-auto custom-scrollbar space-y-10">
           <div className="space-y-2">
-             <span className="text-[11px] font-black text-primary uppercase tracking-[0.3em]">{activeItem.type.replace('-', ' ')}</span>
+             <span className="text-[11px] font-black text-primary uppercase tracking-[0.3em]">
+               {activeItem.type === 'chapter-intro' 
+                 ? (language === 'fr' ? 'TITRE DU CHAPITRE' : 'CHAPTER TITLE')
+                 : activeItem.type === 'chapter-conclusion'
+                   ? (language === 'fr' ? 'CONCLUSION DU CHAPITRE' : 'CHAPTER CONCLUSION')
+                   : activeItem.type.replace('-', ' ')}
+             </span>
              <input 
                value={title}
                onChange={e => updateActiveContent({ title: e.target.value })}

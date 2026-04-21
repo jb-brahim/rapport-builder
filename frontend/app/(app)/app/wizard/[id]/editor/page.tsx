@@ -820,17 +820,8 @@ export default function VisualEditor() {
          { id: 'rem-c', type: 'text', content: r || t('editor.placeholderContent'), isPlaceholder: !r }
       ], true));
 
-      // RÉSUMÉ (Abstract) - Always include a page
-      const resumeRaw = answers.resume?.text || (typeof answers.resume === 'string' ? answers.resume : '');
-      mergedElements.push(...addElements([
-         { id: 'resume-l', type: 'heading', content: t('editor.sections.abstract') }, 
-         { id: 'resume-t', type: 'text', content: resumeRaw || t('editor.placeholderContent'), isPlaceholder: !resumeRaw }
-      ], true));
-      
-      // Tables of Content / Figures / Tables (Always their own page)
+      // Tables of Content (Always its own page)
       mergedElements.push(...addElements([{ id: 'toc-l', type: 'heading', content: t('editor.sections.toc') }], true));
-      mergedElements.push(...addElements([{ id: 'tof-l', type: 'heading', content: t('editor.sections.tof') }], true));
-      mergedElements.push(...addElements([{ id: 'tot-l', type: 'heading', content: t('editor.sections.tot') }], true));
       
       // --- PAGE X: INTRODUCTION ---
       const introSegments: any[] = [
