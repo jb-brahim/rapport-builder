@@ -151,7 +151,17 @@
     "step5Label": "Étape 5 — Introduction Générale",
     "step4Label": "Étape 4 — Table des Matières",
     "step3Label": "Étape 3 — Remerciements",
-    "step2Label": "Étape 2 — Dédicace"
+    "step2Label": "Step 2 — Dedication",
+    "new": {
+      "title": "New Workspace.",
+      "subtitle": "Configure the basics of your document to unlock the intelligent assistant.",
+      "configTitle": "Configuration",
+      "configDesc": "Language and initial structure",
+      "persTitle": "Personalization",
+      "persDesc": "Choice of templates & styles",
+      "footerNote": "You can modify this information later in the settings",
+      "launcher": "Launch Assistant"
+    }
   },
   "step1": {
     "title": "Cover Page Information",
