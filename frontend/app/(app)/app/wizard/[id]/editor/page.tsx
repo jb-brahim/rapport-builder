@@ -1275,37 +1275,42 @@ export default function VisualEditor() {
         onChange={handleLogoChange}
       />
       {/* Top Navbar */}
-      <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-50">
-        <div className="flex items-center gap-4">
+      <header className="h-20 bg-white/80 backdrop-blur-xl border-b border-slate-200/50 flex items-center justify-between px-8 shrink-0 z-50 sticky top-0 shadow-sm">
+        <div className="flex items-center gap-6">
           <button
             onClick={() => router.back()}
-            className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-500"
+            className="group flex items-center gap-2 p-2 hover:bg-slate-100/50 rounded-xl transition-all text-slate-400 hover:text-slate-900"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+            <span className="text-[10px] font-black uppercase tracking-widest hidden md:block">Retour</span>
           </button>
-          <div className="h-8 w-px bg-slate-200 mx-1" />
-          <h1 className="font-bold text-lg tracking-tight">Visual Editor <span className="text-slate-400 font-normal ml-2">PFE Rapport</span></h1>
+          <div className="h-10 w-px bg-slate-200/60 mx-1" />
+          <div className="flex flex-col">
+            <h1 className="font-black text-xs uppercase tracking-[0.2em] text-[#250136]">Visual Editor</h1>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">PFE Rapport <span className="text-primary italic ml-1">Pro</span></span>
+          </div>
           
           {/* Active Partners Presence */}
           {activePartners.length > 0 && (
-            <div className="flex -space-x-2 ml-6 animate-in fade-in slide-in-from-left-2 duration-700">
+            <div className="flex -space-x-2 ml-8 items-center bg-slate-50/50 p-1.5 rounded-full border border-slate-100/50">
                {activePartners.map((partner, i) => (
                  <div key={i} className="group relative">
-                    <div className="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-slate-100 shadow-sm transition-transform hover:-translate-y-1">
+                    <div className="w-7 h-7 rounded-full border-2 border-white overflow-hidden bg-white shadow-sm transition-all hover:scale-110 hover:-translate-y-0.5 cursor-help">
                        <img 
                           src={partner.userId.profile?.photoUrl || `https://ui-avatars.com/api/?name=${partner.userId.profile?.name || 'User'}&background=random`} 
                           alt="Partner" 
                           className="w-full h-full object-cover"
                        />
                     </div>
-                    <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
                     
                     {/* Tooltip */}
-                    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-900 text-white text-[8px] font-black uppercase tracking-widest rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-[100] whitespace-nowrap">
-                       {partner.userId.profile?.name || 'Membre du binôme'} est en ligne
+                    <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-900/95 backdrop-blur shadow-xl text-white text-[9px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-[100] whitespace-nowrap">
+                       {partner.userId.profile?.name || 'Collaborateur'} est actif
                     </div>
                  </div>
                ))}
+               <span className="text-[9px] font-black text-slate-400 ml-3 mr-2 uppercase tracking-tighter">Live</span>
             </div>
           )}
         </div>
@@ -1397,16 +1402,31 @@ export default function VisualEditor() {
             </button>
 
             <div className="w-px h-6 bg-slate-200 mx-1" />
+          </div>
 
-            {saveStatus === 'success' && <span className="text-[10px] font-bold text-green-500 animate-in fade-in slide-in-from-right-2 hidden lg:block">{t('common.save')}!</span>}
-            {saveStatus === 'error' && <span className="text-[10px] font-bold text-red-500 hidden lg:block">Failed</span>}
+          <div className="flex items-center gap-3 animate-in fade-in duration-500">
+            <div className={`flex items-center gap-2 p-1.5 rounded-2xl border transition-all ${saveStatus === 'success' ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50/50 border-slate-200/50'}`}>
+              {saveStatus === 'success' && <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse ml-1" />}
+              <span className={`text-[10px] font-black uppercase tracking-widest px-2 ${saveStatus === 'success' ? 'text-emerald-600' : 'text-slate-400'}`}>
+                {saveStatus === 'success' ? t('common.save') : (isSaving ? t('common.loading') : 'Idle')}
+              </span>
+            </div>
+
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className={`flex items-center gap-2 bg-slate-900 text-white px-5 py-2 rounded-full text-sm font-bold transition-all shadow-md ${isSaving ? 'opacity-70 cursor-wait' : 'hover:bg-slate-800 active:scale-95'}`}
+              className={cn(
+                "group relative flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-primary/20 active:scale-95 overflow-hidden",
+                isSaving ? "bg-slate-100 cursor-wait" : "bg-slate-900 hover:bg-slate-800"
+              )}
+              title={t('editor.save')}
             >
-              {isSaving ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
-              <span className="hidden sm:block">{isSaving ? t('common.loading') : t('editor.save')}</span>
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              {isSaving ? (
+                <div className="w-5 h-5 border-[3px] border-slate-300 border-t-slate-900 rounded-full animate-spin" />
+              ) : (
+                <Save className="w-5 h-5 text-white group-hover:scale-110 transition-transform" />
+              )}
             </button>
           </div>
           </div>
@@ -1417,11 +1437,17 @@ export default function VisualEditor() {
 
       <div className="flex-1 flex overflow-hidden">
 
-        {/* Left Sidebar */}
+        {/* Left Sidebar - High Status Toolbox */}
         {!isZenMode && (
-          <aside className="w-20 bg-white border-r border-slate-200 flex flex-col items-center py-6 gap-6 shrink-0 z-40 shadow-sm animate-in slide-in-from-left-4 duration-500">
-          <ToolButton icon={<Layout className="w-5 h-5" />} label={t('dashboard.modal.subtitle')} active />
-          
+          <aside className="w-[88px] bg-white/90 backdrop-blur-md border-r border-slate-200/50 flex flex-col items-center py-8 gap-1 shrink-0 z-40 animate-in slide-in-from-left-8 duration-700">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-100 mb-6 group cursor-default">
+              <Layout className="w-5 h-5 text-white group-hover:scale-110 transition-transform" />
+            </div>
+            
+            <div className="flex-1 flex flex-col items-center gap-2 w-full px-2">
+              <ToolButton icon={<Plus className="w-5 h-5" />} label="Nouveau" active={false} 
+                 onClick={() => {}} // Custom logic can be added
+              />
 
           <ToolButton 
             icon={<Bookmark className="w-5 h-5" />} 
@@ -1491,39 +1517,48 @@ export default function VisualEditor() {
             icon={<TableIcon className="w-5 h-5" />}
             label={t('editor.sections.tot').split(' ')[2]}
           />
-          <div className="mt-auto">
             <ToolButton icon={<Settings2 className="w-5 h-5" />} label={t('sidebar.settings')} />
           </div>
         </aside>
         )}
 
         {/* Main Workspace (Multi-Page Canvas) */}
-        <main className="flex-1 relative overflow-auto p-12 bg-[#E1E4EB] custom-scrollbar flex flex-col items-center gap-12">
+        <main className="flex-1 relative overflow-auto p-16 bg-gradient-to-br from-[#F8FAFC] to-[#F1F5F9] custom-scrollbar flex flex-col items-center gap-20">
 
-          <div className="fixed bottom-8 right-8 bg-white border border-slate-200 rounded-full shadow-xl flex items-center p-1 gap-2 z-50">
-            <button onClick={() => setZoom(z => Math.max(0.2, z - 0.1))} className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 rounded-full">-</button>
-            <span className="text-[10px] font-bold w-10 text-center">{Math.round(zoom * 100)}%</span>
-            <button onClick={() => setZoom(z => Math.min(2, z + 0.1))} className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 rounded-full">+</button>
+          <div className="fixed bottom-10 right-10 bg-white/90 backdrop-blur shadow-2xl border border-slate-200/50 rounded-2xl flex items-center p-1.5 gap-2 z-50 ring-1 ring-black/5">
+            <button onClick={() => setZoom(z => Math.max(0.2, z - 0.1))} className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-xl transition-all font-black text-slate-500">-</button>
+            <div className="h-6 w-px bg-slate-100 mx-1" />
+            <span className="text-[11px] font-black w-14 text-center text-slate-900 uppercase tracking-tighter">{Math.round(zoom * 100)}%</span>
+            <div className="h-6 w-px bg-slate-100 mx-1" />
+            <button onClick={() => setZoom(z => Math.min(2, z + 0.1))} className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-xl transition-all font-black text-slate-500">+</button>
           </div>
 
           {/* Scalable Document Workspace */}
           <div 
-            className="relative flex flex-col items-center gap-12 origin-top transition-transform duration-200"
+            className="relative flex flex-col items-center gap-20 origin-top transition-transform duration-300"
             style={{ transform: `scale(${zoom})`, width: '100%' }}
           >
             {/* Visual Page Shadows - These sit behind the content */}
             {Array.from({ length: numPages }, (_, i) => i + 1).map((pageNum) => (
               <div key={pageNum} className="relative group">
-                {/* Page Left Tab */}
-                <div className="absolute -left-20 top-0 text-[10px] font-black text-slate-400 p-2 border-r border-slate-300 h-full flex flex-col items-center gap-2 pointer-events-none">
-                  <span>PAGE</span>
-                  <span className="text-2xl text-slate-500">{pageNum}</span>
-                  <div className={`w-1 flex-1 rounded-full ${activePage === pageNum ? 'bg-primary' : 'bg-slate-200'}`} />
+                {/* Page Left Tab - Professional Numbering */}
+                <div className="absolute -left-32 top-0 h-full flex flex-col justify-start pt-12 items-end pointer-events-none pr-8">
+                  <div className="flex flex-col items-center gap-4">
+                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em] rotate-180 [writing-mode:vertical-lr]">Section Preview</span>
+                    <div className="h-20 w-[1px] bg-gradient-to-b from-slate-200 to-transparent" />
+                    <span className="text-4xl font-black text-slate-200/80 tracking-tighter transition-colors group-hover:text-primary/20">{pageNum.toString().padStart(2, '0')}</span>
+                    <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${activePage === pageNum ? 'bg-primary ring-4 ring-primary/10' : 'bg-slate-200 group-hover:bg-slate-300'}`} />
+                  </div>
                 </div>
 
-                {/* Page Background Layer */}
+                {/* Page Background Layer - Refined Physical Depth */}
                 <div
-                  className={`bg-white shadow-2xl relative border-2 overflow-hidden transition-all ${activePage === pageNum ? 'border-primary ring-4 ring-primary/5' : 'border-transparent shadow-md hover:border-slate-300'}`}
+                  className={cn(
+                    "bg-white relative border transition-all duration-500 overflow-hidden",
+                    activePage === pageNum 
+                      ? "border-primary/30 shadow-[0_35px_60px_-15px_rgba(0,0,0,0.15)] ring-1 ring-primary/5 scale-[1.002]" 
+                      : "border-slate-200 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.12)] hover:border-slate-300"
+                  )}
                   style={{ width: '794px', height: '1123px' }}
                   onClick={() => {
                     setSelectedId(null);
@@ -1773,16 +1808,22 @@ export default function VisualEditor() {
             <div className="w-12 h-12 rounded-full bg-slate-100 group-hover:bg-primary group-hover:text-white flex items-center justify-center transition-all duration-300">
               <Plus className="w-6 h-6" />
             </div>
-            <span className="font-bold text-sm uppercase tracking-widest">{t('editor.addNewPage')}</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">{t('editor.addNewPage')}</span>
           </button>
         </main>
 
-        {/* Right Info Sidebar */}
+        {/* Right Info Sidebar - Refined Properties */}
         {!isZenMode && (
-          <aside className="hidden lg:flex w-[280px] bg-white border-l border-slate-200 flex-col shrink-0 p-6 z-40 overflow-y-auto animate-in slide-in-from-right-4 duration-500">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-6 flex items-center gap-2">
-            <MousePointer2 className="w-4 h-4" /> {t('editor.selectionInfo')}
-          </h3>
+          <aside className="hidden lg:flex w-[320px] bg-white/70 backdrop-blur-xl border-l border-slate-200/50 flex-col shrink-0 p-8 z-40 overflow-y-auto animate-in slide-in-from-right-8 duration-700">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 rounded-2xl bg-slate-900 flex items-center justify-center text-white shadow-lg">
+                <MousePointer2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 leading-none mb-1">Inspecteur</h3>
+                <p className="text-xs font-bold text-[#250136]">{t('editor.selectionInfo')}</p>
+              </div>
+            </div>
 
             {selectedElement ? (
               <div className="space-y-6">
@@ -2381,11 +2422,30 @@ export default function VisualEditor() {
 
 function ToolButton({ icon, label, active = false, onClick }: { icon: any, label: string, active?: boolean, onClick?: () => void }) {
   return (
-    <button onClick={onClick} className="flex flex-col items-center gap-1 group transition-all">
-      <div className={`p-3 rounded-2xl transition-all shadow-sm ${active ? 'bg-primary text-white scale-110' : 'bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}>
+    <button
+      onClick={onClick}
+      className={cn(
+        "group relative flex flex-col items-center justify-center w-16 h-16 rounded-2xl transition-all duration-300",
+        active 
+          ? "bg-slate-900 text-white shadow-xl scale-105" 
+          : "text-slate-400 hover:text-slate-900 hover:bg-slate-100/50"
+      )}
+    >
+      <div className={cn(
+        "w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-500",
+        active ? "bg-white/10" : "group-hover:bg-white shadow-sm ring-1 ring-black/5"
+      )}>
         {icon}
       </div>
-      <span className={`text-[10px] font-bold uppercase tracking-wider ${active ? 'text-primary' : 'text-slate-400'}`}>{label}</span>
+      <span className={cn(
+        "text-[8px] font-black uppercase tracking-[0.1em] mt-1.5 transition-all text-center leading-none px-1",
+        active ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+      )}>
+        {label}
+      </span>
+      {active && (
+        <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-primary rounded-full shadow-lg" />
+      )}
     </button>
   );
 }
