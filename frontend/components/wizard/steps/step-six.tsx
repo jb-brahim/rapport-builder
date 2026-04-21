@@ -122,16 +122,16 @@ const ESTIMATE_PX_PER_LINE = 26;
 const ESTIMATE_CHARS_PER_LINE = 75;
 
 const estimateContentHeight = (content: any, type: string) => {
-  if (type === 'image') return 480; 
-  if (type === 'heading') return 100;
+  if (type === 'image') return 420; 
+  if (type === 'heading') return 60;
   if (type === 'table') return 300; 
-  if (type === 'raw') return 160; // For chapter headers
+  if (type === 'raw') return 120; // For chapter headers
   
   if (typeof content !== 'string') return 50;
   
   const textOnly = content.replace(/<[^>]*>/g, '');
   const lines = Math.max(1, Math.ceil(textOnly.length / ESTIMATE_CHARS_PER_LINE));
-  return lines * ESTIMATE_PX_PER_LINE + 30; 
+  return lines * ESTIMATE_PX_PER_LINE + 15; 
 };
 
 
@@ -233,6 +233,7 @@ const paginateChapter = (chapter: Chapter, chapIdx: number) => {
     parts.forEach((part) => {
       const figMatch = part.match(/\[FIGURE (\d+)\]/i);
       if (figMatch) {
+         // ... same image logic ...
         const idx = parseInt(figMatch[1]) - 1;
         if (images[idx]) {
           pushToPage({ type: 'image', content: images[idx].src, caption: `Figure ${sectionPrefix}.${idx+1} — ${images[idx].caption || "Sans titre"}` });
@@ -243,6 +244,7 @@ const paginateChapter = (chapter: Chapter, chapIdx: number) => {
       }
       const tabMatch = part.match(/\[TABLEAU (\d+)\]/i);
       if (tabMatch) {
+         // ... same table logic ...
         const idx = parseInt(tabMatch[1]) - 1;
         if (tables[idx]) {
           pushToPage({ type: 'table', content: JSON.stringify([tables[idx].headers, ...tables[idx].rows]), caption: `Tableau ${sectionPrefix}.${idx+1} — ${tables[idx].caption || "Sans titre"}` });
@@ -251,7 +253,30 @@ const paginateChapter = (chapter: Chapter, chapIdx: number) => {
         }
         return;
       }
-      if (part.trim()) pushToPage({ type: 'text', content: part });
+
+      if (part.trim()) {
+        const h = estimateContentHeight(part, 'text');
+        if (curY + h > MAX_Y && part.length > 200) {
+           // Splitting Logic for long text
+           const availableH = MAX_Y - curY;
+           const linesPossible = Math.floor((availableH - 15) / ESTIMATE_PX_PER_LINE);
+           
+           if (linesPossible > 3) {
+             const charLimit = linesPossible * ESTIMATE_CHARS_PER_LINE;
+             let splitIdx = charLimit;
+             const lastSpace = part.lastIndexOf(' ', charLimit);
+             if (lastSpace > charLimit * 0.8) splitIdx = lastSpace;
+             
+             const part1 = part.substring(0, splitIdx);
+             const part2 = part.substring(splitIdx).trim();
+             
+             pushToPage({ type: 'text', content: part1 });
+             if (part2) parseAndPush(part2, images, tables, sectionPrefix);
+             return;
+           }
+        }
+        pushToPage({ type: 'text', content: part });
+      }
     });
   };
 
