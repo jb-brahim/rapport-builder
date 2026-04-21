@@ -230,8 +230,8 @@ const formatChapterContent = (chapter: any) => {
 };
 
 const estimateHeight = (content: string, type: 'text' | 'heading' | 'image' | 'table') => {
-  if (type === 'image') return 600; // Increased to 600 to prevent caption overlap
-  if (type === 'heading') return 120;
+  if (type === 'image') return 450; 
+  if (type === 'heading') return 60;
   if (type === 'table') {
     try {
       const data = JSON.parse(content);
@@ -344,10 +344,10 @@ const parseSmartSegments = (
 const getChapterSegments = (chapter: any, chapIdx: number, counters: { fig: number; tbl: number }): any[] => {
   const segments: any[] = [];
   const styles = {
-    l1: 'font-size: 14pt; font-weight: 900; color: #DC2626; display: block; margin-bottom: 8px; margin-top: 16px;',
-    l2: 'font-size: 12pt; font-weight: 900; color: #16A34A; display: block; margin-bottom: 4px; margin-top: 12px; margin-left: 20px;',
-    l3: 'font-size: 12pt; font-weight: 900; color: #000000; display: block; margin-bottom: 4px; margin-top: 8px; margin-left: 40px;',
-    text: 'font-size: 12pt; font-weight: normal; color: #000000; display: block; margin-bottom: 8px;'
+    l1: 'font-size: 14pt; font-weight: 900; color: #DC2626; display: block; margin-bottom: 4px; margin-top: 10px;',
+    l2: 'font-size: 12pt; font-weight: 900; color: #16A34A; display: block; margin-bottom: 2px; margin-top: 8px; margin-left: 20px;',
+    l3: 'font-size: 12pt; font-weight: 900; color: #000000; display: block; margin-bottom: 2px; margin-top: 6px; margin-left: 40px;',
+    text: 'font-size: 12pt; font-weight: normal; color: #000000; display: block; margin-bottom: 4px; line-height: 1.6;'
   };
 
   segments.push({
@@ -1556,7 +1556,8 @@ export default function VisualEditor() {
                           fontFamily: el.fontFamily,
                           fontWeight: el.fontWeight,
                           textAlign: el.textAlign,
-                          whiteSpace: 'pre-wrap'
+                          whiteSpace: 'pre-wrap',
+                          lineHeight: 1.6
                         }}
                         dangerouslySetInnerHTML={{ 
                           __html: el.id === 'toc-l' ? el.content + autoContent.tocContent :
@@ -1594,6 +1595,7 @@ export default function VisualEditor() {
                           fontFamily: el.fontFamily,
                           fontWeight: el.fontWeight,
                           textAlign: el.textAlign,
+                          lineHeight: 1.6
                         }}
                       />
                     )}
