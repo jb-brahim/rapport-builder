@@ -1007,9 +1007,8 @@ export default function StepSix({ rapportId, chaptersConfig, setChaptersConfig, 
                  e.target.style.height = e.target.scrollHeight + 'px';
                }}
                placeholder="Write heading..."
-               rows={1}
-               className="w-full text-5xl font-black text-[#250136] outline-none placeholder:text-slate-400 selection:bg-primary/10 transition-all resize-none overflow-hidden leading-tight"
-               style={{ minHeight: '1.2em' }}
+               rows={2}
+               className="w-full text-3xl font-black text-[#250136] outline-none placeholder:text-slate-400 selection:bg-primary/10 transition-all resize-none overflow-hidden leading-tight"
              />
           </div>
 
