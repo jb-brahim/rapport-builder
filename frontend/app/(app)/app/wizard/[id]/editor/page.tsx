@@ -566,6 +566,25 @@ export default function VisualEditor() {
     [elements, introStartPage]
   );
 
+  // Group chapter elements by page for flow-based rendering (bypasses absolute positioning)
+  const chapterPageContent = useMemo(() => {
+    const pageMap = new Map<number, EditorElement[]>();
+    elements.forEach(el => {
+      if (el.id.startsWith('chap-')) {
+        if (!pageMap.has(el.page)) pageMap.set(el.page, []);
+        pageMap.get(el.page)!.push(el);
+      }
+    });
+    // Sort each page's elements by their y position
+    pageMap.forEach((els) => els.sort((a, b) => a.y - b.y));
+    return pageMap;
+  }, [elements]);
+
+  const chapterElementIds = useMemo(() =>
+    new Set(elements.filter(el => el.id.startsWith('chap-')).map(el => el.id)),
+    [elements]
+  );
+
   const undo = () => {
     if (historyIndex > 0) {
       isInternalChange.current = true;
@@ -1410,6 +1429,28 @@ export default function VisualEditor() {
                       </span>
                     </div>
                   )}
+
+                  {/* Chapter Flow Content - rendered as natural HTML flow, NOT absolute */}
+                  {chapterPageContent.has(pageNum) && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '60px',
+                        left: '80px',
+                        right: '80px',
+                        bottom: '60px',
+                        overflow: 'hidden',
+                        fontFamily: '"Computer Modern Serif", serif',
+                      }}
+                    >
+                      {chapterPageContent.get(pageNum)!.map(el => (
+                        <div
+                          key={el.id}
+                          dangerouslySetInnerHTML={{ __html: el.content }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -1417,7 +1458,7 @@ export default function VisualEditor() {
             {/* Global Interaction Layer (Elements) - Overlays all pages */}
             <div className="absolute top-0 left-0 right-0 bottom-0 pointer-events-none flex flex-col items-center">
               <div className="relative" style={{ width: '794px', height: `${numPages * (PAGE_HEIGHT + PAGE_GAP)}px` }}>
-                {elements.map((el) => (
+                {elements.filter(el => !chapterElementIds.has(el.id)).map((el) => (
                   <Rnd
                     key={el.id}
                     size={{ width: el.width, height: el.height }}
