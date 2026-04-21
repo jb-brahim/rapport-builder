@@ -231,7 +231,7 @@ export default function DashboardPage() {
               <p className="text-[11px] font-black text-white uppercase tracking-[0.3em]">Day Streak</p>
            </div>
            <Button 
-             onClick={() => router.push('/app/settings')}
+             onClick={() => router.push('/settings')}
              variant="ghost" 
              className="relative z-10 w-full h-12 bg-white/10 hover:bg-white text-white hover:text-rose-600 border-white/20 text-[10px] font-black uppercase tracking-widest mt-6 backdrop-blur-md transition-all active:scale-95"
            >
