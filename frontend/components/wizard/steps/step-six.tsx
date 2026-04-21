@@ -195,20 +195,20 @@ const RenderSegment = ({ segment, sectionIndex }: { segment: any, sectionIndex: 
    if (type === 'heading') {
       const isConclusion = content?.toLowerCase().includes('conclusion');
       return (
-        <h3 className={cn(
-          "font-rapport font-black uppercase mb-6 flex gap-3", 
-          isConclusion ? "text-slate-900" : (segment.level === 1 ? "text-[#DC2626]" : "text-emerald-600"),
-          segment.level === 1 ? "text-[13pt] mt-12" : "text-[12pt] mt-8"
-        )}>
+         <h3 className={cn(
+           "font-rapport font-black uppercase mb-3 flex gap-3", 
+           isConclusion ? "text-slate-900" : (segment.level === 1 ? "text-[#DC2626]" : "text-emerald-600"),
+           segment.level === 1 ? "text-[13pt] mt-8" : "text-[12pt] mt-5"
+         )}>
            {content}
         </h3>
       );
    }
 
    return (
-      <div className="whitespace-pre-wrap leading-[2.2] font-rapport text-[11pt] text-slate-800 mb-6">
-        {content}
-      </div>
+       <div className="whitespace-pre-wrap leading-[1.7] font-rapport text-[11pt] text-slate-800 mb-4">
+         {content}
+       </div>
    );
 };
 
@@ -260,12 +260,12 @@ const paginateChapter = (chapter: Chapter, chapIdx: number) => {
     type: 'raw', 
     id: `ch-${chapIdx}-header`,
     content: (
-      <div className="flex flex-col items-center mb-16">
-        <h2 className="text-[16pt] font-black text-[#DC2626] uppercase text-center tracking-tight leading-tight">
-          {chapter.title ? `CHAPITRE ${chapIdx + 1}: ${chapter.title}` : `CHAPITRE ${chapIdx + 1}`}
-        </h2>
-        <div className="w-16 h-1.5 bg-[#DC2626] mt-6 rounded-full opacity-10" />
-      </div>
+       <div className="flex flex-col items-center mb-8">
+         <h2 className="text-[16pt] font-black text-[#DC2626] uppercase text-center tracking-tight leading-tight">
+           {chapter.title ? `CHAPITRE ${chapIdx + 1}: ${chapter.title}` : `CHAPITRE ${chapIdx + 1}`}
+         </h2>
+         <div className="w-16 h-1 bg-[#DC2626] mt-4 rounded-full opacity-10" />
+       </div>
     )
   });
 
