@@ -2,12 +2,12 @@
 
 import { useAuth } from '@/app/context/auth-context';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { apiClient } from '@/lib/api';
 import { useTranslation } from '@/app/context/language-context';
-import { Plus, Clock, FileText, CheckCircle2, Filter, Megaphone, X, Flame, Activity, Award } from 'lucide-react';
+import { Plus, Clock, FileText, CheckCircle2, Filter, Megaphone, X, Flame, Activity, Award, Sparkles, ArrowRight, Zap, Target } from 'lucide-react';
 
 
 interface Announcement {
@@ -99,8 +99,21 @@ export default function DashboardPage() {
   const inProgress = rapports.filter(r => r.status === 'draft').length;
   const completed = rapports.filter(r => r.status === 'final').length;
 
+  const recentRapports = useMemo(() => {
+    return [...rapports].sort((a, b) => new Date(b.lastSavedAt).getTime() - new Date(a.lastSavedAt).getTime()).slice(0, 3);
+  }, [rapports]);
+
+  const academicTips = [
+    "Utilisez des verbes d'action pour renforcer vos objectifs de recherche.",
+    "La structure en sablier est idéale pour une introduction percutante.",
+    "N'oubliez pas de citer vos sources au fur et à mesure pour éviter le plagiat.",
+    "Une bonne conclusion ouvre toujours sur des perspectives d'avenir."
+  ];
+
+  const currentTip = useMemo(() => academicTips[Math.floor(Math.random() * academicTips.length)], []);
+
   return (
-    <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 pb-20">
       
       {/* Announcements Section */}
       {announcements.filter(a => !dismissedAnnouncements.includes(a._id)).length > 0 && (
@@ -138,167 +151,251 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Header Area with Action */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="space-y-2">
-          <h1 className="text-4xl font-black text-[#250136] tracking-tight">
-            {user?.role === 'supervisor' ? `Bonjour, Dr. ${user?.name || 'Academic'}` : t('dashboard.welcomeBack', { name: user?.name || 'Researcher' })}
-          </h1>
-          <div className="flex items-center gap-2 text-[#250136]/50 font-bold">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)] animate-pulse" />
-            <span>{user?.role === 'supervisor' ? `Vous encadrez ${rapports.length} projets actifs` : t('dashboard.hubStatus', { count: rapports.length })}</span>
-          </div>
+      {/* Main Bento Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-4 grid-rows-auto gap-6">
+        
+        {/* Welcome & Action Bento (2x1) */}
+        <div className="md:col-span-2 glass-panel p-8 bg-gradient-to-br from-[#250136] via-[#3a0a4f] to-[#250136] border-none shadow-2xl relative overflow-hidden group flex flex-col justify-between min-h-[240px] hover:scale-[1.01] transition-all duration-500 cursor-default">
+           <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/20 transition-all duration-1000 animate-pulse" />
+           
+           <div className="relative z-10 space-y-5">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-[9px] font-black uppercase tracking-widest text-primary-foreground/90">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
+                <Zap className="w-3 h-3 text-primary" />
+                {t('dashboard.hubStatus', { count: rapports.length })}
+              </div>
+              <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-[1.05] group-hover:translate-x-1 transition-transform duration-700">
+                {user?.role === 'supervisor' ? `Bonjour, Dr. ${user?.name || 'Academic'}` : t('dashboard.welcomeBack', { name: user?.name || '' })}
+              </h1>
+           </div>
+
+           <div className="relative z-10 flex items-center justify-between gap-6 mt-6">
+              <Button 
+                onClick={() => router.push('/app/wizard/new')} 
+                className="rounded-2xl h-14 px-10 bg-primary text-white hover:bg-white hover:text-[#250136] transition-all text-xs font-black shadow-2xl shadow-primary/30 uppercase tracking-widest flex items-center gap-3 border-none group/btn active:scale-95"
+              >
+                <Plus className="w-5 h-5 group-hover/btn:rotate-90 transition-transform duration-700" />
+                {t('dashboard.initWorkspace')}
+              </Button>
+              <div className="hidden lg:flex items-center gap-2 text-white/30 text-[9px] font-black uppercase tracking-[0.2em] group-hover:text-white/60 transition-colors">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400/60" />
+                Security Layer Active
+              </div>
+           </div>
         </div>
 
-        <Button 
-          onClick={() => router.push('/app/wizard/new')} 
-          className="rounded-xl h-12 px-6 bg-[#250136] text-white hover:bg-primary transition-all text-xs font-black shadow-xl shadow-primary/10 uppercase tracking-widest flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          {t('dashboard.initWorkspace')}
-        </Button>
-      </div>
-
-      {/* High-Density Insights Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="md:col-span-3 glass-panel p-4 md:p-6 border-white/60 bg-white/50 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6 divide-y md:divide-y-0 md:divide-x divide-black/5 items-center relative overflow-hidden">
-          {[
-            { labelKey: user?.role === 'supervisor' ? 'Étudiants Actifs' : 'dashboard.activeProjects', value: total, icon: FileText, color: 'text-primary', statusKey: 'dashboard.thisWeek', bg: 'bg-primary/10' },
-            { labelKey: user?.role === 'supervisor' ? 'En Révision' : 'dashboard.inProgress', value: inProgress, icon: Clock, color: 'text-amber-500', statusKey: 'dashboard.updatingLive', bg: 'bg-amber-500/10' },
-            { labelKey: user?.role === 'supervisor' ? 'Validés' : 'dashboard.completed', value: completed, icon: CheckCircle2, color: 'text-emerald-500', statusKey: 'dashboard.finalized', bg: 'bg-emerald-500/10' }
-          ].map((stat, i) => (
-            <div key={i} className="px-4 py-4 md:py-0 flex items-center justify-between group">
-              <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl border border-white/40 ${stat.bg} flex justify-center items-center group-hover:scale-105 transition-transform shadow-sm`}>
-                  <stat.icon className={`w-5 h-5 ${stat.color}`} />
-                </div>
-                <div>
-                  <p className="text-2xl font-black text-[#250136] tracking-tighter leading-none">{stat.value}</p>
-                  <p className="text-[10px] font-black text-[#250136]/50 uppercase tracking-widest mt-1">{stat.labelKey.startsWith('dashboard.') ? t(stat.labelKey) : stat.labelKey}</p>
-                </div>
-              </div>
-              <div className={`hidden lg:flex items-center gap-2 text-[9px] font-black ${stat.color} px-2.5 py-1 rounded-lg bg-white shadow-sm border border-black/5`}>
-                <div className={`w-1 h-1 rounded-full ${stat.color.replace('text-', 'bg-')} animate-pulse`} />
-                {t(stat.statusKey)}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Writing Streak Widget */}
-        <div className="glass-panel p-6 bg-gradient-to-br from-[#250136] to-[#3a0a4f] border-none shadow-xl flex flex-col justify-between relative overflow-hidden group">
-           <div className="absolute -right-4 -top-4 opacity-10 group-hover:scale-110 transition-transform duration-700">
-             <Flame className="w-32 h-32 text-orange-400 rotate-12" />
+        {/* Stats Bento (1x1) */}
+        <div className="glass-panel p-8 bg-white/90 border-white/80 shadow-2xl flex flex-col justify-between hover:scale-[1.02] transition-all duration-500 group/stats overflow-hidden">
+           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover/stats:opacity-100 transition-opacity" />
+           <div className="flex items-center justify-between mb-6 relative z-10">
+              <span className="text-[10px] font-black text-[#250136]/30 uppercase tracking-[0.2em]">Live Insights</span>
+              <Activity className="w-4 h-4 text-primary/30 group-hover/stats:text-primary transition-colors duration-500" />
            </div>
            
-           <div className="flex items-center gap-3 relative z-10">
-              <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
-                <Flame className="w-5 h-5 text-orange-400" />
-              </div>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">Writing Streak</span>
+           <div className="space-y-5 relative z-10">
+              {[
+                { label: t('dashboard.activeProjects'), value: total, color: 'text-primary', bg: 'bg-primary/5' },
+                { label: t('dashboard.inProgress'), value: inProgress, color: 'text-amber-500', bg: 'bg-amber-500/5' },
+                { label: t('dashboard.completed'), value: completed, color: 'text-emerald-500', bg: 'bg-emerald-500/5' }
+              ].map((s, i) => (
+                <div key={i} className="flex items-center justify-between group/item p-2 rounded-xl hover:bg-white transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-1 h-4 rounded-full ${s.color.replace('text-', 'bg-')} opacity-30`} />
+                    <span className="text-[11px] font-black text-[#250136]/60 group-hover/item:text-[#250136] transition-colors">{s.label}</span>
+                  </div>
+                  <span className={`text-2xl font-black ${s.color} transition-all duration-500 tabular-nums`}>{s.value}</span>
+                </div>
+              ))}
            </div>
-
-           <div className="mt-8 relative z-10">
-              <div className="flex items-baseline gap-2">
-                <span className="text-5xl font-black text-white tracking-tighter">{user?.writingStreak || 0}</span>
-                <span className="text-xs font-black text-white/50 uppercase tracking-widest">Days</span>
+           
+           <div className="mt-6 pt-6 border-t border-black/5 flex items-center justify-between relative z-10">
+              <span className="text-[9px] font-black text-[#250136]/20 uppercase tracking-[0.3em]">{t('dashboard.activity')}</span>
+              <div className="flex -space-x-1.5">
+                {[1,2,3].map(i => <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-gradient-to-br from-primary/20 to-primary/5 shadow-sm" />)}
               </div>
-              <p className="text-[10px] font-bold text-white/40 mt-1 uppercase tracking-wider">Keep the momentum going!</p>
            </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Document Health / Readiness Card */}
-        <div className="lg:col-span-1 glass-panel p-6 border-white/60 bg-white shadow-sm flex flex-col gap-6 group">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 border border-indigo-100">
-                <Activity className="w-5 h-5" />
+        {/* Streak Bento (1x1) */}
+        <div className="glass-panel p-8 bg-gradient-to-br from-[#ff5f00] via-[#ff2d00] to-[#d9004c] border-none shadow-2xl flex flex-col justify-between relative overflow-hidden group hover:scale-[1.02] transition-all duration-500">
+           <div className="absolute inset-x-0 bottom-0 h-1/2 bg-white/10 blur-3xl translate-y-1/2" />
+           <Flame className="absolute -right-6 -bottom-6 w-40 h-40 text-black/10 rotate-12 group-hover:scale-125 group-hover:rotate-0 transition-all duration-1000" />
+           <div className="relative z-10">
+              <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center border border-white/30 mb-8 group-hover:scale-110 transition-transform shadow-lg">
+                <Flame className="w-8 h-8 text-white drop-shadow-lg" />
               </div>
-              <div>
-                <h4 className="text-xs font-black text-[#250136] uppercase tracking-widest">Document Health</h4>
-                <p className="text-[10px] text-[#250136]/50 font-bold uppercase tracking-widest mt-0.5">Overall Progress</p>
+              <div className="flex items-baseline gap-2">
+                 <p className="text-6xl font-black text-white tracking-tighter mb-1 drop-shadow-2xl">{user?.writingStreak || 0}</p>
+                 <Sparkles className="w-4 h-4 text-orange-200 animate-pulse" />
               </div>
-            </div>
-            <Award className="w-5 h-5 text-amber-500 opacity-20 group-hover:opacity-100 transition-opacity" />
-          </div>
+              <p className="text-[11px] font-black text-white/80 uppercase tracking-[0.3em]">Day Streak</p>
+           </div>
+           <Button variant="ghost" className="relative z-10 w-full h-12 bg-white/10 hover:bg-white/20 text-white border-white/20 text-[10px] font-black uppercase tracking-widest mt-6 backdrop-blur-md transition-all active:scale-95">
+              Explorer les Badges
+           </Button>
+        </div>
 
-          <div className="space-y-4">
-             {(() => {
+        {/* Recent Activity Bento (2x1) */}
+        <div className="md:col-span-2 glass-panel p-8 bg-white shadow-xl flex flex-col border-white/60">
+           <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center text-primary border border-primary/10">
+                    <Clock className="w-5 h-5" />
+                 </div>
+                 <div>
+                    <h4 className="text-sm font-black text-[#250136] tracking-tight">Activité Récente</h4>
+                    <p className="text-[10px] text-[#250136]/40 font-bold uppercase tracking-widest mt-0.5">Vos derniers documents édités</p>
+                 </div>
+              </div>
+           </div>
+
+           <div className="space-y-4 flex-1">
+              {recentRapports.length > 0 ? recentRapports.map(r => (
+                <Link key={r._id} href={`/app/wizard/${r._id}`} className="flex items-center justify-between p-3 rounded-2xl hover:bg-black/5 transition-all group">
+                   <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-black/5 flex items-center justify-center">
+                         <FileText className="w-4 h-4 text-primary/40" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-[#250136] leading-tight group-hover:text-primary transition-colors">{r.wizardAnswers?.projectTitle || t('dashboard.untitled')}</p>
+                        <p className="text-[9px] font-bold text-[#250136]/30 uppercase tracking-widest mt-1">Modifié le {new Date(r.lastSavedAt).toLocaleDateString()}</p>
+                      </div>
+                   </div>
+                   <ArrowRight className="w-4 h-4 text-[#250136]/20 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                </Link>
+              )) : (
+                <div className="h-full flex flex-col items-center justify-center text-center py-4">
+                   <p className="text-xs font-bold text-[#250136]/30 uppercase tracking-widest">Aucune activité récente</p>
+                </div>
+              )}
+           </div>
+        </div>
+
+        {/* AI Tip Bento (1x1) */}
+        <div className="glass-panel p-8 bg-gradient-to-br from-indigo-600 to-violet-700 border-none shadow-2xl flex flex-col justify-between relative overflow-hidden group hover:scale-[1.02] transition-all duration-500">
+           <div className="absolute -left-12 -top-12 w-48 h-48 bg-white/10 rounded-full blur-[60px] group-hover:bg-white/20 transition-all duration-1000" />
+           <div className="relative z-10">
+              <div className="flex items-center gap-3 text-white/60 mb-8">
+                <div className="p-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/20">
+                  <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+                </div>
+                <span className="text-[11px] font-black uppercase tracking-[0.2em]">Academic Tip</span>
+              </div>
+              <p className="text-base font-bold text-white leading-relaxed italic group-hover:translate-x-1 transition-transform duration-700">"{currentTip}"</p>
+           </div>
+           
+           <div className="relative z-10 mt-8 flex items-center justify-between">
+              <div className="flex flex-col">
+                 <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">Intelligence</span>
+                 <span className="text-[8px] font-bold text-amber-300/60 uppercase tracking-widest">Rappori Engine v2.0</span>
+              </div>
+              <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center backdrop-blur-md border border-white/10 group-hover:bg-white/20 transition-all">
+                 <Zap className="w-4 h-4 text-amber-300" />
+              </div>
+           </div>
+        </div>
+
+        {/* Health Bento (1x1) */}
+        <div className="glass-panel p-8 bg-white border-white/60 shadow-xl flex flex-col justify-between">
+           <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-black text-[#250136]/40 uppercase tracking-widest">Santé Globale</span>
+              <Award className="w-4 h-4 text-emerald-500" />
+           </div>
+
+           {(() => {
                 const totalPages = rapports.reduce((acc, r) => acc + (r.currentStep || 0), 0);
-                const targetPages = rapports.length * 9;
-                const health = targetPages > 0 ? Math.round((totalPages / targetPages) * 100) : 0;
+                const targetPages = (rapports.length || 1) * 9;
+                const health = Math.round((totalPages / targetPages) * 100);
                 
                 return (
                   <>
-                    <div className="flex items-end justify-between">
-                      <span className="text-4xl font-black text-[#250136] tracking-tighter">{health}%</span>
-                      <span className="text-[10px] font-black text-emerald-500 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 uppercase tracking-widest">System OK</span>
+                    <div className="relative w-24 h-24 mx-auto my-4 flex items-center justify-center">
+                       <svg className="w-full h-full -rotate-90">
+                          <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-black/5" />
+                          <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-emerald-500" strokeDasharray={2 * Math.PI * 40} strokeDashoffset={2 * Math.PI * 40 * (1 - health / 100)} strokeLinecap="round" />
+                       </svg>
+                       <span className="absolute text-2xl font-black text-[#250136] tracking-tighter">{health}%</span>
                     </div>
-                    <div className="w-full h-2.5 bg-black/5 rounded-full overflow-hidden border border-black/5 shadow-inner">
-                      <div 
-                        className="h-full bg-gradient-to-r from-indigo-500 to-primary transition-all duration-1000 shadow-[0_0_12px_rgba(79,70,229,0.3)]"
-                        style={{ width: `${health}%` }}
-                      />
-                    </div>
+                    <p className="text-[10px] font-black text-center text-emerald-500 uppercase tracking-[0.2em] bg-emerald-50 py-1.5 rounded-lg border border-emerald-100">Optimal Performance</p>
                   </>
                 );
-             })()}
-          </div>
+           })()}
         </div>
 
-        {/* Existing Status Indicator (Moved or adjusted) */}
-        <div className="lg:col-span-2 glass-panel p-6 border-white/60 bg-white/30 backdrop-blur-xl flex items-center justify-between overflow-hidden relative">
-           <div className="absolute right-0 top-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
-           <div className="space-y-2 relative z-10">
-              <h4 className="text-sm font-black text-[#250136] uppercase tracking-widest">Next Milestone</h4>
-              <p className="text-xl font-black text-[#250136] leading-tight">Complete your Literature Review <br /><span className="text-primary font-bold text-xs uppercase tracking-[0.2em]">+250 XP</span></p>
+        {/* Next Milestone Bento (4x1 or 2x1 as needed, using overflow) */}
+        <div className="md:col-span-4 glass-panel p-8 bg-gradient-to-r from-[#f8f9ff] to-white border-white/60 shadow-xl flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden group">
+           <div className="absolute right-0 top-0 w-64 h-64 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:bg-primary/10 transition-colors" />
+           
+           <div className="flex items-center gap-6 relative z-10">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0">
+                 <Target className="w-8 h-8 text-primary" />
+              </div>
+              <div className="space-y-1">
+                 <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Prochaine Étape Majeure</h4>
+                 <p className="text-2xl font-black text-[#250136] tracking-tight leading-none italic">"Finaliser la Revue de Littérature"</p>
+                 <div className="flex items-center gap-4 mt-2">
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#250136]/50">
+                       <Zap className="w-3 h-3 text-amber-500" />
+                       +250 XP Achievement
+                    </span>
+                    <span className="w-1 h-1 rounded-full bg-black/10" />
+                    <span className="text-[11px] font-bold text-[#250136]/50 uppercase">7 Jours Restants</span>
+                 </div>
+              </div>
            </div>
-           <button className="h-12 px-6 rounded-xl bg-white text-[#250136] border border-black/5 font-black text-[10px] uppercase tracking-widest transition-all hover:shadow-lg active:scale-95 relative z-10">
-              View Roadmap
-           </button>
+
+           <div className="flex items-center gap-4 relative z-10 w-full md:w-auto">
+              <Button variant="outline" className="flex-1 md:flex-none h-12 px-8 rounded-2xl border-black/5 bg-white font-black text-[10px] uppercase tracking-widest hover:bg-black/5 transition-all">
+                 Voir la Roadmap
+              </Button>
+              <Button className="flex-1 md:flex-none h-12 px-8 rounded-2xl bg-[#250136] text-white font-black text-[10px] uppercase tracking-widest hover:bg-primary shadow-xl shadow-primary/20 transition-all">
+                 Lancer l'Assistant
+              </Button>
+           </div>
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="pt-12 space-y-8">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-black text-[#250136] flex items-center gap-3">
-            {t('dashboard.activeProjectsHub')}
-            <span className="text-[10px] font-black text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20 tracking-widest uppercase">
-              {rapports.length} {t('dashboard.total')}
-            </span>
-          </h2>
+          <div className="space-y-1">
+             <h2 className="text-3xl font-black text-[#250136] tracking-tight">
+               {t('dashboard.activeProjectsHub')}
+             </h2>
+             <p className="text-[11px] font-bold text-[#250136]/40 uppercase tracking-widest flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Vérification du statut des documents en temps réel
+             </p>
+          </div>
           
           <div className="flex items-center gap-4">
-             <div className="flex bg-white/50 backdrop-blur-md p-1 rounded-2xl border border-black/5 shadow-sm">
-               <button 
-                 onClick={() => setViewMode('list')}
-                 className={`px-5 py-2 text-xs font-black rounded-xl transition-all ${
-                   viewMode === 'list' 
-                     ? 'bg-[#250136] text-white shadow-lg' 
-                     : 'text-[#250136]/40 hover:text-[#250136]'
-                 }`}
-               >
-                 {t('dashboard.listView')}
-               </button>
-               <button 
-                 onClick={() => setViewMode('grid')}
-                 className={`px-5 py-2 text-xs font-black rounded-xl transition-all ${
-                   viewMode === 'grid' 
-                     ? 'bg-[#250136] text-white shadow-lg' 
-                     : 'text-[#250136]/40 hover:text-[#250136]'
-                 }`}
-               >
-                 {t('dashboard.gridView')}
-               </button>
-             </div>
-             <Button variant="ghost" className="rounded-2xl border border-black/5 bg-white/50 h-11 px-6 text-xs font-black text-[#250136]/60 hover:bg-white hover:text-primary transition-all group">
-               <span className="flex items-center gap-2">
-                 <Filter className="w-3.5 h-3.5" />
-                 {t('dashboard.filterSort')}
-               </span>
-             </Button>
+             <div className="flex bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-black/5 shadow-sm">
+                <button 
+                  onClick={() => setViewMode('list')}
+                  className={`px-5 py-2 text-xs font-black rounded-xl transition-all ${
+                    viewMode === 'list' 
+                      ? 'bg-[#250136] text-white shadow-lg' 
+                      : 'text-[#250136]/60 hover:text-[#250136]'
+                  }`}
+                >
+                  {t('dashboard.listView')}
+                </button>
+                <button 
+                  onClick={() => setViewMode('grid')}
+                  className={`px-5 py-2 text-xs font-black rounded-xl transition-all ${
+                    viewMode === 'grid' 
+                      ? 'bg-[#250136] text-white shadow-lg' 
+                      : 'text-[#250136]/60 hover:text-[#250136]'
+                  }`}
+                >
+                  {t('dashboard.gridView')}
+                </button>
+              </div>
+              <Button variant="ghost" className="rounded-2xl border border-black/5 bg-white/80 h-12 px-6 text-xs font-black text-[#250136] hover:bg-white hover:text-primary transition-all group shadow-sm">
+                <span className="flex items-center gap-2">
+                  <Filter className="w-3.5 h-3.5" />
+                  {t('dashboard.filterSort')}
+                </span>
+              </Button>
           </div>
         </div>
         
@@ -437,7 +534,7 @@ export default function DashboardPage() {
                         </div>
 
                         <Link href={`/app/wizard/${rapport._id}`} className="block">
-                           <Button className="w-full h-10 rounded-xl bg-[#250136]/5 text-[#250136] hover:bg-primary hover:text-white transition-all text-[10px] font-black uppercase tracking-widest border border-transparent hover:shadow-lg hover:shadow-primary/20">
+                           <Button className="w-full h-11 rounded-xl bg-[#250136] text-white hover:bg-primary transition-all text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary/10">
                               {t('dashboard.resume')}
                            </Button>
                         </Link>
